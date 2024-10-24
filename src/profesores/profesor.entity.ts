@@ -2,10 +2,10 @@ import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 
 
 @Entity({
-    name: "profesor",
+    name: "profesores",
 })
 
-export class Profesor {
+export class Profesores {
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
