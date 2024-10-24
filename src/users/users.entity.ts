@@ -6,9 +6,9 @@ export enum rolEnum {
     NORMAL = 'Normal',
   }
 @Entity({
-    name: 'users'
+    name: 'usuarios'
 })
-export class User {
+export class Usuarios {
 
     @PrimaryGeneratedColumn('uuid')
     id: string;
