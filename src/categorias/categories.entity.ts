@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
+import { Clases } from "src/clases/clase.entity";
 
 @Entity({
     name: "categorias"
@@ -20,4 +21,7 @@ export class Categorias {
     })
     @Column({ length: 100, nullable: false, unique: true })
     nombre: string;
+
+    @OneToMany(() => Clases, (clases) => clases.categorias)
+    clases: Clases[]
 }

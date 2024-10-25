@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Clases } from "src/clases/clase.entity";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
 
 
 @Entity({
@@ -23,5 +24,8 @@ export class Profesores {
 
     @Column({ nullable: true })
     video: string;
+
+    @OneToMany(() => Clases, (clases) => clases.profesores)
+    clases: Clases[]
 
 }

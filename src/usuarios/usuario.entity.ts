@@ -1,4 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn,} from "typeorm";
+import { Clases } from "src/clases/clase.entity";
+import { Turnos } from "src/turnos/turno.entity";
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, OneToMany,} from "typeorm";
 
 export enum rolEnum {
     ADMIN = 'Admin',
@@ -33,5 +35,12 @@ export class Usuarios {
 
     @Column({ default: 'Normal' })
     rol: rolEnum;
+
+    @OneToOne(() => Clases)
+    @JoinColumn()
+    clases: Clases;
+
+    @OneToMany(() => Turnos, (turnos) => turnos.usuarios)
+    turnos: Turnos[]
 
 }
