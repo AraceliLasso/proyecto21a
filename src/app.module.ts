@@ -5,7 +5,7 @@ import { TurnosModule } from './turnos/turno.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { postgresDataSourceConfig } from './config/data-source';
-import { UsuarioModulo } from './usuarios/usuario.module';
+import { UsuarioModule } from './usuarios/usuario.module';
 import { CategoriasModule } from './categorias/categories.module';
 
 
@@ -20,7 +20,7 @@ import { CategoriasModule } from './categorias/categories.module';
       useFactory: (configService: ConfigService) =>
         configService.get('postgres')
     }),
-    UsuarioModulo,
+    UsuarioModule,
     CategoriasModule,
     TurnosModule,
     // SharedModule,

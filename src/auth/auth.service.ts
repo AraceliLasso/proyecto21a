@@ -3,12 +3,12 @@ import { JwtService } from '@nestjs/jwt';
 import { OAuth2Client } from 'google-auth-library';
 import * as jwt from 'jsonwebtoken';
 import { Usuario } from 'src/usuarios/usuario.entity';
-import { UsuariosServicio } from 'src/usuarios/usuario.service';
+import { UsuariosService } from 'src/usuarios/usuario.service';
 
 @Injectable()
 export class AuthService {
     constructor(
-    private readonly usuariosService: UsuariosServicio,
+    private readonly usuariosService: UsuariosService,
     private readonly jwtService: JwtService,
 ) {}
 

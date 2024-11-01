@@ -1,16 +1,16 @@
 import { Body, Controller, Get, Patch, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
-import { MailService } from 'src/notifications/mail.service';
 import { ActualizarPerfilDto } from './dtos/actualizar-usuarioGoogle.dto';
-import { UsuariosServicio } from 'src/usuarios/usuario.service';
+import { UsuariosService } from 'src/usuarios/usuario.service';
+import { MailService } from 'src/notificaciones/mail.service';
 
 @Controller('auth')
 export class AuthController {
     constructor (
         private readonly authService: AuthService,
         private readonly mailService: MailService, 
-        private readonly usersService: UsuariosServicio,
+        private readonly usersService: UsuariosService,
 
     ) {}
 

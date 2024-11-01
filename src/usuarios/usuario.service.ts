@@ -17,7 +17,7 @@ import { ActualizarPerfilDto } from "src/auth/dtos/actualizar-usuarioGoogle.dto"
 //import { MailService } from "src/notifications/mail.service";
 
 @Injectable()
-export class UsuariosServicio{
+export class UsuariosService{
     constructor (
         @InjectRepository(Usuario)
         private readonly usuariosRepository: Repository<Usuario>,
