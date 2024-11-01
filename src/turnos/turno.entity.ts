@@ -1,5 +1,5 @@
 import { Clases } from "src/clases/clase.entity";
-import { Usuarios } from "src/usuarios/usuario.entity";
+import { Usuario } from "src/usuarios/usuario.entity";
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
 
 export enum Statusenum {
@@ -28,8 +28,8 @@ export class Turnos {
   @Column({ nullable: true })
   estaPago: boolean;
 
-  @ManyToOne(() => Usuarios, (usuarios) => usuarios.turnos)
-  usuarios: Usuarios;
+  @ManyToOne(() => Usuario, (usuario) => usuario.turnos)
+  usuario: Usuario;
 
   @ManyToOne(() => Clases, (clases) => clases.turnos)
   clases: Clases;

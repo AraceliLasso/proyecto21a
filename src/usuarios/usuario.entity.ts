@@ -1,21 +1,22 @@
 import { Clases } from "src/clases/clase.entity";
 import { Turnos } from "src/turnos/turno.entity";
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, OneToMany,} from "typeorm";
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, OneToMany } from "typeorm";
 
 export enum rolEnum {
-    ADMIN = 'Admin',
-    PREMIUM = 'Premium',
-    NORMAL = 'Normal',
-  }
+    ADMIN = 'admin',
+    PROFESOR = 'profesor',
+    CLIENTE = 'cliente',
+}
+
 @Entity({
     name: 'usuarios'
 })
-export class Usuarios {
+export class Usuario {
 
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ length: 50, nullable: false })
+    @Column({ length: 80, nullable: false })
     nombre: string;
 
     @Column({ nullable: true })
@@ -30,17 +31,17 @@ export class Usuarios {
     @Column({ nullable: false })
     contrasena: string;
 
-    @Column({ nullable: false })
-    estadoMembresia: string;
-
-    @Column({ default: 'Normal' })
+    @Column({
+        type: 'enum',
+        enum: rolEnum,
+        default: rolEnum.CLIENTE,
+    })
     rol: rolEnum;
 
     @OneToOne(() => Clases)
     @JoinColumn()
     clases: Clases;
 
-    @OneToMany(() => Turnos, (turnos) => turnos.usuarios)
-    turnos: Turnos[]
-
+    @OneToMany(() => Turnos, (turnos) => turnos.usuario)
+    turnos: Turnos[];
 }
