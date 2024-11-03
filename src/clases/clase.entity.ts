@@ -1,6 +1,5 @@
 import { Categorias } from "src/categorias/categories.entity";
 import { Profesores } from "src/profesores/profesor.entity";
-import { Turnos } from "src/turnos/turno.entity";
 import { Usuario } from "src/usuarios/usuario.entity";
 import { Entity, PrimaryGeneratedColumn, Column, IntegerType, OneToOne, OneToMany, ManyToOne } from "typeorm";
 
@@ -30,9 +29,6 @@ export class Clases {
 
     @OneToOne(() => Usuario, (usuario) => usuario.clases)
     usuario: Usuario;
-
-    @OneToMany(() => Turnos, (turnos) => turnos.clases)
-    turnos: Turnos[]
 
     @ManyToOne(() => Categorias, (categorias) => categorias.clases)
     categorias: Categorias;

@@ -1,5 +1,4 @@
 import { Clases } from "src/clases/clase.entity";
-import { Turnos } from "src/turnos/turno.entity";
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, OneToMany } from "typeorm";
 
 export enum rolEnum {
@@ -41,7 +40,4 @@ export class Usuario {
     @OneToOne(() => Clases)
     @JoinColumn()
     clases: Clases;
-
-    @OneToMany(() => Turnos, (turnos) => turnos.usuario)
-    turnos: Turnos[];
 }

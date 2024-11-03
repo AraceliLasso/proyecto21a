@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TurnosModule } from './turnos/turno.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { postgresDataSourceConfig } from './config/data-source';
@@ -22,7 +21,6 @@ import { CategoriasModule } from './categorias/categories.module';
     }),
     UsuarioModule,
     CategoriasModule,
-    TurnosModule,
     // SharedModule,
     // StripeModule,
     // FileUploadModule,
