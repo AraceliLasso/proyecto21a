@@ -1,9 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as v8 from 'v8';
+
+console.log(`Heap size limit: ${v8.getHeapStatistics().heap_size_limit / (1024 * 1024)} MB`);
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
 
   // Configura CORS
   // const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'; // Definir la URL de frontend
