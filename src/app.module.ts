@@ -6,6 +6,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { postgresDataSourceConfig } from './config/data-source';
 import { UsuarioModule } from './usuarios/usuario.module';
 import { CategoriasModule } from './categorias/categories.module';
+import { MailModule } from './notificaciones/mail.module';
+import { AuthModule } from './auth/auth.module';
+import { SharedModule } from './shared/shared.module';
 
 
 @Module({
@@ -21,11 +24,10 @@ import { CategoriasModule } from './categorias/categories.module';
     }),
     UsuarioModule,
     CategoriasModule,
-    // SharedModule,
+    SharedModule,
     // StripeModule,
-    // FileUploadModule,
-    // MailModule,
-    // AuthModule
+    MailModule,
+    AuthModule
   ],
 controllers: [AppController],
 providers: [AppService],
