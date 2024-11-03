@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
 
-export default class UserResponseDto {
+export default class UsuarioRespuestaDto {
     @ApiProperty({
         type: String,
         description: "El identificador único del usuario, asignado por la base de datos",
@@ -60,7 +60,7 @@ export default class UserResponseDto {
     telefono: number;
 
 
-    constructor(partial: Partial<UserResponseDto>) { // Esto permite que el constructor acepte menos propiedades de las declaradas, por ejemplo, password
+    constructor(partial: Partial<UsuarioRespuestaDto>) { // Esto permite que el constructor acepte menos propiedades de las declaradas, por ejemplo, password
         const { nombre, edad, email, telefono } = partial;
         this.nombre = nombre;
         this.edad = edad;

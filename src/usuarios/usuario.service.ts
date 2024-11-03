@@ -66,7 +66,7 @@ export class UsuariosService{
         }
     
 
-       async obtenerUsuarios(page: number, limit: number): Promise<UsuarioAdminDto[]> {
+       async obtenerUsuariosPag(page: number, limit: number): Promise<UsuarioAdminDto[]> {
     const offset = (page - 1) * limit;
 
     const usuarios = await this.usuariosRepository.find({
