@@ -9,6 +9,8 @@ import { CategoriasModule } from './categorias/categories.module';
 import { MailModule } from './notificaciones/mail.module';
 import { AuthModule } from './auth/auth.module';
 import { SharedModule } from './shared/shared.module';
+import { ProfesoresModule } from './profesores/profesor.module';
+import { ClasesModule } from './clases/clase.module';
 
 
 @Module({
@@ -25,9 +27,10 @@ import { SharedModule } from './shared/shared.module';
     UsuarioModule,
     CategoriasModule,
     SharedModule,
-    // StripeModule,
     MailModule,
-    AuthModule
+    AuthModule,
+    ProfesoresModule,
+    ClasesModule
   ],
 controllers: [AppController],
 providers: [AppService],

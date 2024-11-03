@@ -7,11 +7,11 @@ import { ActualizarUsuarioDto } from "./dtos/actualizar-usuario.dto";
 import { MailService } from "src/notificaciones/mail.service";
 import { LoginUsuarioDto } from "./dtos/login-usuario.dto";
 import { UsuarioAdminDto } from "./dtos/admin-usuario.dto";
-import { AuthGuard } from "@nestjs/passport";
 import UsuarioRespuestaDto from "./dtos/respuesta-usuario.dto";
 import { Usuario } from "./usuario.entity";
-import { RolesGuard } from "src/guard/auth.roles";
 import { Roles } from "src/decorators/roles.decorators";
+import { AuthGuard } from "src/guard/auth.guard";
+import { RolesGuard } from "src/guard/roles.guard";
 
 
 
@@ -19,7 +19,7 @@ import { Roles } from "src/decorators/roles.decorators";
 
 @ApiTags("Usuarios")
 @Controller('usuarios')
-export class usuariosController{
+export class UsuariosController{
     constructor(
         private readonly usuariosService: UsuariosService,
         private readonly mailService: MailService
