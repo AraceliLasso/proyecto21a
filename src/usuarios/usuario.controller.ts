@@ -18,7 +18,7 @@ import { RolesGuard } from "src/guard/roles.guard";
 
 
 @ApiTags("Usuarios")
-@Controller('usuarios')
+@Controller("usuarios")
 export class UsuariosController{
     constructor(
         private readonly usuariosService: UsuariosService,
@@ -83,7 +83,7 @@ export class UsuariosController{
     @Roles('admin')
     @ApiSecurity('bearer')
     @HttpCode(HttpStatus.OK)
-    async getusuario(@Param('id', new ParseUUIDPipe()) id: string): Promise<UsuarioRespuestaDto>{
+    async obtenerusuario(@Param('id', new ParseUUIDPipe()) id: string): Promise<UsuarioRespuestaDto>{
         const usuario = await this.usuariosService.obtenerUsuarioPorId(id)
         if(!IsUUID(4, { each: true})){
             throw new HttpException('Invalid UUID', HttpStatus.BAD_REQUEST)
