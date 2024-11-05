@@ -1,12 +1,12 @@
-import { Clases } from "src/clases/clase.entity";
+import { Clase } from "src/clases/clase.entity";
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
 
 
 @Entity({
-    name: "profesores",
+    name: "perfilesProfesores",
 })
 
-export class Profesores {
+export class PerfilProfesor {
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
@@ -25,7 +25,7 @@ export class Profesores {
     @Column({ nullable: true })
     video: string;
 
-    @OneToMany(() => Clases, (clases) => clases.profesores)
-    clases: Clases[]
+    @OneToMany(() => Clase, (clases) => clases.perfilesProfesores)
+    clases: Clase[]
 
 }

@@ -1,14 +1,14 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { Categorias } from "./categories.entity";
-import { Clases } from "src/clases/clase.entity";
+import { Categoria } from "./categories.entity";
+import { Clase } from "src/clases/clase.entity";
 
 
 
 
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Categorias, Clases])],
+    imports: [TypeOrmModule.forFeature([Categoria, Clase])],
     // providers: [],
     // controllers: [],
     // exports: []

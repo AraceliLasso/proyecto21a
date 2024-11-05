@@ -1,6 +1,5 @@
-import { Categorias } from "src/categorias/categories.entity";
-import { Profesores } from "src/profesores/profesor.entity";
-import { Usuario } from "src/usuarios/usuario.entity";
+import { Categoria } from "src/categorias/categories.entity";
+import { PerfilProfesor } from "src/profesores/profesor.entity";
 import { Entity, PrimaryGeneratedColumn, Column, IntegerType, OneToOne, OneToMany, ManyToOne } from "typeorm";
 
 
@@ -8,7 +7,7 @@ import { Entity, PrimaryGeneratedColumn, Column, IntegerType, OneToOne, OneToMan
     name: "clases",
 })
 
-export class Clases {
+export class Clase {
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
@@ -27,12 +26,10 @@ export class Clases {
     @Column({ nullable: true })
     imagen: string;
 
-    @OneToOne(() => Usuario, (usuario) => usuario.clases)
-    usuario: Usuario;
 
-    @ManyToOne(() => Categorias, (categorias) => categorias.clases)
-    categorias: Categorias;
+    @ManyToOne(() => Categoria, (categorias) => categorias.clases)
+    categorias: Categoria;
 
-    @ManyToOne(() => Profesores, (profesores) => profesores.clases)
-    profesores: Profesores;
+    @ManyToOne(() => PerfilProfesor, (perfilesProfesores) => perfilesProfesores.clases)
+    perfilesProfesores: PerfilProfesor;
 }

@@ -1,13 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Clases } from "./clase.entity";
+import { Clase } from "./clase.entity";
 import { Repository } from "typeorm";
 
 @Injectable()
 export class ClasesService{
     constructor (
-        @InjectRepository(Clases)
-        private readonly clasesRepository: Repository<Clases>
+        @InjectRepository(Clase)
+        private readonly clasesRepository: Repository<Clase>
     ){}
     // GET
     // POST

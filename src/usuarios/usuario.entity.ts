@@ -1,4 +1,4 @@
-import { Clases } from "src/clases/clase.entity";
+import { PerfilProfesor } from "src/profesores/profesor.entity";
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, OneToMany } from "typeorm";
 
 export enum rolEnum {
@@ -37,7 +37,7 @@ export class Usuario {
     })
     rol: rolEnum;
 
-    @OneToOne(() => Clases)
+    @OneToOne(() => PerfilProfesor)
     @JoinColumn()
-    clases: Clases;
+    perfilesProfesores: PerfilProfesor;
 }
