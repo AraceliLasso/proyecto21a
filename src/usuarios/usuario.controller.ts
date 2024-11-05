@@ -43,9 +43,9 @@ export class UsuariosController{
          // Enviar correo de confirmación
         await this.mailService.sendMail(
         crearUsuario.email,
-        'Bienvenido a JhonDay',
+        'Bienvenido a ForgeFit',
         'Gracias por registrarte.',
-        '<h1>Te damos la bienvenida a JhonDay!!</h1><p>Gracias por registrarte.</p>',
+        '<h1>Te damos la bienvenida a ForgeFit!!</h1><p>Gracias por registrarte.</p>',
         );
         return {
             message: `Usuario creado exitosamente`,
@@ -83,7 +83,7 @@ export class UsuariosController{
     @Roles('admin')
     @ApiSecurity('bearer')
     @HttpCode(HttpStatus.OK)
-    async obtenerusuario(@Param('id', new ParseUUIDPipe()) id: string): Promise<UsuarioRespuestaDto>{
+    async obtenerUsuario(@Param('id', new ParseUUIDPipe()) id: string): Promise<UsuarioRespuestaDto>{
         const usuario = await this.usuariosService.obtenerUsuarioPorId(id)
         if(!IsUUID(4, { each: true})){
             throw new HttpException('Invalid UUID', HttpStatus.BAD_REQUEST)
