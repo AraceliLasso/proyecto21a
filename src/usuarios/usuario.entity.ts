@@ -1,4 +1,6 @@
-import { Clases } from "src/clases/clase.entity";
+import { Inscripcion } from "src/inscripciones/inscripcion.entity";
+import { Membresia } from "src/membresias/membresia.entity";
+import { PerfilProfesor } from "src/profesores/profesor.entity";
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, OneToMany } from "typeorm";
 
 export enum rolEnum {
@@ -37,7 +39,12 @@ export class Usuario {
     })
     rol: rolEnum;
 
-    @OneToOne(() => Clases)
-    @JoinColumn()
-    clases: Clases;
+    @OneToOne(() => PerfilProfesor, (perfilProfesor)=>perfilProfesor.usuario)
+    perfilProfesor: PerfilProfesor;
+
+    @OneToOne(()=> Membresia, (membresia)=> membresia.usuario)
+    membresia:Membresia;
+
+    @OneToMany(()=> Inscripcion, (inscripciones) => inscripciones.usuario)
+    inscripciones:Inscripcion[];
 }
