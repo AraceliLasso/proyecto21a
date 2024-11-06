@@ -1,4 +1,5 @@
 import { Categoria } from "src/categorias/categories.entity";
+import { Inscripcion } from "src/inscripciones/inscripcion.entity";
 import { PerfilProfesor } from "src/profesores/profesor.entity";
 import { Entity, PrimaryGeneratedColumn, Column, IntegerType, OneToOne, OneToMany, ManyToOne } from "typeorm";
 
@@ -27,9 +28,12 @@ export class Clase {
     imagen: string;
 
 
-    @ManyToOne(() => Categoria, (categorias) => categorias.clases)
-    categorias: Categoria;
+    @ManyToOne(() => Categoria, (categoria) => categoria.clases)
+    categoria: Categoria;
 
-    @ManyToOne(() => PerfilProfesor, (perfilesProfesores) => perfilesProfesores.clases)
-    perfilesProfesores: PerfilProfesor;
+    @ManyToOne(() => PerfilProfesor, (perfilProfesor) => perfilProfesor.clases)
+    perfilProfesor: PerfilProfesor;
+
+    @OneToMany(() => Inscripcion, (inscripciones) => inscripciones.clase)
+    inscripciones: Inscripcion[];
 }

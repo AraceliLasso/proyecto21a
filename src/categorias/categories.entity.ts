@@ -22,6 +22,6 @@ export class Categoria {
     @Column({ length: 100, nullable: false, unique: true })
     nombre: string;
 
-    @OneToMany(() => Clase, (clases) => clases.categorias)
+    @OneToMany(() => Clase, (clases) => clases.categoria)
     clases: Clase[]
 }

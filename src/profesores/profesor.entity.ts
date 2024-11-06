@@ -1,5 +1,6 @@
 import { Clase } from "src/clases/clase.entity";
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { Usuario } from "src/usuarios/usuario.entity";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, OneToOne, JoinColumn } from "typeorm";
 
 
 @Entity({
@@ -22,10 +23,11 @@ export class PerfilProfesor {
     @Column({ nullable: false })
     imagen: string;
 
-    @Column({ nullable: true })
-    video: string;
-
-    @OneToMany(() => Clase, (clases) => clases.perfilesProfesores)
+    @OneToMany(() => Clase, (clases) => clases.perfilProfesor)
     clases: Clase[]
+
+    @OneToOne(()=>Usuario, (usuario)=> usuario.perfilProfesor)
+    @JoinColumn()
+    usuario:Usuario
 
 }
