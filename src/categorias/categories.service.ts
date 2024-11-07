@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Categoria } from "./categories.entity";
@@ -48,13 +48,29 @@ export class CategoriesService {
         if (!category) {
         throw new NotFoundException(`Categoría con ID ${id} no encontrada`);
         } 
+        
+        // Verificar si el nombre ya existe en otra categoría
+        if (modificarCategoriaDto.nombre) {
+            const existingCategory = await this.categoryRepository.findOne({
+                where: { nombre: modificarCategoriaDto.nombre },
+            });
+            if (existingCategory && existingCategory.id !== id) {
+                throw new BadRequestException(`El nombre de la categoría "${modificarCategoriaDto.nombre}" ya existe`);
+            }
+        }
+
         Object.assign(category, modificarCategoriaDto);
         return this.categoryRepository.save(category);
     }
 
-    async removeCategory(id: string): Promise<void> {
+    async removeCategory(id: string): Promise<string> {
         const categoria = await this.findOne(id);
+        if (!categoria) {
+            throw new NotFoundException(`Categoría con ID ${id} no encontrada`);
+        }
+        const nombreCategoria = categoria.nombre;
         await this.categoryRepository.remove(categoria);
+        return `Categoría "${nombreCategoria}" eliminada exitosamente`;
     }
-    
+
     }       

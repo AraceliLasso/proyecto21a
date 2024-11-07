@@ -18,7 +18,8 @@ export class RolesGuard implements CanActivate{
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    if (requiredRoles.includes('admin') && !user.admin) {
+    // Verifica si el rol del usuario está dentro de los roles requeridos
+    if (!requiredRoles.includes(user.rol)) {
         throw new ForbiddenException('No tienes los permisos necesarios');
     }
 

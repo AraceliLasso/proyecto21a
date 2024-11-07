@@ -90,15 +90,10 @@ export class ClasesController {
     @UseGuards(AuthGuard, RolesGuard)
     @Roles('admin')
     @ApiSecurity('bearer')
-    async delete(@Param('id', new ParseUUIDPipe()) id: string) {
-        const clase = await this.clasesService.findOne(id);
-        if (!clase) {
-            throw new NotFoundException(`Clase con id ${id} no fue encontrada`);
-        }
-        await this.clasesService.remove(id);
-        return; // Devuelve vacío para el código de estado 204
-    }
+    async delete(@Param('id', new ParseUUIDPipe()) id: string): Promise<{ message: string }> {
+        const resultMessage = await this.clasesService.remove(id);
+        return { message: resultMessage };
 
 }
-
+}
 

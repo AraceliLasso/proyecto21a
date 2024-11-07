@@ -89,9 +89,14 @@ export class ClasesService{
     }
 
     // DELETE
-    async remove(id: string): Promise<{ id: string }> {
-        await this.clasesRepository.delete(id);
-        return { id };
+    async remove(id: string): Promise<string> {
+        const clase = await this.findOne(id);
+        if (!clase || !(clase instanceof Clase)) {
+            throw new NotFoundException(`Clase con ID ${id} no encontrada`);
+        }
+        const nombreClase = clase.nombre;
+        await this.clasesRepository.remove(clase);
+        return `Clase "${nombreClase}" eliminada exitosamente`;
     }
 
 }

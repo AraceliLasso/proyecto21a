@@ -6,6 +6,6 @@ export class ModificarCategoriaDto{
         description: "El nombre de la categoría",
         required: true,
     })
-    name: string;
+    nombre: string;
 
 }

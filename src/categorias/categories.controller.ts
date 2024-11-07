@@ -55,10 +55,10 @@ export class CategoriesController {
     @Put(':id')
     async update(
         @Param('id') id: string, 
-        @Body() modificarCategroiaDto: ModificarCategoriaDto
+        @Body() modificarCategoriaDto: ModificarCategoriaDto
     ): Promise<Categoria> {
         try {
-        return await this.categoriesService.update(id, modificarCategroiaDto);
+        return await this.categoriesService.update(id, modificarCategoriaDto);
         } catch (error) {
         throw new BadRequestException('Error al actualizar la categoría: ' + error.message);
         }
@@ -68,8 +68,9 @@ export class CategoriesController {
     @ApiOperation({ summary: 'Eliminar una categoria por ID' })
     @ApiResponse({ status: 204, description: 'Categoria eliminada exitosamente' })
     @ApiResponse({ status: 404, description: 'Categoria no encontrada' })
-    async remove(@Param('id') id: string): Promise<void> {
-        return this.categoriesService.removeCategory(id);
+    async remove(@Param('id') id: string): Promise<{ message: string }> {
+        const resultMessage = await this.categoriesService.removeCategory(id);
+        return { message: resultMessage };
     }
 
 }
