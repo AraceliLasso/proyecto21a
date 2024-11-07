@@ -1,6 +1,6 @@
 import { Categoria } from "src/categorias/categories.entity";
 import { Inscripcion } from "src/inscripciones/inscripcion.entity";
-import { PerfilProfesor } from "src/profesores/profesor.entity";
+import { PerfilProfesor } from "src/perfilesProfesores/perfilProfesor.entity";
 import { Entity, PrimaryGeneratedColumn, Column, IntegerType, OneToOne, OneToMany, ManyToOne, JoinColumn } from "typeorm";
 
 

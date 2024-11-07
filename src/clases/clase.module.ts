@@ -1,8 +1,8 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Clase } from "./clase.entity";
-import { PerfilProfesor } from "src/profesores/profesor.entity";
 import { Categoria } from "src/categorias/categories.entity";
+import { PerfilProfesor } from "src/perfilesProfesores/perfilProfesor.entity";
 
 
 
