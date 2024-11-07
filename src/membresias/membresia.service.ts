@@ -108,12 +108,24 @@ export class MembresiaService {
 
         return membresia;
     }
-    async obtenerMembresiasInactivas(): Promise<Membresia[]> {
+    async obtenerMembresiasInactivas(
+        page: number = 1,
+        limit: number = 5,
+      ): Promise<Membresia[]> {
+        // Calcular el desplazamiento (skip) basado en la página y el límite
+        const skip = (page - 1) * limit;
+    
+        // Obtener las membresías inactivas de los usuarios
         return this.membresiasRepository.find({
-            where: { activo: false }, // Membresías que están inactivas
-            order: { fechaExpiracion: 'ASC' }, // Ordenar por fecha de expiración (si es necesario)
+          where: {
+            activo: false, // Membresía inactiva
+            fechaExpiracion: MoreThan(new Date()), // Fecha de expiración no pasada
+          },
+          skip, // Paginación
+          take: limit, // Paginación
+          relations: ['usuario'], // Incluir relación con 'usuario' para obtener los datos del usuario
         });
-    }
+      }
     async cancelarMembresia(usuario: Usuario): Promise<Membresia> {
         const membresia = await this.membresiasRepository.findOne({
             where: { usuario, activo: true },
