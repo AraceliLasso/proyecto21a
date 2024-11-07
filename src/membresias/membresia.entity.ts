@@ -1,49 +1,42 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import { ApiProperty } from "@nestjs/swagger";
-import { Usuario } from "src/usuarios/usuario.entity";
-import { Inscripcion } from "src/inscripciones/inscripcion.entity";
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, OneToMany, UpdateDateColumn, CreateDateColumn } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
+import { Usuario } from 'src/usuarios/usuario.entity';
+import { Inscripcion } from 'src/inscripciones/inscripcion.entity';
 
-export enum membresiaEnum {
-    MENSUAL = "mensual",
-    CUATRIMESTRAL = "cuatrimestral",
-    ANUAL = "anual"
-}
-
-@Entity({ name: "membresias" })
+@Entity('membresias')
 export class Membresia {
-    @ApiProperty({
-        type: String,
-        description: "Identificador único de la membresía",
-        required: true,
-    })
-    @PrimaryGeneratedColumn("uuid")
+    @ApiProperty({ description: 'Identificador único de la membresía' })
+    @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({
-        type: 'enum',
-        enum: membresiaEnum,
-        nullable: true // Nullable to indicate no active membership initially
-    })
-    tipoMembresia: membresiaEnum | null;
+    @ApiProperty({ description: 'Nombre del tipo de membresía' })
+    @Column()
+    nombre: string;
 
-    @Column({
-        type: 'int',
-        nullable: true,
-        comment: "Precio de la membresía (entero, sin decimales)",
-    })
-    precio: number | null;
+    @ApiProperty({ description: 'Precio de la membresía' })
+    @Column({ type: 'int' })
+    precio: number;
 
-    @CreateDateColumn({ name: 'fecha_creacion' })
+    @ApiProperty({ description: 'Duración de la membresía en meses' })
+    @Column({ type: 'int' })
+    duracionEnMeses: number;
+
+    @ApiProperty({ description: 'Fecha de creación de la membresía' })
+    @CreateDateColumn()
     fechaCreacion: Date;
 
-    @UpdateDateColumn({ name: 'fecha_actualizacion' })
+    @ApiProperty({ description: 'Fecha de expiración de la membresía' })
+    @Column({ type: 'timestamp' })
+    fechaExpiracion: Date;
+
+    @UpdateDateColumn()
     fechaActualizacion: Date;
     @Column({
-        type: 'timestamp',
-        nullable: true,
-        comment: "Fecha de expiración de la membresía"
+        type: 'boolean',
+        default: true, // Si es true, la membresía está disponible para nuevos usuarios
+        nullable: false
     })
-    fechaExpiracion: Date | null;
+    activo: boolean;
 
     @OneToOne(() => Usuario, (usuario) => usuario.membresia)
     @JoinColumn()

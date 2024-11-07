@@ -1,101 +1,159 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+// membresia.service.ts
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { MoreThan, Repository } from 'typeorm';
 import { Membresia } from './membresia.entity';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Usuario } from 'src/usuarios/usuario.entity';
-import { membresiaEnum } from './membresia.entity';
-import { IsNull, MoreThan, Not, Repository } from 'typeorm';
 
 @Injectable()
 export class MembresiaService {
-    constructor(private readonly membresiasRepository: Repository<Membresia>) { }
+    constructor(
+        @InjectRepository(Membresia)
+        private readonly membresiasRepository: Repository<Membresia>,
+    ) { }
 
-    private calcularFechaExpiracion(tipo: membresiaEnum): Date {
-        const fechaExpiracion = new Date();
-        switch (tipo) {
-            case membresiaEnum.MENSUAL:
-                fechaExpiracion.setMonth(fechaExpiracion.getMonth() + 1);
-                break;
-            case membresiaEnum.CUATRIMESTRAL:
-                fechaExpiracion.setMonth(fechaExpiracion.getMonth() + 4);
-                break;
-            case membresiaEnum.ANUAL:
-                fechaExpiracion.setFullYear(fechaExpiracion.getFullYear() + 1);
-                break;
+    // Función para comprar una membresía
+    async comprarMembresia(usuario: Usuario, nombre: string, precio: number, duracionEnMeses: number): Promise<Membresia> {
+        // Verificar si el tipo de membresía está activo
+        const membresiaExistente = await this.membresiasRepository.findOne({ where: { nombre, activo: true } });
+    
+        if (!membresiaExistente) {
+            throw new BadRequestException('El tipo de membresía no está disponible para la compra.');
         }
-        return fechaExpiracion;
-    }
-
-    async comprarMembresia(usuario: Usuario, tipo: membresiaEnum, precio: number): Promise<Membresia> {
+    
+        // Buscar membresía existente del usuario
         let membresia = await this.membresiasRepository.findOne({ where: { usuario } });
-
+    
         if (!membresia) {
             membresia = this.membresiasRepository.create({ usuario });
         }
+    
+        // Si la membresía ya está activa y no ha expirado, no cambiamos el precio
+        if (membresia.activo && membresia.fechaExpiracion > new Date()) {
+            // No actualizamos el precio si ya está activa y no ha expirado
+            return membresia;
+        }
+    
+        // Actualizamos los datos de la membresía (nombre, precio, duración, etc.)
+        membresia.nombre = nombre;
+        membresia.precio = precio;  // Se aplica el nuevo precio
+        membresia.duracionEnMeses = duracionEnMeses;
+        membresia.fechaExpiracion = this.calcularFechaExpiracion(duracionEnMeses);
+        membresia.activo = true;  // Marcamos como activa
+    
+        return this.membresiasRepository.save(membresia);
+    }
+    
 
-        membresia.tipoMembresia = tipo;
-        membresia.precio = precio;
-        membresia.fechaExpiracion = this.calcularFechaExpiracion(tipo);
+    // Función para renovar una membresía
+    async renovarMembresia(usuario: Usuario): Promise<Membresia> {
+        const membresia = await this.membresiasRepository.findOne({
+            where: { usuario, activo: true, fechaExpiracion: MoreThan(new Date()) },
+        });
+
+        if (!membresia) {
+            throw new NotFoundException('No tienes una membresía activa para renovar.');
+        }
+
+        // Verificamos si la membresía aún está activa antes de renovarla
+        if (!membresia.activo) {
+            throw new BadRequestException('El tipo de membresía ya no está disponible para renovar.');
+        }
+
+        membresia.fechaExpiracion = this.calcularFechaExpiracion(membresia.duracionEnMeses);
 
         return this.membresiasRepository.save(membresia);
     }
 
-    async obtenerMembresiaActiva(usuario: Usuario): Promise<Membresia | null> {
-        const membresia = await this.membresiasRepository.findOne({ where: { usuario } });
-        if (!membresia || (membresia.fechaExpiracion && membresia.fechaExpiracion < new Date())) {
-            return null;
+    // Función para desactivar una membresía como admin
+    async desactivarMembresia(nombre: string): Promise<Membresia> {
+        // Buscar la membresía por nombre
+        const membresia = await this.membresiasRepository.findOne({ where: { nombre } });
+
+        if (!membresia) {
+            throw new NotFoundException('Membresía no encontrada.');
         }
+
+        // Desactivamos el tipo de membresía
+        membresia.activo = false;
+        return this.membresiasRepository.save(membresia);
+    }
+
+    // Función privada para calcular la fecha de expiración
+    private calcularFechaExpiracion(duracionEnMeses: number): Date {
+        const fechaExpiracion = new Date();
+        fechaExpiracion.setMonth(fechaExpiracion.getMonth() + duracionEnMeses);
+        return fechaExpiracion;
+    }
+    async obtenerHistorialMembresias(usuario: Usuario): Promise<Membresia[]> {
+        return this.membresiasRepository.find({
+            where: { usuario }, // Obtén todas las membresías del usuario
+            order: { fechaCreacion: 'DESC' }, // Ordenar por fecha de creación
+        });
+    }
+
+    async obtenerHistorialMembresiasAdmin(): Promise<Membresia[]> {
+        return this.membresiasRepository.find({
+            order: { fechaCreacion: 'DESC' }, // Ordenar por fecha de creación
+        });
+    }
+    async obtenerMembresiaActiva(usuario: Usuario): Promise<Membresia> {
+        const membresia = await this.membresiasRepository.findOne({
+            where: { usuario, activo: true, fechaExpiracion: MoreThan(new Date()) }, // Verifica que esté activa y no haya expirado
+        });
+
+        if (!membresia) {
+            throw new NotFoundException('No tienes una membresía activa.');
+        }
+
         return membresia;
     }
-
+    async obtenerMembresiasInactivas(): Promise<Membresia[]> {
+        return this.membresiasRepository.find({
+            where: { activo: false }, // Membresías que están inactivas
+            order: { fechaExpiracion: 'ASC' }, // Ordenar por fecha de expiración (si es necesario)
+        });
+    }
     async cancelarMembresia(usuario: Usuario): Promise<Membresia> {
-        const membresia = await this.obtenerMembresiaActiva(usuario);
-
+        const membresia = await this.membresiasRepository.findOne({
+            where: { usuario, activo: true },
+        });
+    
         if (!membresia) {
-            throw new NotFoundException('El usuario no tiene una membresía activa para cancelar.');
+            throw new NotFoundException('No tienes una membresía activa para cancelar.');
         }
-
-        membresia.tipoMembresia = null;
-        membresia.fechaExpiracion = null;
+    
+        membresia.activo = false; // Desactivar la membresía
         return this.membresiasRepository.save(membresia);
     }
-    async renovarMembresia(usuario: Usuario): Promise<Membresia> {
-        const membresia = await this.obtenerMembresiaActiva(usuario);
+    async cancelarMembresiaAdmin(nombre: string): Promise<Membresia> {
+        const membresia = await this.membresiasRepository.findOne({ where: { nombre, activo: true } });
+    
         if (!membresia) {
-            throw new NotFoundException('No se encuentra una membresía activa para renovar.');
+            throw new NotFoundException('Membresía no encontrada o ya está inactiva.');
         }
-        // Calcular nueva fecha de expiración según el tipo de membresía
-        membresia.fechaExpiracion = this.calcularFechaExpiracion(membresia.tipoMembresia);
+    
+        membresia.activo = false; // Desactivar la membresía
         return this.membresiasRepository.save(membresia);
     }
-    async verificarMembresiaVencida(usuario: Usuario): Promise<boolean> {
-        const membresia = await this.obtenerMembresiaActiva(usuario);
+
+    async actualizarPrecioMembresia(nombre: string, nuevoPrecio: number): Promise<Membresia> {
+        // Buscar la membresía activa por nombre
+        const membresia = await this.membresiasRepository.findOne({ where: { nombre, activo: true } });
+    
         if (!membresia) {
-            return true; // Si no tiene membresía, consideramos que está vencida
+            throw new NotFoundException('Membresía no encontrada o ya no está activa.');
         }
-        return membresia.fechaExpiracion < new Date();
-    }
-
-    async obtenerHistorialMembresias(usuario: Usuario): Promise<Membresia[]> {
-        return this.membresiasRepository.find({ where: { usuario } });
-    }
-    async actualizarPrecioMembresia(usuario: Usuario, nuevoPrecio: number): Promise<Membresia> {
-        // Verificar si el usuario ya tiene una membresía activa
-        const membresiaActiva = await this.membresiasRepository.findOne({ where: { usuario, tipoMembresia: Not(IsNull()), fechaExpiracion: MoreThan(new Date()) } });
-
-        if (membresiaActiva) {
-            // Si la membresía ya está activa, no se cambia el precio
-            return membresiaActiva;
-        } else {
-            // Si no tiene una membresía activa (es nueva o ha vencido), asignamos el nuevo precio
-            const membresiaNueva = new Membresia();
-            membresiaNueva.usuario = usuario;
-            membresiaNueva.precio = nuevoPrecio; // Asignar el nuevo precio
-            membresiaNueva.tipoMembresia = membresiaEnum.MENSUAL; // O el tipo de membresía que el usuario escoja
-            membresiaNueva.fechaCreacion = new Date();
-            membresiaNueva.fechaExpiracion = this.calcularFechaExpiracion(membresiaNueva.tipoMembresia);
-
-            // Guardamos la nueva membresía con el nuevo precio
-            return this.membresiasRepository.save(membresiaNueva);
+    
+        // Si la membresía está activa y no ha expirado, no actualizamos el precio
+        if (membresia.fechaExpiracion > new Date()) {
+            throw new BadRequestException('El precio de la membresía no se puede cambiar mientras esté activa y sin expirar.');
         }
+    
+        // Si la membresía ha expirado o está inactiva, actualizamos el precio
+        membresia.precio = nuevoPrecio;
+        return this.membresiasRepository.save(membresia);
     }
-
+    
+        
 }

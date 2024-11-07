@@ -7,7 +7,7 @@ import { PerfilesProfesoresService } from "./perfilProfesor.service";
 @Controller("perfilProfesor")
 export class PerfilesProfesoresController{
     constructor(
-        private readonly perfilesProfesoresService: PerfilesProfesoresService,
+        private readonly PerfilesProfesoresService: PerfilesProfesoresService,
     ){}
     //GET
     
