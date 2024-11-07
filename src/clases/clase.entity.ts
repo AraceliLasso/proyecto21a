@@ -19,7 +19,10 @@ export class Clase {
     descripcion: string;
 
     @Column({ nullable: false })
-    horario: Date;
+    fecha: Date;
+
+    @Column({ nullable: false })
+    horario: string;
 
     @Column({ nullable: true })
     disponibilidad: number;

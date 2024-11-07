@@ -9,8 +9,13 @@ export class ClasesService{
         @InjectRepository(Clase)
         private readonly clasesRepository: Repository<Clase>
     ){}
-    // GET
+
     // POST
+    
+
+
+   
+     // GET
     // PUT
     // PATCH
     // DELETE
