@@ -13,10 +13,10 @@ export class RespuestaCategoriaDto {
         description: "El nombre de la categoría",
         required: true,
     })
-    name: string;
+    nombre: string;
 
-    constructor(id: string, name: string) {
+    constructor(id: string, nombre: string) {
         this.id = id;
-        this.name = name;
+        this.nombre = nombre;
     }
 }

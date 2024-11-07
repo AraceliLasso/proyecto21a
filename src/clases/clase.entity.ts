@@ -1,7 +1,7 @@
 import { Categoria } from "src/categorias/categories.entity";
 import { Inscripcion } from "src/inscripciones/inscripcion.entity";
 import { PerfilProfesor } from "src/profesores/profesor.entity";
-import { Entity, PrimaryGeneratedColumn, Column, IntegerType, OneToOne, OneToMany, ManyToOne } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, IntegerType, OneToOne, OneToMany, ManyToOne, JoinColumn } from "typeorm";
 
 
 @Entity({
@@ -19,10 +19,7 @@ export class Clase {
     descripcion: string;
 
     @Column({ nullable: false })
-    fecha: Date;
-
-    @Column({ nullable: false })
-    horario: string;
+    fecha: Date
 
     @Column({ nullable: true })
     disponibilidad: number;
@@ -31,7 +28,11 @@ export class Clase {
     imagen: string;
 
 
+    @Column({ type: 'uuid', name: "categoriaId", nullable: false })
+    categoriaId: string;
+
     @ManyToOne(() => Categoria, (categoria) => categoria.clases)
+    @JoinColumn({ name: "categoriaId" })
     categoria: Categoria;
 
     @ManyToOne(() => PerfilProfesor, (perfilProfesor) => perfilProfesor.clases)
