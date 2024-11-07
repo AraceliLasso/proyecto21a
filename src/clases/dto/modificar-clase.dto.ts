@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsNumber, IsString, IsUUID } from "class-validator";
 
-export class CrearClaseDto {
+export class ModificarClaseDto {
     @ApiProperty({ description: "El nombre de la clase", required: true })
     @IsString()
     @IsNotEmpty()

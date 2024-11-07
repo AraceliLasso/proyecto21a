@@ -6,6 +6,7 @@ import { CrearClaseDto } from "./dto/crear-clase.dto";
 import { RespuestaClaseDto } from "./dto/respuesta-clase.dto";
 import { CategoriesService } from "src/categorias/categories.service";
 import { RespuestaCategoriaDto } from "src/categorias/dto/respuesta-categoria.dto";
+import { ModificarClaseDto } from "./dto/modificar-clase.dto";
 
 @Injectable()
 export class ClasesService{
@@ -62,8 +63,35 @@ export class ClasesService{
         return new RespuestaClaseDto(clase, categoryDto);
     }
 
-    
     // PUT
-    // PATCH
+    async update(id: string, modificarClaseDto: ModificarClaseDto): Promise<RespuestaClaseDto> {
+        const clase = await this.clasesRepository.findOne({
+            where: { id }, // Usar un objeto con la propiedad `where`
+            relations: ['categoria'], // Cargar la relación de categoría
+        });
+
+        if (!clase) {
+            throw new NotFoundException(`Clase con ID ${id} no encontrada`);
+        }
+
+        // Actualiza los campos de la clase
+        if (modificarClaseDto.nombre) clase.nombre = modificarClaseDto.nombre;
+        if (modificarClaseDto.descripcion) clase.descripcion = modificarClaseDto.descripcion;
+        if (modificarClaseDto.fecha) clase.fecha = modificarClaseDto.fecha;
+        if (modificarClaseDto.disponibilidad) clase.disponibilidad = modificarClaseDto.disponibilidad;
+        if (modificarClaseDto.imagen) clase.imagen = modificarClaseDto.imagen;
+
+
+        const modificarclase = await this.clasesRepository.save(clase);
+        const categoryDto = new RespuestaCategoriaDto(modificarclase.categoria.id, modificarclase.categoria.nombre);
+
+        return new RespuestaClaseDto(modificarclase, categoryDto);
+    }
+
     // DELETE
+    async remove(id: string): Promise<{ id: string }> {
+        await this.clasesRepository.delete(id);
+        return { id };
+    }
+
 }
