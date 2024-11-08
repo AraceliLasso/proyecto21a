@@ -7,13 +7,17 @@ import { RespuestaClaseDto } from "./dto/respuesta-clase.dto";
 import { CategoriesService } from "src/categorias/categories.service";
 import { RespuestaCategoriaDto } from "src/categorias/dto/respuesta-categoria.dto";
 import { ModificarClaseDto } from "./dto/modificar-clase.dto";
+import { PerfilProfesor } from "src/perfilesProfesores/perfilProfesor.entity";
 
 @Injectable()
 export class ClasesService{
     constructor (
         @InjectRepository(Clase)
         private readonly clasesRepository: Repository<Clase>,
-        private readonly categoriesService: CategoriesService
+        private readonly categoriesService: CategoriesService,
+
+        @InjectRepository(PerfilProfesor)
+        private readonly perfilProfesorRepository: Repository<PerfilProfesor>,
     ){}
 
     // POST
@@ -67,7 +71,7 @@ export class ClasesService{
     async update(id: string, modificarClaseDto: ModificarClaseDto): Promise<RespuestaClaseDto> {
         const clase = await this.clasesRepository.findOne({
             where: { id }, // Usar un objeto con la propiedad `where`
-            relations: ['categoria'], // Cargar la relación de categoría
+            relations: ['categoria', 'perfilProfesor'], // Cargar la relación de categoría
         });
 
         if (!clase) {
@@ -80,6 +84,18 @@ export class ClasesService{
         if (modificarClaseDto.fecha) clase.fecha = modificarClaseDto.fecha;
         if (modificarClaseDto.disponibilidad) clase.disponibilidad = modificarClaseDto.disponibilidad;
         if (modificarClaseDto.imagen) clase.imagen = modificarClaseDto.imagen;
+        if (modificarClaseDto.categoriaId) clase.categoriaId = modificarClaseDto.categoriaId;
+        
+        // Verifica si se proporcionó el ID del perfil del profesor y asigna la entidad correspondiente, cuando configure Profesor
+        if (modificarClaseDto.perfilProfesorId) {
+            const perfilProfesor = await this.perfilProfesorRepository.findOne({
+                where: { id: modificarClaseDto.perfilProfesorId },
+            });
+            if (!perfilProfesor) {
+                throw new NotFoundException(`Perfil de profesor con ID ${modificarClaseDto.perfilProfesorId} no encontrado`);
+            }
+            clase.perfilProfesor = perfilProfesor;
+        }
 
 
         const modificarclase = await this.clasesRepository.save(clase);
@@ -89,14 +105,21 @@ export class ClasesService{
     }
 
     // DELETE
+    // async remove(id: string): Promise<string> {
+    //     const clase = await this.findOne(id);
+    //     if (!clase || !(clase instanceof Clase)) {
+    //         throw new NotFoundException(`Clase con ID ${id} no encontrada`);
+    //     }
+    //     const nombreClase = clase.nombre;
+    //     await this.clasesRepository.remove(clase);
+    //     return `Clase "${nombreClase}" eliminada exitosamente`;
+    // }
     async remove(id: string): Promise<string> {
-        const clase = await this.findOne(id);
-        if (!clase || !(clase instanceof Clase)) {
+        const result = await this.clasesRepository.delete(id);
+        if (result.affected === 0) {
             throw new NotFoundException(`Clase con ID ${id} no encontrada`);
         }
-        const nombreClase = clase.nombre;
-        await this.clasesRepository.remove(clase);
-        return `Clase "${nombreClase}" eliminada exitosamente`;
+        return `Clase con ID ${id} eliminada exitosamente`;
     }
 
 }

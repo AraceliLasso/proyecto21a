@@ -16,7 +16,6 @@ export class Clase {
         required: true,
     })
     @PrimaryGeneratedColumn("uuid")
-    @PrimaryGeneratedColumn("uuid")
     id: string;
 
     @ApiProperty({
@@ -24,7 +23,7 @@ export class Clase {
         description: "Nombre de la clase",
         required: true,
     })
-    @Column({ length: 100, nullable: false, unique: true })
+    @Column({ length: 100, unique: true })
     nombre: string;
 
     @ApiProperty({
@@ -32,7 +31,7 @@ export class Clase {
         description: "Descripcion de la clase",
         required: true,
     })
-    @Column({ length: 100, nullable: false, unique: true })
+    @Column({ length: 100,  unique: true })
     descripcion: string;
 
     @ApiProperty({
