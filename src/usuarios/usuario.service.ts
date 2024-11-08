@@ -40,9 +40,9 @@ export class UsuariosService{
         }
     
         // Verifica si el rol es ADMIN antes de crear el token
-        if (usuario.rol !== rolEnum.ADMIN) {
-            throw new HttpException('No tiene permiso para acceder a este recurso', HttpStatus.FORBIDDEN);
-        }
+        // if (usuario.rol !== rolEnum.ADMIN) {
+        //     throw new HttpException('No tiene permiso para acceder a este recurso', HttpStatus.FORBIDDEN);
+        // }
     
         const token = await this.createToken(usuario);
         // Elimina campos sensibles como contrasena
