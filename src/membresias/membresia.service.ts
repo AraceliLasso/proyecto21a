@@ -4,6 +4,7 @@ import { MoreThan, Repository } from 'typeorm';
 import { Membresia } from './membresia.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Usuario } from 'src/usuarios/usuario.entity';
+import { ActualizarPrecioMembresiaDto } from './dtos/actualizar-membresia.dto';
 
 @Injectable()
 export class MembresiaService {
@@ -108,12 +109,24 @@ export class MembresiaService {
 
         return membresia;
     }
-    async obtenerMembresiasInactivas(): Promise<Membresia[]> {
+    async obtenerMembresiasInactivas(
+        page: number = 1,
+        limit: number = 5,
+      ): Promise<Membresia[]> {
+        // Calcular el desplazamiento (skip) basado en la página y el límite
+        const skip = (page - 1) * limit;
+    
+        // Obtener las membresías inactivas de los usuarios
         return this.membresiasRepository.find({
-            where: { activo: false }, // Membresías que están inactivas
-            order: { fechaExpiracion: 'ASC' }, // Ordenar por fecha de expiración (si es necesario)
+          where: {
+            activo: false, // Membresía inactiva
+            fechaExpiracion: MoreThan(new Date()), // Fecha de expiración no pasada
+          },
+          skip, // Paginación
+          take: limit, // Paginación
+          relations: ['usuario'], // Incluir relación con 'usuario' para obtener los datos del usuario
         });
-    }
+      }
     async cancelarMembresia(usuario: Usuario): Promise<Membresia> {
         const membresia = await this.membresiasRepository.findOne({
             where: { usuario, activo: true },
@@ -137,7 +150,10 @@ export class MembresiaService {
         return this.membresiasRepository.save(membresia);
     }
 
-    async actualizarPrecioMembresia(nombre: string, nuevoPrecio: number): Promise<Membresia> {
+    async actualizarPrecioMembresia(nombre: string, actualizarPrecioDto: ActualizarPrecioMembresiaDto): Promise<Membresia> {
+        //* desestructuración de objetos para extraer la propiedad precio de actualizarPrecioDto
+        //*y asignarla a una nueva variable llamada nuevoPrecio.
+        const { precio: nuevoPrecio } = actualizarPrecioDto;
         // Buscar la membresía activa por nombre
         const membresia = await this.membresiasRepository.findOne({ where: { nombre, activo: true } });
     

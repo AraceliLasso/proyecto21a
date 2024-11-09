@@ -104,17 +104,7 @@ export class ClasesService{
         return new RespuestaClaseDto(modificarclase, categoryDto);
     }
 
-    // DELETE
-    // async remove(id: string): Promise<string> {
-    //     const clase = await this.findOne(id);
-    //     if (!clase || !(clase instanceof Clase)) {
-    //         throw new NotFoundException(`Clase con ID ${id} no encontrada`);
-    //     }
-    //     const nombreClase = clase.nombre;
-    //     await this.clasesRepository.remove(clase);
-    //     return `Clase "${nombreClase}" eliminada exitosamente`;
-    // }
-    async remove(id: string): Promise<string> {
+        async remove(id: string): Promise<string> {
         const result = await this.clasesRepository.delete(id);
         if (result.affected === 0) {
             throw new NotFoundException(`Clase con ID ${id} no encontrada`);

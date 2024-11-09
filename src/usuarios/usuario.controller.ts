@@ -50,7 +50,7 @@ export class UsuariosController{
         return {
             message: `Usuario creado exitosamente`,
             usuarioId: usuario.id
-        };
+        };                                                                                                          
     }
 
     @Get()  
@@ -61,7 +61,7 @@ export class UsuariosController{
     @Roles('admin')
     @ApiSecurity('bearer')
     @ApiQuery({ name: 'page', required: false, description: 'Número de página', example: 1 })
-    @ApiQuery({ name: 'limit', required: false, description: 'Cantidad de resultadoados por página', example: 5 })
+    @ApiQuery({ name: 'limit', required: false, description: 'Cantidad de resultados por página', example: 5 })
     async obtenerUsuariosPag(
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 5
