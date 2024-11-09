@@ -40,7 +40,7 @@ export class UsuariosController{
     async crearUsuario(@Body() crearUsuario: CrearUsuarioDto, @Req() request){
         const usuario = await this.usuariosService.crearUsuario(crearUsuario)
 
-        //  // Enviar correo de confirmación
+         // Enviar correo de confirmación
         // await this.mailService.sendMail(
         // crearUsuario.email,
         // 'Bienvenido a ForgeFit',
