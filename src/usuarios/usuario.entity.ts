@@ -1,6 +1,6 @@
 import { Inscripcion } from "src/inscripciones/inscripcion.entity";
 import { Membresia } from "src/membresias/membresia.entity";
-import { PerfilProfesor } from "src/profesores/profesor.entity";
+import { PerfilProfesor } from "src/perfilesProfesores/perfilProfesor.entity";
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, OneToMany } from "typeorm";
 
 export enum rolEnum {

@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { PerfilProfesor } from "./profesor.entity";
 import { Clase } from "src/clases/clase.entity";
+import { PerfilProfesor } from "./perfilProfesor.entity";
 
 
 
@@ -13,4 +13,4 @@ import { Clase } from "src/clases/clase.entity";
     // controllers: [],
     // exports: []
 })
-export class ProfesoresModule{}
+export class PerfilesProfesoresModule{}
