@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
 import { SharedModule } from './shared/shared.module';
 import { ClasesModule } from './clases/clase.module';
 import { PerfilesProfesoresModule } from './perfilesProfesores/perfilProfesor.module';
+import { MembresiaModule } from './membresias/membresia.module';
 
 
 @Module({
@@ -30,7 +31,8 @@ import { PerfilesProfesoresModule } from './perfilesProfesores/perfilProfesor.mo
     MailModule,
     AuthModule,
     PerfilesProfesoresModule,
-    ClasesModule
+    ClasesModule,
+    MembresiaModule
   ],
 controllers: [AppController],
 providers: [AppService],

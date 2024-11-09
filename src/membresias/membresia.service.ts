@@ -4,6 +4,7 @@ import { MoreThan, Repository } from 'typeorm';
 import { Membresia } from './membresia.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Usuario } from 'src/usuarios/usuario.entity';
+import { ActualizarPrecioMembresiaDto } from './dtos/actualizar-membresia.dto';
 
 @Injectable()
 export class MembresiaService {
@@ -149,7 +150,10 @@ export class MembresiaService {
         return this.membresiasRepository.save(membresia);
     }
 
-    async actualizarPrecioMembresia(nombre: string, nuevoPrecio: number): Promise<Membresia> {
+    async actualizarPrecioMembresia(nombre: string, actualizarPrecioDto: ActualizarPrecioMembresiaDto): Promise<Membresia> {
+        //* desestructuración de objetos para extraer la propiedad precio de actualizarPrecioDto
+        //*y asignarla a una nueva variable llamada nuevoPrecio.
+        const { precio: nuevoPrecio } = actualizarPrecioDto;
         // Buscar la membresía activa por nombre
         const membresia = await this.membresiasRepository.findOne({ where: { nombre, activo: true } });
     

@@ -9,6 +9,7 @@ import { AuthGuard } from 'src/guard/auth.guard';
 import { UsuariosService } from 'src/usuarios/usuario.service';
 import { MembresiaInactivaDto } from './dtos/inactivo-membresia.dto';
 import { ApiOperation, ApiQuery, ApiResponse, ApiSecurity } from '@nestjs/swagger';
+import { ActualizarPrecioMembresiaDto } from './dtos/actualizar-membresia.dto';
 
 @Controller('membresias')
 export class MembresiaController {
@@ -38,6 +39,9 @@ export class MembresiaController {
     // Obtener historial de membresías: GET /membresias/historial
     //*para que el usuario vea sus propias membresias
     @Get(':usuarioId/historial')
+    @ApiOperation({ summary: 'Obtener historial de usuario por ID' })
+    @ApiResponse({ status: 200, description: 'Historial obtenido', type: Membresia})
+    @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
     async obtenerHistorialMembresias(
         @Param('usuarioId') usuarioId: string
     ): Promise<Membresia[]> {
@@ -45,9 +49,9 @@ export class MembresiaController {
         usuario.id = usuarioId;
         return this.membresiaService.obtenerHistorialMembresias(usuario);
     }
-   
+
     @Get('admin/historial')
-     @UseGuards(AuthGuard, RolesGuard)
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles('admin') // Asegura que solo los administradores tengan acceso
     async obtenerHistorialMembresiasAdmin(): Promise<Membresia[]> {
         return this.membresiaService.obtenerHistorialMembresiasAdmin();
@@ -77,22 +81,33 @@ export class MembresiaController {
     @ApiQuery({ name: 'page', required: false, description: 'Número de página', example: 1 })
     @ApiQuery({ name: 'limit', required: false, description: 'Cantidad de resultados por página', example: 5 })
     async obtenerMembresiasInactivas(
-      @Query('page') page: number = 1,
-      @Query('limit') limit: number = 5,
+        @Query('page') page: number = 1,
+        @Query('limit') limit: number = 5,
     ): Promise<MembresiaInactivaDto[]> {
-      const membresias = await this.membresiaService.obtenerMembresiasInactivas(page, limit);
-  
-      return membresias.map(membresia => ({
-        id: membresia.id,
-        usuarioNombre: membresia.usuario?.nombre || 'Desconocido', // Aseguramos que no sea null
-        fechaExpiracion: membresia.fechaExpiracion,
-        activo: membresia.activo,
-      }));
+        const membresias = await this.membresiaService.obtenerMembresiasInactivas(page, limit);
+
+        return membresias.map(membresia => ({
+            id: membresia.id,
+            usuarioNombre: membresia.usuario?.nombre || 'Desconocido', // Aseguramos que no sea null
+            fechaExpiracion: membresia.fechaExpiracion,
+            activo: membresia.activo,
+        }));
     }
 
     @Put('desactivar/:nombre')
     async desactivarMembresia(@Param('nombre') nombre: string) {
         return this.membresiaService.desactivarMembresia(nombre);
+    }
+    @Put(":membresiaId/precio")
+    @ApiOperation({ summary: 'Actualizar una membresia por ID' })
+    @ApiResponse({ status: 200, description: 'Membresia actualizada', type: ActualizarPrecioMembresiaDto })
+    @ApiResponse({ status: 404, description: 'Membresia no encontrada' })
+    @UseGuards(AuthGuard)
+    @ApiSecurity('bearer')
+    @HttpCode(HttpStatus.OK)
+    async actualizarPrecioMembresia(@Param("membresiaId") membresiaId: string, @Body() actualizarPrecio: ActualizarPrecioMembresiaDto): Promise<Membresia> {
+        const membresia = await this.membresiaService.actualizarPrecioMembresia(membresiaId, actualizarPrecio)
+        return membresia;
     }
 }
 // Actualizar precio de membresía: PATCH /membresias/precio
