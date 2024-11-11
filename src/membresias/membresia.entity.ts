@@ -36,7 +36,7 @@ export class Membresia {
         default: true, // Si es true, la membresía está disponible para nuevos usuarios
         nullable: false
     })
-    activo: boolean;
+    activa: boolean;
 
     @OneToOne(() => Usuario, (usuario) => usuario.membresia)
     @JoinColumn()
