@@ -101,6 +101,12 @@ export class UsuariosService{
             throw new HttpException('Las contraseñas no coinciden', 400)
         }
 
+        // Verificar si el usuario ya existe en la base de datos
+        const usuarioExistente = await this.usuariosRepository.findOne({ where: { email: crearUsuario.email } });
+        if (usuarioExistente) {
+            throw new HttpException('El usuario con este email ya existe', 400);
+        }
+
         // Crear una nueva instancia de usuario
         const nuevoUsuario = new Usuario();
         Object.assign(nuevoUsuario, crearUsuario);// Asignar los datos del DTO al nuevo usuario
@@ -117,67 +123,67 @@ export class UsuariosService{
     }
     }
 
-    async crearUsuarioOAuth(perfil: any): Promise<Usuario> {
-        try{
-        console.log("perfil", perfil)
-        // Verificar si el usuario ya existe
-        const existingusuario = await this.usuariosRepository.findOne({ where: { email: perfil.email } });
-        if (existingusuario) {
-        return existingusuario;
-        }
+    // async crearUsuarioOAuth(perfil: any): Promise<Usuario> {
+    //     try{
+    //     console.log("perfil", perfil)
+    //     // Verificar si el usuario ya existe
+    //     const existingusuario = await this.usuariosRepository.findOne({ where: { email: perfil.email } });
+    //     if (existingusuario) {
+    //     return existingusuario;
+    //     }
 
 
-        const nuevoUsuario = new Usuario();
-        nuevoUsuario.email = perfil.email;
-        nuevoUsuario.nombre = `${perfil.given_nombre || ''} ${perfil.family_nombre || ''}`.trim();
+    //     const nuevoUsuario = new Usuario();
+    //     nuevoUsuario.email = perfil.email;
+    //     nuevoUsuario.nombre = `${perfil.given_nombre || ''} ${perfil.family_nombre || ''}`.trim();
 
-        // Como estos campos no se obtienen de OAuth le pasamos el valor predeterminado de null
-        nuevoUsuario.telefono = perfil.telefono || null; 
-        nuevoUsuario.edad = perfil.edad || null;
-        nuevoUsuario.contrasena = "contrasenaOAuth";
+    //     // Como estos campos no se obtienen de OAuth le pasamos el valor predeterminado de null
+    //     nuevoUsuario.telefono = perfil.telefono || null; 
+    //     nuevoUsuario.edad = perfil.edad || null;
+    //     nuevoUsuario.contrasena = "contrasenaOAuth";
         
-        // Guardar el nuevo usuario y devolverlo
-        return await this.usuariosRepository.save(nuevoUsuario);
+    //     // Guardar el nuevo usuario y devolverlo
+    //     return await this.usuariosRepository.save(nuevoUsuario);
 
-    } catch (error) {
-        console.error('Error al guardar el usuario:', error);
-        throw new HttpException('Error al crear el usuario con OAuth', 500);
-    }
-    }
+    // } catch (error) {
+    //     console.error('Error al guardar el usuario:', error);
+    //     throw new HttpException('Error al crear el usuario con OAuth', 500);
+    // }
+    // }
 
-    async actualizarPerfil( email: string , actualizarPerfil: ActualizarPerfilDto): Promise<Usuario> {
-        // const email = decodedToken.email;
-        // console.log("decodedToken", decodedToken)
-        console.log("email capturado del decodedToken", email)
+    // async actualizarPerfil( email: string , actualizarPerfil: ActualizarPerfilDto): Promise<Usuario> {
+    //     // const email = decodedToken.email;
+    //     // console.log("decodedToken", decodedToken)
+    //     console.log("email capturado del decodedToken", email)
 
-        if (!email) {
-            throw new UnauthorizedException('Email no encontrado en el token decodificado.');
-        }
+    //     if (!email) {
+    //         throw new UnauthorizedException('Email no encontrado en el token decodificado.');
+    //     }
 
-        const usuario = await this.usuariosRepository.findOne({ where: { email } });
-        console.log("Email encontrado en updateperfil", email)
+    //     const usuario = await this.usuariosRepository.findOne({ where: { email } });
+    //     console.log("Email encontrado en updateperfil", email)
     
-        if (!usuario) {
-            throw new NotFoundException('Usuario no encontrado');
-        }
+    //     if (!usuario) {
+    //         throw new NotFoundException('Usuario no encontrado');
+    //     }
     
-        Object.assign(usuario, actualizarPerfil);
-        console.log("actualizarPerfil", actualizarPerfil)
+    //     Object.assign(usuario, actualizarPerfil);
+    //     console.log("actualizarPerfil", actualizarPerfil)
 
-        try {
-            const updatedusuario = await this.usuariosRepository.save(usuario);
-            console.log("Usuario actualizado en la base de datos:", updatedusuario);
-            return updatedusuario
-        } catch (error) {
-            console.error("Error al guardar en la base de datos:", error);
-            throw new HttpException('Error al actualizar el perfil del usuario', 500);
-        }
+    //     try {
+    //         const updatedusuario = await this.usuariosRepository.save(usuario);
+    //         console.log("Usuario actualizado en la base de datos:", updatedusuario);
+    //         return updatedusuario
+    //     } catch (error) {
+    //         console.error("Error al guardar en la base de datos:", error);
+    //         throw new HttpException('Error al actualizar el perfil del usuario', 500);
+    //     }
 
-        }
+    //     }
     
 
 
-    async encontrarPorEmail(email: string){
+    async encontrarPorEmail(email: string): Promise<Usuario | null>{
         return this.usuariosRepository.findOne( {where: {email}})
     }
 
