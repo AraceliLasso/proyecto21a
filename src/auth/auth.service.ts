@@ -6,11 +6,14 @@ import * as jwt from 'jsonwebtoken';
 import { Usuario } from 'src/usuarios/usuario.entity';
 import { UsuariosService } from 'src/usuarios/usuario.service';
 import { Repository } from 'typeorm';
+import { LoginGoogleDto } from './dtos/login-usuarioGoogle.dto';
 
 @Injectable()
 export class AuthService {
+    
     constructor(
     private readonly usuariosService: UsuariosService,
+    
     private readonly jwtService: JwtService,
     @InjectRepository(Usuario)
     private userRepository: Repository<Usuario>,
@@ -34,6 +37,37 @@ async verifyGoogleToken(token: string): Promise<any> {
         throw new Error('Error al verificar el token de Google: ' + error.message);
     }
 }
+
+async validateGoogleUser(loginGoogleDto: LoginGoogleDto): Promise<any> {
+    const { token } = loginGoogleDto;
+
+    // Verifica el token con Google
+    const ticket = await this.client.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload) {
+        throw new UnauthorizedException('Invalid token');
+    }
+
+    // Busca al usuario en la base de datos o lo registra si es nuevo
+    let user = await this.usuariosService.encontrarPorEmail(payload.email);
+    if (!user) {
+        user = await this.usuariosService.crearUsuario({
+        email: payload.email,
+        nombre: payload.name,
+        telefono:  null,
+        edad:  null,
+        contrasena:  "contraseñaGoogle",
+        confirmarContrasena: "contraseñaGoogle"
+        //id: payload.sub, // ID de Google
+        });
+    }
+
+    return user;
+    }
 
     // async validateOAuthLogin(decodedToken: any) {
     

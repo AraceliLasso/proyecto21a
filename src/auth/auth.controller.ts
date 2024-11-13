@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { ActualizarPerfilDto } from './dtos/actualizar-usuarioGoogle.dto';
 import { UsuariosService } from 'src/usuarios/usuario.service';
 import { MailService } from 'src/notificaciones/mail.service';
+import { LoginGoogleDto } from './dtos/login-usuarioGoogle.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -23,6 +24,12 @@ export class AuthController {
     // Si el usuario ya está autenticado, se procederá a la siguiente función (callback).
     }
 
+    @Get('login')
+    @UseGuards(AuthGuard('oauth2'))
+    async login() {
+    // Redirige al proveedor de OAuth2
+    }
+
     @Get('google/callback')
     @UseGuards(AuthGuard('google'))
     async googleAuthRedirect(@Req() req) {
@@ -37,10 +44,28 @@ export class AuthController {
     };
 }
 
-    @Post('google-login')
-    async googleLogin(@Body() userData: { email: string, name: string, phone: number }) {
-        return this.authService.saveGoogleUser(userData);
+@Post('google-login')
+async loginWithGoogle(@Body() loginGoogleDto: LoginGoogleDto) {
+  // Lógica de autenticación con OAuth2
+    const user = await this.authService.validateGoogleUser(loginGoogleDto);
+    if (!user) {
+        throw new UnauthorizedException('Invalid credentials');
     }
+    return {
+        usuario: {
+        id: user.id,
+        email: user.email,
+        nombre: user.nombre,
+        rol: user.rol,
+        },
+        token: this.authService.generateJwtToken(user),
+    }
+}
+}
+    // @Post('google-login')
+    // async googleLogin(@Body() userData: { email: string, name: string, phone: number }) {
+    //     return this.authService.saveGoogleUser(userData);
+    // }
    // async googleLogin(@Body() body: { token: string }) {
 
 //     try{
@@ -91,7 +116,7 @@ export class AuthController {
 //         throw new UnauthorizedException('Error al iniciar sesión con Google');
 //     }
     
-}
+//}
     // @Patch('update-profile')
     // @UseGuards(AuthGuard('jwt'))
     // async actualizarPerfil(@Req() req, @Body() ActualizarPerfilDto: ActualizarPerfilDto) {
