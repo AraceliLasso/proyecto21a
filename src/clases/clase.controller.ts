@@ -8,6 +8,7 @@ import { RolesGuard } from "src/guard/roles.guard";
 import { Roles } from "src/decorators/roles.decorators";
 import { Clase } from "./clase.entity";
 import { ModificarClaseDto } from "./dto/modificar-clase.dto";
+import { SearchDto } from "./dto/search-logica.dto";
 
 @ApiTags("Clases")
 @Controller("clases")
@@ -32,6 +33,22 @@ export class ClasesController {
             throw new InternalServerErrorException('Error inesperado al crear la clase');
         }
     }
+    @Post('search')
+    @ApiOperation({ summary: 'Buscar clases por nombre, categoría, profesor o descripción' })
+    @ApiResponse({ status: 200, description: 'Clases no encontradas', type: [Clase] })
+    @ApiResponse({ status: 404, description: 'No se encontraron las clases' })
+    async searchClases(@Body() searchDto: SearchDto) {
+        try {
+            const clases = await this.clasesService.searchClases(searchDto);
+            if (!clases || clases.length === 0) {
+                throw new NotFoundException('No se encontraron las clases');
+            }
+            return clases;
+        } catch (error) {
+            console.error('Error al buscar clases:', error);
+            throw new InternalServerErrorException('Error inesperado al buscar clases');
+        }
+    }
 
 
     // GET --- ver si usamos el paginado o que traiga todas en una sola pagina
@@ -40,7 +57,7 @@ export class ClasesController {
     @ApiResponse({ status: 200, description: 'Clases obtenidas', type: [Clase] })
     @ApiQuery({ name: 'page', required: false, description: 'Número de página', example: 1 })
     @ApiQuery({ name: 'limit', required: false, description: 'Cantidad de resultados por página', example: 5 })
-    async getProducts(
+    async getClases(
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 10,
     ) {
