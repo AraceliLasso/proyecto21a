@@ -34,6 +34,9 @@ export class MailService {
     async sendMail(to: string, subject: string, text: string, html: string) {
         try {
             const accessToken = await this.oauth2Client.getAccessToken();
+            if (!this.transporter.auth) {
+                this.transporter.auth = {}; // Inicializa `auth` si no está definido
+            }
             this.transporter.auth.accessToken = accessToken.token || ''; // Asigna el accessToken al transportador
             
             const mailOptions = {

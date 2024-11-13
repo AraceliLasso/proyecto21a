@@ -12,14 +12,14 @@ export class Clase {
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
-    @Column()
+    @Column({ nullable: false })
     nombre: string;
 
     @Column({ nullable: false })
     descripcion: string;
 
     @Column({ nullable: false })
-    horario: Date;
+    fecha: Date;
 
     @Column({ nullable: true })
     disponibilidad: number;
