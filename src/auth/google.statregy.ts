@@ -15,12 +15,16 @@ export class OAuth2Strategy extends PassportStrategy(Strategy, 'oauth2') {
         });
     }
 
-    async validate(accessToken: string, refreshToken: string, profile: any): Promise<any> {
-    // Lógica para validar y gestionar el perfil del usuario
-    return {
-        accessToken,
-        profile,
-    };
+    // async validate(accessToken: string, refreshToken: string, profile: any): Promise<any> {
+    // // Lógica para validar y gestionar el perfil del usuario
+    // return {
+    //     accessToken,
+    //     profile,
+    // };
+    // }
+    async validate(payload: any) {
+        console.log("Payload from token:", payload);
+        return payload.user ? payload.user : null; // Devuelve el `user` del payload si existe
     }
 }
 

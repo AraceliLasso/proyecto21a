@@ -4,6 +4,7 @@ import { Usuario } from 'src/usuarios/usuario.entity';
 import { UsuariosService } from 'src/usuarios/usuario.service';
 import { Repository } from 'typeorm';
 import { LoginGoogleDto } from './dtos/login-usuarioGoogle.dto';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
@@ -62,5 +63,22 @@ async crearUsuarioGoogle(payload: LoginGoogleDto) {
         console.error('Error en la autenticación OAuth:', error);
         throw new UnauthorizedException('No se pudo autenticar al usuario');
     }
+}
+
+async generateJwtToken(usuario: Partial<Usuario>): Promise<string> {
+    const payload = { 
+        user:{
+            sub: usuario.id,
+            nombre: usuario.nombre,
+            email: usuario.email,
+            rol: usuario.rol,
+            
+        }
+    };
+    const secretKey = process.env.JWT_SECRET || 'default_secret_key';
+    return jwt.sign(payload, secretKey, {
+        expiresIn: '1h',
+    });
+
 }
 }

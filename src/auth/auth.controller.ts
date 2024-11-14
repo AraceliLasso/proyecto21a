@@ -29,6 +29,7 @@ export class AuthController {
     @UseGuards(AuthGuard('google'))
     async googleAuthRedirect(@Req() req) {
         if (!req.user) {
+            console.log("req.user en endpoint google/callback", req.user)
             console.error('Usuario no autenticado');
             throw new UnauthorizedException('No se pudo autenticar al usuario');
         }
@@ -41,7 +42,9 @@ export class AuthController {
 
 @Post('google-login')
 async loginWithGoogle(@Body() loginGoogleDto: LoginGoogleDto) {
+    console.log('Datos recibidos en el backend:',loginGoogleDto);
     const usuario = await this.authService.autenticarUsuarioOAuth(loginGoogleDto);
+    console.log("usuario en google-login", usuario)
     if (!usuario) {
         throw new UnauthorizedException('Credenciales invalidas');
     }
