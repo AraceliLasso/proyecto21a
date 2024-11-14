@@ -24,12 +24,7 @@ export class AuthController {
     // Si el usuario ya está autenticado, se procederá a la siguiente función (callback).
     }
 
-    @Get('login')
-    @UseGuards(AuthGuard('oauth2'))
-    async login() {
-    // Redirige al proveedor de OAuth2
-    }
-
+    
     @Get('google/callback')
     @UseGuards(AuthGuard('google'))
     async googleAuthRedirect(@Req() req) {
@@ -46,77 +41,31 @@ export class AuthController {
 
 @Post('google-login')
 async loginWithGoogle(@Body() loginGoogleDto: LoginGoogleDto) {
-  // Lógica de autenticación con OAuth2
-    const user = await this.authService.validateGoogleUser(loginGoogleDto);
-    if (!user) {
-        throw new UnauthorizedException('Invalid credentials');
+    const usuario = await this.authService.autenticarUsuarioOAuth(loginGoogleDto);
+    if (!usuario) {
+        throw new UnauthorizedException('Credenciales invalidas');
     }
-    return {
-        usuario: {
-        id: user.id,
-        email: user.email,
-        nombre: user.nombre,
-        rol: user.rol,
-        },
-        token: this.authService.generateJwtToken(user),
+    // Si el usuario es nuevo, envía un correo de bienvenida
+    if (usuario.esNuevoUsuario) {
+        setImmediate(() => {
+            this.mailService
+            .sendMail(
+                usuario.usuario.email,
+                'Bienvenido a ForgeFit',
+                'Gracias por registrarte.',
+                '<h1>Te damos la bienvenida a ForgeFit!!</h1><p>Gracias por registrarte.</p>',
+            )
+            .catch((error) => {
+                console.error("Error al enviar correo de bienvenida:", error);
+            });
+        });
+        }
+        return usuario;
+    } catch (error) {
+      throw error; // Propaga el error para que NestJS lo maneje
     }
 }
-}
-    // @Post('google-login')
-    // async googleLogin(@Body() userData: { email: string, name: string, phone: number }) {
-    //     return this.authService.saveGoogleUser(userData);
-    // }
-   // async googleLogin(@Body() body: { token: string }) {
 
-//     try{
-//         const { token } = body;
-//         console.log("body", body)
-
-//         const decodedToken = await this.authService.verifyGoogleToken(token); // Verificando y decodificando el token JWT recibido
-
-//         // Enviar el perfil decodificado (que proviene del token) a validateOAuthLogin
-//         const { usuario, esNuevoUsuario } = await this.authService.validateOAuthLogin(decodedToken);
-
-//         if (!usuario.telefono || !usuario.edad) {
-//             // Redirige al formulario de completar perfil
-//             return {
-//                 message: 'Redirigir a completar perfil',
-//                 redirect: '/completar-perfil',
-//             };
-//         }
-
-//         // Enviar correo de bienvenida si el usuario es nuevo
-//         if (esNuevoUsuario) { 
-//             setImmediate(() => {
-//             this.mailService.sendMail(
-//                 usuario.email,
-//                 'Bienvenido a ForgeFit',
-//                 'Gracias por registrarte.',
-//                 '<h1>Te damos la bienvenida a ForgeFit!!</h1><p>Gracias por registrarte.</p>',
-//         ).catch((error) => {
-//             console.error("Error al enviar correo de bienvenida:", error);
-//         });
-//     });
-// }
-//         const jwtToken = await this.authService.generateJwtToken(usuario); // Genera un token JWT para el usuario
-
-//         return {
-//             token: jwtToken,
-//             userData: {
-//                 nombre: usuario.nombre,
-//                 email: usuario.email,
-//                 telefono: usuario.telefono || null,
-//                 edad: usuario.edad || null,
-//                 isProfileComplete: usuario.telefono && usuario.edad ? true : false // Solo verifica teléfono y edad
-//             },
-//         };
-        
-//     }catch (error){
-//         console.error("Error al iniciar sesión con Google:", error);
-//         throw new UnauthorizedException('Error al iniciar sesión con Google');
-//     }
-    
-//}
     // @Patch('update-profile')
     // @UseGuards(AuthGuard('jwt'))
     // async actualizarPerfil(@Req() req, @Body() ActualizarPerfilDto: ActualizarPerfilDto) {
