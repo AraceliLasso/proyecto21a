@@ -39,8 +39,8 @@ export class Usuario {
     })
     rol: rolEnum;
 
-    @OneToOne(() => PerfilProfesor, (perfilProfesor)=>perfilProfesor.usuario)
-    perfilProfesor: PerfilProfesor;
+    // @OneToOne(() => PerfilProfesor, (perfilProfesor)=>perfilProfesor.usuario)
+    // perfilProfesor: PerfilProfesor;
 
     @OneToOne(()=> Membresia, (membresia)=> membresia.usuario)
     membresia:Membresia;
