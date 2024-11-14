@@ -33,12 +33,12 @@ export class UsuarioAdminDto {
     email: string;
 
     @ApiProperty({
-        type: Number,
+        type: String,
         description: "La edad del usuario",
         required: true,
     })
-    @IsNumber()
-    edad: number;
+    @IsString()
+    edad: string;
 
     @ApiProperty({
         type: String,
@@ -46,8 +46,8 @@ export class UsuarioAdminDto {
         required: true,
     })
     @IsNotEmpty()
-    @IsNumber()
-    telefono: number;
+    @IsString()
+    telefono: string;
 
     @ApiProperty({
         type: Boolean,

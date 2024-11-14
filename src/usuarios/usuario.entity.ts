@@ -21,10 +21,10 @@ export class Usuario {
     nombre: string;
 
     @Column({ nullable: true })
-    edad: number;
+    edad: string;
 
     @Column({ nullable: true })
-    telefono: number;
+    telefono: string;
 
     @Column({ length: 50, unique: true, nullable: false })
     email: string;
