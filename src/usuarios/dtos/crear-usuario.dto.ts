@@ -54,6 +54,11 @@ export class CrearUsuarioDto {
     @IsNumber()
     edad: number;
 
+    @ApiProperty({ description: "La foto del usuario" })
+    @IsString()
+    @IsOptional()
+    imagen?: string | null;
+
     @ApiProperty({
         type: Number,
         description: "El número de teléfono del usuario",

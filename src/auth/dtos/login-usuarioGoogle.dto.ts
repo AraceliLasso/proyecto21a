@@ -29,6 +29,11 @@ export class LoginGoogleDto {
     @IsOptional()
     edad?: number | null;
 
+    @ApiProperty({ description: "La foto del usuario" })
+    @IsString()
+    @IsOptional()
+    imagen?: string | null;
+
     @ApiProperty({ description: "La contraseña del usuario" })
     @IsString()
     contrasena?: string;
