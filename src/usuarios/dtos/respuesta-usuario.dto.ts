@@ -43,21 +43,22 @@ export default class UsuarioRespuestaDto {
     contrasena: string;
 
     @ApiProperty({
-        type: String,
+        type: Number,
         description: "La edad del usuario",
         required: true,
     })
-    @IsString()
-    edad: string;
+    @IsNumber()
+    edad: number;
 
     @ApiProperty({
-        type: String,
+        type: Number,
         description: "El número de teléfono del usuario",
         required: true,
     })
     @IsNotEmpty()
-    @IsString()
-    telefono: string;
+    @IsNumber()
+    telefono: number;
+
 
 
     constructor(partial: Partial<UsuarioRespuestaDto>) { // Esto permite que el constructor acepte menos propiedades de las declaradas, por ejemplo, password

@@ -18,16 +18,16 @@ export const seedUsuarios = async (dataSource: DataSource) => {
   const usuarios = [
     {
       nombre: 'Administrador',
-      edad: "30",
-      telefono: "1234567890",
+      edad: 30,
+      telefono: 1234567890,
       email: 'admin@ejemplo.com',
       contrasena: hashedPasswordAdmin,
       rol: rolEnum.ADMIN,
     },
     {
       nombre: 'Profesor Juan',
-      edad: "40",
-      telefono: "9876543210",
+      edad: 40,
+      telefono: 1176543210,
       email: 'juan@ejemplo.com',
       contrasena: hashedPasswordProfesor,
       rol: rolEnum.PROFESOR,
