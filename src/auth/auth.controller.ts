@@ -49,9 +49,9 @@ async googleLogin(@Body() body: { token: string }) {
             setImmediate(() => {
             this.mailService.sendMail(
                 usuario.email,
-                'Bienvenido a JhonDay',
+                'Bienvenido a ForgeFit',
                 'Gracias por registrarte.',
-                '<h1>Te damos la bienvenida a JhonDay!!</h1><p>Gracias por registrarte.</p>',
+                '<h1>Te damos la bienvenida a ForgeFit!!</h1><p>Gracias por registrarte.</p>',
         ).catch((error) => {
             console.error("Error al enviar correo de bienvenida:", error);
         });
