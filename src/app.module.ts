@@ -9,8 +9,11 @@ import { CategoriasModule } from './categorias/categories.module';
 import { MailModule } from './notificaciones/mail.module';
 import { AuthModule } from './auth/auth.module';
 import { SharedModule } from './shared/shared.module';
-import { ProfesoresModule } from './profesores/profesor.module';
 import { ClasesModule } from './clases/clase.module';
+import { PerfilesProfesoresModule } from './perfilesProfesores/perfilProfesor.module';
+import { MembresiaModule } from './membresias/membresia.module';
+import { SeedModule } from './seeds/seeds-module';
+import { InscripcionModule } from './inscripciones/inscripcion.module';
 
 
 @Module({
@@ -29,8 +32,11 @@ import { ClasesModule } from './clases/clase.module';
     SharedModule,
     MailModule,
     AuthModule,
-    ProfesoresModule,
-    ClasesModule
+    PerfilesProfesoresModule,
+    ClasesModule,
+    MembresiaModule,
+    SeedModule,
+    InscripcionModule
   ],
 controllers: [AppController],
 providers: [AppService],

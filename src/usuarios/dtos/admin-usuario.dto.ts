@@ -41,13 +41,14 @@ export class UsuarioAdminDto {
     edad: number;
 
     @ApiProperty({
-        type: String,
+        type: Number,
         description: "El número de teléfono del usuario",
         required: true,
     })
     @IsNotEmpty()
     @IsNumber()
     telefono: number;
+
 
     @ApiProperty({
         type: Boolean,

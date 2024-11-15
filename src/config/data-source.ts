@@ -19,7 +19,7 @@ const PostgresDataSource = {
     port: parseInt(process.env.DB_PORT, 10),
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
-    url: process.env.DB_URL,
+    //url: process.env.DB_URL,
     synchronize: true,
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     migrations:['./dist/migration/*{.ts,.js}'],

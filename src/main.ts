@@ -26,8 +26,8 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle("JhonDay")
-    .setDescription("Este proyecto es una gestión de turnos de un negocio de servicios técnicos")
+    .setTitle("ForgeFit")
+    .setDescription("Esta aplicación permite a los usuarios registrarse, consultar y acceder a una variedad de actividades ofrecidas por el gimnasio")
     .setVersion("1.0")
     .addBearerAuth()
     .build();
