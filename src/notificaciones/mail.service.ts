@@ -34,7 +34,7 @@ export class MailService {
     async sendMail(to: string, subject: string, text: string, html: string) {
         try {
             const accessToken = await this.oauth2Client.getAccessToken();
-            this.transporter.auth.accessToken = accessToken.token || ''; // Asigna el accessToken al transportador
+            //this.transporter.auth.accessToken = accessToken.token || ''; // Asigna el accessToken al transportador
             
             const mailOptions = {
                 from: process.env.EMAIL_USER,
@@ -42,6 +42,11 @@ export class MailService {
                 subject,
                 text,
                 html,
+                auth: {
+                    type: 'OAuth2',
+                    user: process.env.EMAIL_USER,
+                    accessToken: accessToken.token, // Usa el token directamente aquí
+                },
             };
             const result = await this.transporter.sendMail(mailOptions);
             console.log('Email enviado:', result);

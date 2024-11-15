@@ -53,9 +53,9 @@ async crearUsuarioGoogle(payload: LoginGoogleDto) {
         usuario: {
             nombre: usuario.nombre,
             email: usuario.email,
-            telefono: usuario.telefono,
-            edad: usuario.edad,
-            rol: usuario.rol
+            telefono: usuario.telefono ?? null,
+            edad: usuario.edad ?? null,
+            rol: usuario.rol || "cliente"
         },
         esNuevoUsuario, // Devuelve si el usuario es nuevo
     }  

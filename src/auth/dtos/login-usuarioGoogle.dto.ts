@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString,IsEmail, IsNotEmpty, IsNumber, MaxLength, MinLength  } from 'class-validator';
+import { IsString,IsEmail,IsOptional, IsNotEmpty, IsNumber, MaxLength, MinLength  } from 'class-validator';
 
 export class LoginGoogleDto {
     @ApiProperty({ description: "El id del usuario registrado con Google", required: true })
@@ -20,12 +20,14 @@ export class LoginGoogleDto {
     email: string;
 
     @ApiProperty({ description: "El teléfono del usuario" })
+    @IsOptional()
     @IsNumber()
-    telefono?: number;
+    telefono?: number | null;
 
     @ApiProperty({ description: "La edad del usuario" })
     @IsNumber()
-    edad?: number;
+    @IsOptional()
+    edad?: number | null;
 
     @ApiProperty({ description: "La contraseña del usuario" })
     @IsString()
