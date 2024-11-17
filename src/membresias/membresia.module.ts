@@ -9,11 +9,11 @@ import { UsuarioModule } from "src/usuarios/usuario.module";
 
 @Module({
     imports: [
-      TypeOrmModule.forFeature([Membresia]),  // Asegúrate de que la entidad Membresia esté incluida
+      TypeOrmModule.forFeature([Membresia, Usuario]),  // Asegúrate de que la entidad Membresia esté incluida
       UsuarioModule,  // Importa UsuarioModule para tener acceso a UsuariosService
     ],
     controllers: [MembresiaController],
-    providers: [MembresiaService],
+    providers: [MembresiaService, UsuariosService],
     exports: [MembresiaService],
   })
   export class MembresiaModule {}

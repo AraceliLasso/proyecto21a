@@ -60,6 +60,7 @@ export default class UsuarioRespuestaDto {
     telefono: number;
 
 
+
     constructor(partial: Partial<UsuarioRespuestaDto>) { // Esto permite que el constructor acepte menos propiedades de las declaradas, por ejemplo, password
         const { nombre, edad, email, telefono } = partial;
         this.nombre = nombre;

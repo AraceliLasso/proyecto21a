@@ -12,6 +12,8 @@ import { SharedModule } from './shared/shared.module';
 import { ClasesModule } from './clases/clase.module';
 import { PerfilesProfesoresModule } from './perfilesProfesores/perfilProfesor.module';
 import { MembresiaModule } from './membresias/membresia.module';
+import { SeedModule } from './seeds/seeds-module';
+import { InscripcionModule } from './inscripciones/inscripcion.module';
 
 
 @Module({
@@ -32,7 +34,9 @@ import { MembresiaModule } from './membresias/membresia.module';
     AuthModule,
     PerfilesProfesoresModule,
     ClasesModule,
-    MembresiaModule
+    MembresiaModule,
+    SeedModule,
+    InscripcionModule
   ],
 controllers: [AppController],
 providers: [AppService],
