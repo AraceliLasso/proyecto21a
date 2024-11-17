@@ -42,8 +42,6 @@ export class Usuario {
     @Column({ nullable: true })
     imagen: string;
 
-    @Column({ nullable: true })
-    imagen: string;
 
     // @OneToOne(() => PerfilProfesor, (perfilProfesor)=>perfilProfesor.usuario)
     // perfilProfesor: PerfilProfesor;

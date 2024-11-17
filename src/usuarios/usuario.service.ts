@@ -25,12 +25,7 @@ export class UsuariosService {
         //private readonly mailService: MailService
     ) { }
 
-    async obtenerUsuarioPorId(id: string): Promise<Usuario | undefined> {
-        return this.usuariosRepository.findOne({ where: { id } })
-    }
-
-
-    // Actualizar usuario
+      // Actualizar usuario
     async update(usuario: Usuario): Promise<Usuario> {
         return this.usuariosRepository.save(usuario);
     }
