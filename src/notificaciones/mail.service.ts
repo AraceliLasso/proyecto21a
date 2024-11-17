@@ -45,6 +45,11 @@ export class MailService {
                 subject,
                 text,
                 html,
+                auth: {
+                    type: 'OAuth2',
+                    user: process.env.EMAIL_USER,
+                    accessToken: accessToken.token, // Usa el token directamente aquí
+                },
             };
             const result = await this.transporter.sendMail(mailOptions);
             console.log('Email enviado:', result);

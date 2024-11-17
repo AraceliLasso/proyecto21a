@@ -1,30 +1,30 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, VerifyCallback } from 'passport-google-oauth20';
-import { AuthService } from './auth.service';
+import { Strategy } from 'passport-oauth2';
 
 @Injectable()
-export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-    constructor(private readonly authService: AuthService) {
+export class OAuth2Strategy extends PassportStrategy(Strategy, 'oauth2') {
+    constructor() {
     super({
+        authorizationURL: 'https://provider.com/oauth2/authorize',
+        tokenURL: 'https://provider.com/oauth2/token',
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: 'http://localhost:3010/auth/google/callback', // URL de redirección
-        scope: ['email', 'profile'],
-    });
+        callbackURL: 'http://localhost:3000/api/auth/callback',
+        scope: ['profile', 'email'],
+        });
+    }
+
+    // async validate(accessToken: string, refreshToken: string, profile: any): Promise<any> {
+    // // Lógica para validar y gestionar el perfil del usuario
+    // return {
+    //     accessToken,
+    //     profile,
+    // };
+    // }
+    async validate(payload: any) {
+        console.log("Payload from token:", payload);
+        return payload.user ? payload.user : null; // Devuelve el `user` del payload si existe
+    }
 }
 
-async validate(accessToken: string, refreshToken: string, profile: any) {
-    console.log('Google profile:', profile); // Imprime el perfil de Google para debug
-
-    const { emails, name, photos } = profile;
-
-    // Retorna la información que necesitas
-    return {
-        email: emails[0].value, // Extrae el email
-        name: name.givenName, // Nombre del usuario
-        picture: photos[0].value, // URL de la foto
-    };
-}
-
-}

@@ -1,72 +1,85 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { OAuth2Client } from 'google-auth-library';
-import * as jwt from 'jsonwebtoken';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Usuario } from 'src/usuarios/usuario.entity';
 import { UsuariosService } from 'src/usuarios/usuario.service';
+import { Repository } from 'typeorm';
+import { LoginGoogleDto } from './dtos/login-usuarioGoogle.dto';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
     constructor(
     private readonly usuariosService: UsuariosService,
-    private readonly jwtService: JwtService,
+
+    @InjectRepository(Usuario)
+    private readonly usuariosRepository: Repository<Usuario>,
 ) {}
 
-private client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+// Método para crear un usuario con datos predeterminados
+async crearUsuarioGoogle(payload: LoginGoogleDto) {
+    const nuevoUsuario = {
+        email: payload.email,
+        nombre: payload.nombre,
+        telefono: payload.telefono || null,
+        edad: payload.edad || null,
+        contrasena: payload.contrasena || 'contraseñaGoogle', // Contraseña genérica o no usable
+        confirmarContrasena: payload.confirmarContrasena || 'contraseñaGoogle',
+    };
 
-async verifyGoogleToken(token: string): Promise<any> {
     try {
-        const ticket = await this.client.verifyIdToken({
-            idToken: token,
-            audience: process.env.GOOGLE_CLIENT_ID,
-        });
-        const payload = ticket.getPayload();
-        return payload;// Devuelve el perfil del usuario decodificado
+        return await this.usuariosRepository.save(nuevoUsuario);
     } catch (error) {
-        throw new Error('Token inválido');
+        console.error('Error al crear usuario:', error);
+        throw new UnauthorizedException('No se pudo registrar al usuario');
+    }
+    }
+
+    // Método de autenticación o registro
+    async autenticarUsuarioOAuth(payload: LoginGoogleDto) {
+
+    try{
+    // Buscar si el usuario ya está registrado
+    let usuario = await this.usuariosService.encontrarPorEmail(payload.email);
+    let esNuevoUsuario = false;
+
+    // Si no existe, crear el usuario con los datos proporcionados y predeterminados
+    if (!usuario) {
+        console.log("Usuario no encontrado, crear nuevo usuario");
+        usuario = await this.crearUsuarioGoogle(payload);
+        esNuevoUsuario = true; // Marca al usuario como nuevo
+    }
+
+    return{
+        usuario: {
+            nombre: usuario.nombre,
+            email: usuario.email,
+            telefono: usuario.telefono ?? null,
+            edad: usuario.edad ?? null,
+            rol: usuario.rol || "cliente",
+            imagen: usuario.imagen ?? null
+        },
+        esNuevoUsuario, // Devuelve si el usuario es nuevo
+    }  
+    } catch (error) {
+        console.error('Error en la autenticación OAuth:', error);
+        throw new UnauthorizedException('No se pudo autenticar al usuario');
     }
 }
 
-    async validateOAuthLogin(decodedToken: any) {
-    
-        const email = decodedToken.email;
-        if (!email) {
-            throw new UnauthorizedException('Email no encontrado en el token decodificado.');
-        }
-
-        // Realiza la lógica de búsqueda o creación de usuario en tu sistema
-        let usuario = await this.usuariosService.encontrarPorEmail(email);
-        let esNuevoUsuario = false;
-
-        if (!usuario) {
-            console.log("usuario not found, creating new usuario");
-            usuario = await this.usuariosService.crearUsuarioOAuth(decodedToken); // Utiliza el token decodificado para la creación de usuario
-            esNuevoUsuario = true; // Marca el usuario como nuevo
-        }
-        
-        return {
-            usuario:{
-                nombre: usuario.nombre,
-                email: usuario.email,
-                telefono: usuario.telefono,
-                edad: usuario.edad,
-            },
-            esNuevoUsuario, // Devuelve si el usuario es nuevo
-        }; 
-    }
-
-    
-    async generateJwtToken(usuario: Partial<Usuario>): Promise<string> {
-        const payload = { 
-            sub: usuario.id, 
+async generateJwtToken(usuario: Partial<Usuario>): Promise<string> {
+    const payload = { 
+        user:{
+            sub: usuario.id,
             nombre: usuario.nombre,
             email: usuario.email,
-            telefono: usuario.telefono,
-            edad: usuario.edad,
+            rol: usuario.rol,
             
-        };
-        return this.jwtService.sign(payload);
+        }
+    };
+    const secretKey = process.env.JWT_SECRET || 'default_secret_key';
+    return jwt.sign(payload, secretKey, {
+        expiresIn: '1h',
+    });
 
-    }
-    
+}
 }

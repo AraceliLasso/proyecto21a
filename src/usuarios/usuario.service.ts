@@ -25,12 +25,7 @@ export class UsuariosService {
         //private readonly mailService: MailService
     ) { }
 
-    async obtenerUsuarioPorId(id: string): Promise<Usuario | undefined> {
-        return this.usuariosRepository.findOne({ where: { id } })
-    }
-
-
-    // Actualizar usuario
+      // Actualizar usuario
     async update(usuario: Usuario): Promise<Usuario> {
         return this.usuariosRepository.save(usuario);
     }
@@ -100,12 +95,16 @@ export class UsuariosService {
     }
 
 
-    async crearUsuario(crearUsuario: CrearUsuarioDto): Promise<Usuario> {
-        try {
-            // Verificar que las contraseñas coinciden antes de cualquier procesamiento
-            if (crearUsuario.contrasena !== crearUsuario.confirmarContrasena) {
-                throw new HttpException('Las contraseñas no coinciden', 400)
-            }
+    async obtenerUsuarioPorId(id: string): Promise<Usuario | undefined>{
+        return this.usuariosRepository.findOne({ where: {id}})
+    }
+
+    async crearUsuario(crearUsuario: CrearUsuarioDto): Promise<Usuario>{
+        try{
+        // Verificar que las contraseñas coinciden antes de cualquier procesamiento
+        if(crearUsuario.contrasena !== crearUsuario.confirmarContrasena){
+            throw new HttpException('Las contraseñas no coinciden', 400)
+        }
 
             // Crear una nueva instancia de usuario
             const nuevoUsuario = new Usuario();
@@ -124,34 +123,34 @@ export class UsuariosService {
     }
 
     async crearUsuarioOAuth(perfil: any): Promise<Usuario> {
-        try {
-            console.log("perfil", perfil)
-            // Verificar si el usuario ya existe
-            const existingusuario = await this.usuariosRepository.findOne({ where: { email: perfil.email } });
-            if (existingusuario) {
-                return existingusuario;
-            }
-
-
-            const nuevoUsuario = new Usuario();
-            nuevoUsuario.email = perfil.email;
-            nuevoUsuario.nombre = `${perfil.given_nombre || ''} ${perfil.family_nombre || ''}`.trim();
-
-            // Como estos campos no se obtienen de OAuth le pasamos el valor predeterminado de null
-            nuevoUsuario.telefono = perfil.telefono || null;
-            nuevoUsuario.edad = perfil.edad || null;
-            nuevoUsuario.contrasena = "contrasenaOAuth";
-
-            // Guardar el nuevo usuario y devolverlo
-            return await this.usuariosRepository.save(nuevoUsuario);
-
-        } catch (error) {
-            console.error('Error al guardar el usuario:', error);
-            throw new HttpException('Error al crear el usuario con OAuth', 500);
+        try{
+        console.log("perfil", perfil)
+        // Verificar si el usuario ya existe
+        const existingusuario = await this.usuariosRepository.findOne({ where: { email: perfil.email } });
+        if (existingusuario) {
+        return existingusuario;
         }
+
+
+        const nuevoUsuario = new Usuario();
+        nuevoUsuario.email = perfil.email;
+        nuevoUsuario.nombre = `${perfil.given_nombre || ''} ${perfil.family_nombre || ''}`.trim();
+
+        // Como estos campos no se obtienen de OAuth le pasamos el valor predeterminado de null
+        nuevoUsuario.telefono = perfil.telefono || null; 
+        nuevoUsuario.edad = perfil.edad || null;
+        nuevoUsuario.contrasena = "contrasenaOAuth";
+        
+        // Guardar el nuevo usuario y devolverlo
+        return await this.usuariosRepository.save(nuevoUsuario);
+
+    } catch (error) {
+        console.error('Error al guardar el usuario:', error);
+        throw new HttpException('Error al crear el usuario con OAuth', 500);
+    }
     }
 
-    async actualizarPerfil(email: string, actualizarPerfil: ActualizarPerfilDto): Promise<Usuario> {
+    async actualizarPerfil( email: string , actualizarPerfil: ActualizarPerfilDto): Promise<Usuario> {
         // const email = decodedToken.email;
         // console.log("decodedToken", decodedToken)
         console.log("email capturado del decodedToken", email)
@@ -162,11 +161,11 @@ export class UsuariosService {
 
         const usuario = await this.usuariosRepository.findOne({ where: { email } });
         console.log("Email encontrado en updateperfil", email)
-
+    
         if (!usuario) {
             throw new NotFoundException('Usuario no encontrado');
         }
-
+    
         Object.assign(usuario, actualizarPerfil);
         console.log("actualizarPerfil", actualizarPerfil)
 
@@ -179,12 +178,12 @@ export class UsuariosService {
             throw new HttpException('Error al actualizar el perfil del usuario', 500);
         }
 
-    }
+        }
+    
 
 
-
-    async encontrarPorEmail(email: string) {
-        return this.usuariosRepository.findOne({ where: { email } })
+    async encontrarPorEmail(email: string){
+        return this.usuariosRepository.findOne( {where: {email}})
     }
 
 
