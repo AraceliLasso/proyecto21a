@@ -39,6 +39,10 @@ export class Usuario {
     })
     rol: rolEnum;
 
+    @Column({ nullable: true })
+    imagen: string;
+
+
     // @OneToOne(() => PerfilProfesor, (perfilProfesor)=>perfilProfesor.usuario)
     // perfilProfesor: PerfilProfesor;
 

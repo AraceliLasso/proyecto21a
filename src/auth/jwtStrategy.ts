@@ -34,3 +34,4 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return usuario; // Aquí devolveremos el objeto completo de Usuario
   }
 }
+
