@@ -4,6 +4,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { UsuariosService } from "./usuario.service";
 import { MailService } from "src/notificaciones/mail.service";
 import { UsuariosController } from "./usuario.controller";
+import { CloudinaryService } from "src/file-upload/cloudinary.service";
 
 
 
@@ -11,7 +12,7 @@ import { UsuariosController } from "./usuario.controller";
 
 @Module({
     imports: [TypeOrmModule.forFeature([Usuario])],
-    providers: [ UsuariosService, MailService],
+    providers: [ UsuariosService, MailService, CloudinaryService],
     controllers: [UsuariosController],
     exports: [UsuariosService]
 })

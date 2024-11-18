@@ -54,7 +54,10 @@ export class ActualizarUsuarioDto {
     contrasena: string;
 
 
-
+    @ApiProperty({ description: "La foto del usuario" })
+    @IsString()
+    @IsOptional()
+    imagen: string
 
 
     @ApiProperty({

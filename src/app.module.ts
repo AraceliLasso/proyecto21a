@@ -14,6 +14,7 @@ import { PerfilesProfesoresModule } from './perfilesProfesores/perfilProfesor.mo
 import { MembresiaModule } from './membresias/membresia.module';
 import { SeedModule } from './seeds/seeds-module';
 import { InscripcionModule } from './inscripciones/inscripcion.module';
+import { CloudinaryService } from './file-upload/cloudinary.service';
 
 
 @Module({
@@ -39,7 +40,7 @@ import { InscripcionModule } from './inscripciones/inscripcion.module';
     InscripcionModule
   ],
 controllers: [AppController],
-providers: [AppService],
+providers: [AppService, CloudinaryService],
 exports: []
 })
 

@@ -37,3 +37,4 @@ export class ModificarClaseDto {
     perfilProfesorId: string;
 
 }
+
