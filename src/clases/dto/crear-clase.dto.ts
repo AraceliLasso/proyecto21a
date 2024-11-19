@@ -21,10 +21,10 @@ export class CrearClaseDto {
     @IsNotEmpty()
     disponibilidad: number;
 
-    @ApiProperty({ description: "URL de la imagen de la clase", required: true })
+    @ApiProperty({ description: "URL de la imagen de la clase",  })
     @IsString()
-    @IsNotEmpty()
-    imagen: string;
+    //@IsOptional()
+    imagen?: string;
 
     @ApiProperty({ description: "ID de la categoría", required: true })
     @IsUUID()
@@ -36,4 +36,8 @@ export class CrearClaseDto {
     @IsNotEmpty()
     perfilProfesorId: string;
 
+}
+
+function IsOptional(): (target: CrearClaseDto, propertyKey: "imagen") => void {
+    throw new Error("Function not implemented.");
 }

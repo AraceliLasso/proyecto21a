@@ -26,9 +26,9 @@ export class ClasesController {
     @ApiOperation({ summary: 'Crear una nueva clase' })
     @ApiResponse({ status: 201, description: 'Clase creada exitosamente', type: RespuestaClaseDto })
     @ApiResponse({ status: 500, description: 'Error inesperado al crear la clase' })
-    @UseGuards(AuthGuard, RolesGuard)
-    @Roles('admin', 'profesor')
-    @ApiSecurity('bearer')
+    // @UseGuards(AuthGuard, RolesGuard)
+    // @Roles('admin', 'profesor')
+    //@ApiSecurity('bearer')
     @ApiConsumes('multipart/form-data')
     @ApiBody({
         description: 'Datos para actualizar la clase, incluyendo la opción de subir una imagen',
@@ -118,9 +118,9 @@ export class ClasesController {
     @ApiOperation({ summary: 'Actualizar una clase existente' })
     @ApiResponse({ status: 200, description: 'Clase actualizada exitosamente', type: RespuestaClaseDto })
     @ApiResponse({ status: 404, description: 'Clase no encontrada' })
-    @UseGuards(AuthGuard, RolesGuard)
-    @Roles('admin', 'profesor')
-    @ApiSecurity('bearer')
+    // @UseGuards(AuthGuard, RolesGuard)
+    // @Roles('admin', 'profesor')
+    //@ApiSecurity('bearer')
     @ApiConsumes('multipart/form-data')
     @ApiBody({
         description: 'Datos para actualizar la clase, incluyendo la opción de subir una imagen',
@@ -168,9 +168,9 @@ export class ClasesController {
     @ApiOperation({ summary: 'Eliminar una clase por ID' })
     @ApiResponse({ status: 204, description: 'Clase eliminada exitosamente' })
     @ApiResponse({ status: 404, description: 'Clase no encontrada' })
-    @UseGuards(AuthGuard, RolesGuard)
-    @Roles('admin', 'profesor')
-    @ApiSecurity('bearer')
+    // @UseGuards(AuthGuard, RolesGuard)
+    // @Roles('admin', 'profesor')
+    //@ApiSecurity('bearer')
     async delete(@Param('id', new ParseUUIDPipe()) id: string): Promise<{ message: string }> {
         const resultMessage = await this.clasesService.remove(id);
         return { message: resultMessage };
