@@ -137,50 +137,78 @@ export class ClasesService{
         }
         return `Clase con ID ${id} eliminada exitosamente`;
     }
+
+    // async searchClases(searchDto: SearchDto): Promise<Clase[]> {
+    //     const { claseNombre, categoriaNombre, perfilProfesorNombre, descripcion } = searchDto;
+
+    //     // Crear un array de promesas
+    //     const queries = [];
+
+    //     if (claseNombre) {
+    //         queries.push(
+    //             this.clasesRepository.createQueryBuilder('clase')
+    //                 .where('clase.nombre ILIKE :nombre', { nombre: `%${claseNombre}%` })
+    //                 .getMany(),
+    //         );
+    //     }
+
+    //     if (categoriaNombre) {
+    //         queries.push(
+    //             this.clasesRepository.createQueryBuilder('clase')
+    //                 .innerJoinAndSelect('clase.categoria', 'categoria')
+    //                 .where('categoria.nombre ILIKE :categoriaNombre', { categoriaNombre: `%${categoriaNombre}%` })
+    //                 .getMany(),
+    //         );
+    //     }
+    //     if (perfilProfesorNombre) {
+    //         queries.push(
+    //             this.clasesRepository.createQueryBuilder('clase')
+    //                 .innerJoinAndSelect('clase.perfilProfesor', 'perfilProfesor')
+    //                 .where('perfilProfesor.nombre ILIKE :perfilProfesorNombre', { perfilProfesorNombre: `%${perfilProfesorNombre}%` })
+    //                 .getMany(),
+    //         );
+    //     }
+
+    //     if (descripcion) {
+    //         queries.push(
+    //             this.clasesRepository.createQueryBuilder('clase')
+    //                 .where('clase.descripcion ILIKE :descripcion', { descripcion: `%${descripcion}%` })
+    //                 .getMany(),
+    //         );
+    //     }
+
+    //     const resultados = await Promise.all(queries);
+    //     const clasesUnicas = Array.from(new Set(resultados.flat().map(clase => clase.id)))
+    //         .map(id => resultados.flat().find(clase => clase.id === id));
+
+    //     return clasesUnicas;
+    // }
+
     async searchClases(searchDto: SearchDto): Promise<Clase[]> {
         const { claseNombre, categoriaNombre, perfilProfesorNombre, descripcion } = searchDto;
-
-        // Crear un array de promesas
-        const queries = [];
-
+    
+        const query = this.clasesRepository.createQueryBuilder('clase')
+            .leftJoinAndSelect('clase.categoria', 'categoria')
+            .leftJoinAndSelect('clase.perfilProfesor', 'perfilProfesor');
+    
         if (claseNombre) {
-            queries.push(
-                this.clasesRepository.createQueryBuilder('clase')
-                    .where('clase.nombre ILIKE :nombre', { nombre: `%${claseNombre}%` })
-                    .getMany(),
-            );
+            query.andWhere('clase.nombre ILIKE :nombre', { nombre: `%${claseNombre}%` });
         }
-
+    
         if (categoriaNombre) {
-            queries.push(
-                this.clasesRepository.createQueryBuilder('clase')
-                    .innerJoinAndSelect('clase.categoria', 'categoria')
-                    .where('categoria.nombre ILIKE :categoriaNombre', { categoriaNombre: `%${categoriaNombre}%` })
-                    .getMany(),
-            );
+            query.andWhere('categoria.nombre ILIKE :categoriaNombre', { categoriaNombre: `%${categoriaNombre}%` });
         }
+    
         if (perfilProfesorNombre) {
-            queries.push(
-                this.clasesRepository.createQueryBuilder('clase')
-                    .innerJoinAndSelect('clase.perfilProfesor', 'perfilProfesor')
-                    .where('perfilProfesor.nombre ILIKE :perfilProfesorNombre', { perfilProfesorNombre: `%${perfilProfesorNombre}%` })
-                    .getMany(),
-            );
+            query.andWhere('perfilProfesor.nombre ILIKE :perfilProfesorNombre', { perfilProfesorNombre: `%${perfilProfesorNombre}%` });
         }
-
+    
         if (descripcion) {
-            queries.push(
-                this.clasesRepository.createQueryBuilder('clase')
-                    .where('clase.descripcion ILIKE :descripcion', { descripcion: `%${descripcion}%` })
-                    .getMany(),
-            );
+            query.andWhere('clase.descripcion ILIKE :descripcion', { descripcion: `%${descripcion}%` });
         }
-
-        const resultados = await Promise.all(queries);
-        const clasesUnicas = Array.from(new Set(resultados.flat().map(clase => clase.id)))
-            .map(id => resultados.flat().find(clase => clase.id === id));
-
-        return clasesUnicas;
+    
+        const clases = await query.getMany();
+        return clases;
     }
 
 
