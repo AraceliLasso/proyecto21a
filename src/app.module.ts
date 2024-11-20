@@ -14,7 +14,6 @@ import { PerfilesProfesoresModule } from './perfilesProfesores/perfilProfesor.mo
 import { MembresiaModule } from './membresias/membresia.module';
 import { SeedModule } from './seeds/seeds-module';
 import { InscripcionModule } from './inscripciones/inscripcion.module';
-import Stripe from 'stripe';
 import { StripeModule } from './stripe/stripe.module';
 
 
