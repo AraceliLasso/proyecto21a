@@ -12,6 +12,10 @@ export class PerfilesProfesoresService{
     //*(cuando inscripciones este listo)
     //GET alumnos inscriptos a la clase del profesor
     
+
+    async crearPerfilProfesor(){
+
+    }
     //POST clases
     //PUT clases
     //DELETE clases
