@@ -16,6 +16,7 @@ import { SeedModule } from './seeds/seeds-module';
 import { InscripcionModule } from './inscripciones/inscripcion.module';
 import Stripe from 'stripe';
 import { StripeModule } from './stripe/stripe.module';
+import { CloudinaryService } from './file-upload/cloudinary.service';
 
 
 @Module({
