@@ -4,12 +4,17 @@ import { Not, Repository } from "typeorm";
 import { PerfilProfesor } from "./perfilProfesor.entity";
 import { CrearPerfilProfesorDto } from "./dto/crear-perfilProfesor.dto";
 import { ModificarPerfilProfesorDto } from "./dto/modificar-perfilProfesor.dto";
+import { ClasesService } from "src/clases/clase.service";
+import { Clase } from "src/clases/clase.entity";
 
 @Injectable()
 export class PerfilesProfesoresService{
     constructor (
         @InjectRepository(PerfilProfesor)
         private readonly perfilesProfesoresRepository: Repository<PerfilProfesor>,
+
+        @InjectRepository(Clase)
+        private readonly clasesRepository:  Repository<Clase>
     ){}
     //*(cuando inscripciones este listo)
     //GET alumnos inscriptos a la clase del profesor
@@ -24,12 +29,12 @@ export class PerfilesProfesoresService{
         return await this.perfilesProfesoresRepository.save(perfilProfesor)
     }
 
-    //Obtengo todos los perfiles d elos profesores
+    //Obtengo todos los perfiles de los profesores
     async obtenerPerfilProfesor(): Promise <PerfilProfesor[]>{
         return await this.perfilesProfesoresRepository.find()
     }
 
-    //Obtengo los eprfiles por clases
+    //Obtengo los perfiles por clases
     async obtenerPerfilProfesorClase(): Promise <PerfilProfesor[]>{
         return await this.perfilesProfesoresRepository.find({ relations: ['clases'] })
     }
@@ -80,7 +85,11 @@ export class PerfilesProfesoresService{
             throw new NotFoundException(`Perfil del profesor con ID ${id} no encontrado`);
         }
 
-        
+        const clasesAsociadas = await this.clasesRepository.find({ where: { perfilProfesor: { id } } });
+            if (clasesAsociadas.length > 0) {
+        throw new BadRequestException(`No se puede eliminar el perfil porque tiene clases asociadas.`);
+        }
+
         const nombrePerfil = perfilProfesor.nombre;
         await this.perfilesProfesoresRepository.remove(perfilProfesor);
         return `Perfil del profesor "${nombrePerfil}" eliminado exitosamente`;

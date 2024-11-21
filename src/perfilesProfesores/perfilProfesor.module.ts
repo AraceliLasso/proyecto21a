@@ -2,6 +2,8 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Clase } from "src/clases/clase.entity";
 import { PerfilProfesor } from "./perfilProfesor.entity";
+import { PerfilesProfesoresService } from "./perfilProfesor.service";
+import { PerfilesProfesoresController } from "./perfilProfesor.controller";
 
 
 
@@ -9,8 +11,8 @@ import { PerfilProfesor } from "./perfilProfesor.entity";
 
 @Module({
     imports: [TypeOrmModule.forFeature([PerfilProfesor, Clase])],
-    // providers: [],
-    // controllers: [],
-    // exports: []
+    providers: [PerfilesProfesoresService],
+    controllers: [PerfilesProfesoresController],
+    exports: [PerfilesProfesoresService]
 })
 export class PerfilesProfesoresModule{}
