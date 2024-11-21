@@ -14,7 +14,8 @@ import { PerfilesProfesoresModule } from './perfilesProfesores/perfilProfesor.mo
 import { MembresiaModule } from './membresias/membresia.module';
 import { SeedModule } from './seeds/seeds-module';
 import { InscripcionModule } from './inscripciones/inscripcion.module';
-import { CloudinaryService } from './file-upload/cloudinary.service';
+import Stripe from 'stripe';
+import { StripeModule } from './stripe/stripe.module';
 
 
 @Module({
@@ -37,7 +38,8 @@ import { CloudinaryService } from './file-upload/cloudinary.service';
     ClasesModule,
     MembresiaModule,
     SeedModule,
-    InscripcionModule
+    InscripcionModule,
+    StripeModule
   ],
 controllers: [AppController],
 providers: [AppService, CloudinaryService],
