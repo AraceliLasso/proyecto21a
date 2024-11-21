@@ -25,4 +25,5 @@ export class LoginUsuarioDto {
     @IsNotEmpty()
     @IsString()
     contrasena: string;
+
 }
