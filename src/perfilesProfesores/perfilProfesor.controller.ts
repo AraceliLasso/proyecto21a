@@ -24,8 +24,8 @@ export class PerfilesProfesoresController{
     @UseGuards(AuthGuard, RolesGuard)
     @Roles('admin' , 'profesor')
     @ApiSecurity('bearer')
-    async crear(@Body() crearPerfilProfesorDto: CrearPerfilProfesorDto): Promise<RespuestaPerfilProfesorDto> {
-        const perfilProfesor = await this.perfilesProfesoresService.crearPerfilProfesor(crearPerfilProfesorDto);
+    async crear(@Body() usuarioId: string, crearPerfilProfesorDto: CrearPerfilProfesorDto): Promise<RespuestaPerfilProfesorDto> {
+        const perfilProfesor = await this.perfilesProfesoresService.crearPerfilProfesor(usuarioId,crearPerfilProfesorDto);
         return perfilProfesor;
     }
 

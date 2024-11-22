@@ -43,8 +43,8 @@ export class Usuario {
     imagen: string;
 
 
-    // @OneToOne(() => PerfilProfesor, (perfilProfesor)=>perfilProfesor.usuario)
-    // perfilProfesor: PerfilProfesor;
+    @OneToOne(() => PerfilProfesor, (perfilProfesor)=>perfilProfesor.usuario)
+    perfilProfesor: PerfilProfesor;
 
     @OneToOne(()=> Membresia, (membresia)=> membresia.usuario, { eager: true, cascade: true }) //eager: true carga las relaciones aut. siempre que se busque un usuario, cascade:true crea o actualiza las relaciones si las prop se incluyen en las operaciones
     membresia:Membresia;

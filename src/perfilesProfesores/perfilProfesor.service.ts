@@ -6,6 +6,7 @@ import { CrearPerfilProfesorDto } from "./dto/crear-perfilProfesor.dto";
 import { ModificarPerfilProfesorDto } from "./dto/modificar-perfilProfesor.dto";
 import { ClasesService } from "src/clases/clase.service";
 import { Clase } from "src/clases/clase.entity";
+import { Usuario } from "src/usuarios/usuario.entity";
 
 @Injectable()
 export class PerfilesProfesoresService{
@@ -14,24 +15,48 @@ export class PerfilesProfesoresService{
         private readonly perfilesProfesoresRepository: Repository<PerfilProfesor>,
 
         @InjectRepository(Clase)
-        private readonly clasesRepository:  Repository<Clase>
+        private readonly clasesRepository:  Repository<Clase>,
+
+        @InjectRepository(Usuario)
+        private readonly usuariosRepository: Repository<Usuario>
     ){}
     //*(cuando inscripciones este listo)
     //GET alumnos inscriptos a la clase del profesor
     
 
-    async crearPerfilProfesor(crearPerfilProfesor: CrearPerfilProfesorDto): Promise<PerfilProfesor>{
-        const existingPerfil = await this.perfilesProfesoresRepository.findOne({ where: { nombre: crearPerfilProfesor.nombre } });
-            if (existingPerfil) {
-                throw new BadRequestException(`El perfil con el nombre "${crearPerfilProfesor.nombre}" ya existe.`);
-            }
-        const perfilProfesor = await this.perfilesProfesoresRepository.create(crearPerfilProfesor)
-        return await this.perfilesProfesoresRepository.save(perfilProfesor)
+    async crearPerfilProfesor(usuarioId: string, crearPerfilProfesor: CrearPerfilProfesorDto): Promise<PerfilProfesor>{
+        // Buscar el usuario
+    const usuario = await this.usuariosRepository.findOne({ where: { id: usuarioId } });
+    if (!usuario) {
+        throw new NotFoundException(`Usuario con ID ${usuarioId} no encontrado`);
     }
 
-    //Obtengo todos los perfiles de los profesores
+    // Verificar que el usuario no tenga ya un perfil de profesor
+    if (usuario.perfilProfesor) {
+        throw new BadRequestException(`El usuario ya tiene un perfil de profesor`);
+    }
+
+    // Crear el perfil
+    const nuevoPerfil = this.perfilesProfesoresRepository.create({
+        ...crearPerfilProfesor,
+        usuario, // Asociar el usuario al perfil
+    });
+
+    return this.perfilesProfesoresRepository.save(nuevoPerfil);
+}
+
+
+    async obtenerPerfilProfesorConUsuario(id: string): Promise<PerfilProfesor> {
+        return await this.perfilesProfesoresRepository.findOne({
+            where: { id },
+            relations: ['usuario'], // Incluye los datos del usuario
+        });
+    }
+
+
+    //Obtengo todos los perfiles de los profesores relacionado con usuario
     async obtenerPerfilProfesor(): Promise <PerfilProfesor[]>{
-        return await this.perfilesProfesoresRepository.find()
+        return await this.perfilesProfesoresRepository.find({ relations: ['usuario'] })
     }
 
     //Obtengo los perfiles por clases
@@ -41,7 +66,10 @@ export class PerfilesProfesoresService{
 
     //Obtengo el perfil del profesor por id
     async obtenerPerfilProfesorId(id: string) : Promise<PerfilProfesor>{
-        const perfilProfesor = await this.perfilesProfesoresRepository.findOne({ where: {id}})
+        const perfilProfesor = await this.perfilesProfesoresRepository.findOne(
+            { where: {id},
+            relations: ['usuario', 'clases'],
+        })
         if(!perfilProfesor){
             throw new NotFoundException(`Perfil de profesor con ID ${id} no encontrado`);
         }
