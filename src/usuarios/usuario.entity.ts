@@ -46,9 +46,9 @@ export class Usuario {
     // @OneToOne(() => PerfilProfesor, (perfilProfesor)=>perfilProfesor.usuario)
     // perfilProfesor: PerfilProfesor;
 
-    @OneToOne(()=> Membresia, (membresia)=> membresia.usuario)
+    @OneToOne(()=> Membresia, (membresia)=> membresia.usuario, { eager: true, cascade: true }) //eager: true carga las relaciones aut. siempre que se busque un usuario, cascade:true crea o actualiza las relaciones si las prop se incluyen en las operaciones
     membresia:Membresia;
 
-    @OneToMany(()=> Inscripcion, (inscripciones) => inscripciones.usuario)
+    @OneToMany(()=> Inscripcion, (inscripciones) => inscripciones.usuario, { eager: true, cascade: true })
     inscripciones:Inscripcion[];
 }
