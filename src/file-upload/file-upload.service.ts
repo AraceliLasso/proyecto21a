@@ -8,18 +8,20 @@ import { ActualizarUsuarioDto } from 'src/usuarios/dtos/actualizar-usuario.dto';
 import { ActualizarImagenUsuarioDto } from 'src/usuarios/dtos/actualizar-imagenusuario.dto';
 import { ActualizarImagenClaseDto } from 'src/clases/dto/actualizar-imagenClase.dto';
 import { ModificarClaseDto } from 'src/clases/dto/modificar-clase.dto';
+import { PerfilesProfesoresService } from 'src/perfilesProfesores/perfilProfesor.service';
 
 
 @Injectable()
 export class FileUploadService {
     constructor(private readonly cloudinaryService: CloudinaryService,
         private readonly clasesService: ClasesService,
-        private readonly usuariosService: UsuariosService
+        private readonly usuariosService: UsuariosService,
+        private readonly perfilesProfesoresService: PerfilesProfesoresService
     ){}
 
     async uploadFile(
         file: Express.Multer.File, 
-        entityType: 'clase' |  'usuario',
+        entityType: 'clase' |  'usuario' | 'perfilProfesor',
         entityId?: string
     ){
         const fileUploadDto: FileUploadDto = {
@@ -60,6 +62,27 @@ export class FileUploadService {
             const actualizarImagenUsuarioDto: ActualizarImagenUsuarioDto = { imagen: url };
             await this.usuariosService.actualizarUsuarios(entityId, actualizarImagenUsuarioDto);
             break;
+
+            case 'perfilProfesor':
+        // Verificar que se proporcione el ID de la entidad
+        if (!entityId) {
+            throw new Error('El ID del perfil del profesor es obligatorio');
+        }
+
+        // Buscar el perfil del profesor en la base de datos
+        const perfilProfesor = await this.perfilesProfesoresService.obtenerPerfilProfesorId(entityId);
+        if (!perfilProfesor) {
+            throw new Error('Perfil del profesor no encontrado');
+        }
+
+        // Actualizar solo la imagen del perfil
+        await this.perfilesProfesoresService.modificarPerfilProfesor(entityId, {
+            ...perfilProfesor, // Propiedades existentes
+            imagen: url,       // Actualizamos solo el campo imagen
+        });
+
+        break;
+
         default:
             throw new Error('Tipo de entidad no compatible');
         }

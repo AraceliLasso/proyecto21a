@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { PerfilesProfesoresService } from "./perfilProfesor.service";
 import { RespuestaPerfilProfesorDto } from "./dto/respuesta-perfilProfesor.dto";
@@ -9,6 +9,8 @@ import { CrearPerfilProfesorDto } from "./dto/crear-perfilProfesor.dto";
 import { PerfilProfesor } from "./perfilProfesor.entity";
 import { Clase } from "src/clases/clase.entity";
 import { ModificarPerfilProfesorDto } from "./dto/modificar-perfilProfesor.dto";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { FileUploadService } from "src/file-upload/file-upload.service";
 
 
 @ApiTags("PerfilProfesor")
@@ -16,17 +18,19 @@ import { ModificarPerfilProfesorDto } from "./dto/modificar-perfilProfesor.dto";
 export class PerfilesProfesoresController{
     constructor(
         private readonly perfilesProfesoresService: PerfilesProfesoresService,
+        private readonly fileUploadService: FileUploadService
     ){}
 
-    @Post()
+    @Post(':usuarioId')
     @ApiOperation({ summary: 'Crear un perfil de profesor' })
     @ApiResponse({ status: 201, description: 'Perfil de profesor creado', type: RespuestaPerfilProfesorDto })
     @UseGuards(AuthGuard, RolesGuard)
     @Roles('admin' , 'profesor')
     @ApiSecurity('bearer')
-    async crear(@Body() usuarioId: string, crearPerfilProfesorDto: CrearPerfilProfesorDto): Promise<RespuestaPerfilProfesorDto> {
-        const perfilProfesor = await this.perfilesProfesoresService.crearPerfilProfesor(usuarioId,crearPerfilProfesorDto);
-        return perfilProfesor;
+    @UseInterceptors(FileInterceptor('imagen'))
+    async crearPerfilProfesor(@Param('usuarioId') usuarioId: string, // ID del usuario asociado
+    @Body()  crearPerfilProfesorDto: CrearPerfilProfesorDto): Promise<RespuestaPerfilProfesorDto> {
+        return this.perfilesProfesoresService.crearPerfilProfesor(usuarioId, crearPerfilProfesorDto);
     }
 
 
@@ -63,17 +67,30 @@ export class PerfilesProfesoresController{
 
     @Put(':id')
     @ApiOperation({ summary: 'Modificar los perfiles de profesores' })
-    @ApiResponse({ status: 200, description: 'Perfiles obtenidos', type: [Clase] })
+    @ApiResponse({ status: 200, description: 'Perfil actualizado correctamente', type: [Clase] })
     @ApiResponse({ status: 404, description: 'Perfil de profesor no encontrado' })
     @UseGuards(AuthGuard, RolesGuard)
     @Roles('admin' , 'profesor')
     @ApiSecurity('bearer')
+    @UseInterceptors(FileInterceptor('imagen'))
     async update(
         @Param('id') id: string, 
-        @Body() modificarPerfilProfesorDto: ModificarPerfilProfesorDto
+        @Body() modificarPerfilProfesorDto: ModificarPerfilProfesorDto,
+        @UploadedFile() imagen?: Express.Multer.File 
     ): Promise<PerfilProfesor> {
         try {
-        return await this.perfilesProfesoresService.modificarPerfilProfesor(id, modificarPerfilProfesorDto);
+            let imgUrl: string | undefined;
+
+        // Si se sube una nueva imagen, súbela a Cloudinary
+        if (imagen) {
+            const uploadResult = await this.fileUploadService.uploadFile(imagen, 'perfilProfesor', id);
+            imgUrl = uploadResult.imgUrl; // Extrae la URL de la imagen del resultado
+        }
+
+        return await this.perfilesProfesoresService.modificarPerfilProfesor(id, {
+            ...modificarPerfilProfesorDto,
+            ...(imgUrl && { imagen: imgUrl }) // Solo agrega la URL de la imagen si existe
+        });
         } catch (error) {
         throw new BadRequestException('Error al actualizar el perfil del profesor: ' + error.message);
         }
