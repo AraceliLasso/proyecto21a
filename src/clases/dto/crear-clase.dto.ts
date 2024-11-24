@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsNumber, IsString, IsUUID } from "class-validator";
 
+
 export class CrearClaseDto {
     @ApiProperty({ description: "El nombre de la clase", required: true })
     @IsString()
@@ -16,15 +17,17 @@ export class CrearClaseDto {
     @IsNotEmpty()
     fecha: Date;
 
-    @ApiProperty({ description: "La disponibilidad de clases", required: true })
+    @ApiProperty({  type: Number,description: "La disponibilidad de clases", required: true })
     @IsNumber()
     @IsNotEmpty()
     disponibilidad: number;
 
-    @ApiProperty({ description: "URL de la imagen de la clase",  })
-    @IsString()
-    //@IsOptional()
-    imagen?: string;
+    @ApiProperty({
+        type: 'string',
+        format: 'binary', 
+        description: 'Imagen de la clase',
+    })
+    imagen: any;
 
     @ApiProperty({ description: "ID de la categoría", required: true })
     @IsUUID()

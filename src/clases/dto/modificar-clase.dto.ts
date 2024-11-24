@@ -21,10 +21,12 @@ export class ModificarClaseDto {
     @IsNotEmpty()
     disponibilidad: number;
 
-    @ApiProperty({ description: "URL de la imagen de la clase",  })
-    @IsString()
-    ///@IsOptional()
-    imagen?: string;
+    @ApiProperty({
+        type: 'string',
+        format: 'binary', 
+        description: 'Imagen de la clase',
+    })
+    imagen: any;
 
     @ApiProperty({ description: "ID de la categoría", required: true })
     @IsUUID()

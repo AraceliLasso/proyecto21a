@@ -57,11 +57,18 @@ export class FileUploadService {
         switch (entityType) {
             case 'clase':
                 // Primero obtenemos la clase actual para no sobrescribir las demás propiedades
-                const clase = await this.clasesService.findOne(entityId);  // Suponiendo que tienes un método findOne
+                const clase = await this.clasesService.findOne(entityId, {
+                    relations: ['perfilProfesor', 'categoria'],});  // Suponiendo que tienes un método findOne
 
+                
                 if (!clase) {
                 throw new Error('Clase no encontrada');
             }
+
+             // Verificar que el perfilProfesorId existe
+        // if (!clase.perfilProfesor || !clase.perfilProfesor.id) {
+        //     throw new Error('El perfil del profesor no existe o no tiene un ID');
+        // }
 
             // Crear una instancia del DTO con solo la imagen
             const actualizarImagenClaseDto: ActualizarImagenClaseDto = {
@@ -72,7 +79,8 @@ export class FileUploadService {
         await this.clasesService.update(entityId, {
             ...clase,   // Propiedades existentes
             imagen: url, // Actualizamos solo la imagen
-            categoriaId: clase.categoria.id 
+            categoriaId: clase.categoria.id ,
+            perfilProfesorId: clase.perfilProfesor.id,
         });
 
                 break;

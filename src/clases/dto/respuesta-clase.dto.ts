@@ -2,6 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsNumber, IsString, IsUUID } from "class-validator";
 import { RespuestaCategoriaDto } from "src/categorias/dto/respuesta-categoria.dto";
 import { Clase } from "../clase.entity";
+import { RespuestaPerfilProfesorDto } from "src/perfilesProfesores/dto/respuesta-perfilProfesor.dto";
 
 export class RespuestaClaseDto {
     @ApiProperty({
@@ -30,15 +31,19 @@ export class RespuestaClaseDto {
     @IsNotEmpty()
     disponibilidad: number;
 
-    @ApiProperty({ description: "URL de la imagen de la clase", required: true })
-    @IsString()
-    @IsNotEmpty()
-    imagen: string;
+    @ApiProperty({
+        type: 'string',
+        format: 'binary', 
+        description: 'Imagen de la clase',
+    })
+    imagen: any;
 
-    @ApiProperty({ description: "ID del profesor", required: true })
-    @IsUUID()
-    @IsNotEmpty()
-    perfilProfesorId: string;
+    @ApiProperty({
+        type: () => RespuestaPerfilProfesorDto, // Se indica que la categoría es un DTO
+        description: "El perfil del profesor de la clase",
+        required: true,
+        })
+        perfilProfesor: RespuestaPerfilProfesorDto;
 
     @ApiProperty({
     type: () => RespuestaCategoriaDto, // Se indica que la categoría es un DTO

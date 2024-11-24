@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Clase } from "./clase.entity";
 import { Repository } from "typeorm";
@@ -10,6 +10,7 @@ import { ModificarClaseDto } from "./dto/modificar-clase.dto";
 import { PerfilProfesor } from "src/perfilesProfesores/perfilProfesor.entity";
 import { SearchDto } from "./dto/search-logica.dto";
 import { CloudinaryService } from "src/file-upload/cloudinary.service";
+import { PerfilesProfesoresService } from "src/perfilesProfesores/perfilProfesor.service";
 
 @Injectable()
 export class ClasesService{
@@ -18,6 +19,7 @@ export class ClasesService{
         private readonly clasesRepository: Repository<Clase>,
         private readonly categoriesService: CategoriesService,
         private readonly cloudinaryService: CloudinaryService,
+        private readonly perfilesProfesoresService: PerfilesProfesoresService,
 
         @InjectRepository(PerfilProfesor)
         private readonly perfilProfesorRepository: Repository<PerfilProfesor>,
@@ -25,21 +27,49 @@ export class ClasesService{
 
     // POST
     async crear(crearClaseDto: CrearClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
+        console.log('Datos del DTO recibidos:', crearClaseDto);
+        // Validar si ya existe una clase con el mismo nombre
+    const claseExistente = await this.clasesRepository.findOne({
+        where: { nombre: crearClaseDto.nombre },
+    });
+
+    if (claseExistente) {
+        throw new ConflictException(`La clase con el nombre '${crearClaseDto.nombre}' ya existe.`);
+    }
+
+
         const categoria = await this.categoriesService.findOne(crearClaseDto.categoriaId);
         if (!categoria) {
             throw new NotFoundException(`Categoría con ID ${crearClaseDto.categoriaId} no encontrada`);
         }
+        console.log('Categoría encontrada:', categoria);
+
+        // Validar el perfil del profesor
+    const perfilProfesor = await this.perfilesProfesoresService.obtenerPerfilProfesorId(crearClaseDto.perfilProfesorId);
+    if (!perfilProfesor) {
+        throw new NotFoundException(`Perfil del profesor con ID ${crearClaseDto.perfilProfesorId} no encontrado`);
+    }
+
+    console.log('Perfil del profesor encontrado:', perfilProfesor);
+
         let imageUrl: string | undefined;
-        if (file) {
-        // Subir la imagen a Cloudinary y obtener la URL
-        imageUrl = await this.cloudinaryService.uploadFile(file.buffer, file.originalname);
+        try {
+            // Subir la imagen a Cloudinary y obtener la URL
+            imageUrl = await this.cloudinaryService.uploadFile(file.buffer, file.originalname);
+            console.log('Archivo subido a URL:', imageUrl);
+        } catch (error) {
+            console.error('Error al subir la imagen a Cloudinary:', error);
+            throw new InternalServerErrorException('Error al subir la imagen');
+        
     }
         const clase = this.clasesRepository.create({
             ...crearClaseDto,
-            categoriaId : crearClaseDto.categoriaId,
+            categoria,
+            perfilProfesor,
             imagen: imageUrl, // Asignar la URL de la imagen si se proporcionó
         });
     
+        console.log('Datos de la clase preparados para guardar:', clase);
         try {
             const savedClase = await this.clasesRepository.save(clase);
             return new RespuestaClaseDto(savedClase, {
@@ -60,10 +90,10 @@ export class ClasesService{
         });
     }
 
-    async findOne(id: string): Promise<RespuestaClaseDto> {
+    async findOne(id: string, options?: { relations: string[] }): Promise<RespuestaClaseDto> {
         const clase = await this.clasesRepository.findOne({
             where: { id },
-            relations: ['categoria'], // Carga la relación de categoría
+            relations: options?.relations || ['categoria', 'perfilProfesor'], // Carga la relación de categoría
         });
         if (!clase) {
             throw new NotFoundException(`Clase con ID ${id} no encontrado`);

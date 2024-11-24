@@ -11,6 +11,7 @@ import { Usuario } from "src/usuarios/usuario.entity";
 import { FileUploadModule } from "src/file-upload/file-upload.module";
 import { CategoriesService } from "src/categorias/categories.service";
 import { UsuariosService } from "src/usuarios/usuario.service";
+import { PerfilesProfesoresService } from "src/perfilesProfesores/perfilProfesor.service";
 
 
 
@@ -21,7 +22,7 @@ import { UsuariosService } from "src/usuarios/usuario.service";
     CategoriasModule,
     FileUploadModule
 ],
-    providers: [ClasesService, CategoriesService, UsuariosService],
+    providers: [ClasesService, CategoriesService, UsuariosService, PerfilesProfesoresService],
     controllers: [ClasesController],
 })
 export class ClasesModule{}

@@ -10,7 +10,13 @@ console.log(`Heap size limit: ${v8.getHeapStatistics().heap_size_limit / (1024 *
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
   // Configura CORS
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'; // Definir la URL de frontend
   console.log({ frontendUrl });

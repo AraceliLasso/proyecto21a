@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, InternalServerErrorException, NotFoundException, Param, ParseUUIDPipe, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, InternalServerErrorException, NotFoundException, Param, ParseUUIDPipe, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { ClasesService } from "./clase.service";
 import { RespuestaClaseDto } from "./dto/respuesta-clase.dto";
@@ -12,6 +12,7 @@ import { SearchDto } from "./dto/search-logica.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { FileUploadService } from "src/file-upload/file-upload.service";
 import { ImageUploadPipe } from "src/pipes/pipes/image/image-upload.pipe";
+import { TransformInterceptor } from "./interceptor";
 
 @ApiTags("Clases")
 @Controller("clases")
@@ -35,10 +36,7 @@ export class ClasesController {
         schema: {
             type: 'object',
             properties: {
-                imagen: {
-                    type: 'string',
-                    format: 'binary'
-                },
+                imagen: { type: 'string', format: 'binary'},
                 nombre: { type: 'string' },
                 descripcion: { type: 'string' },
                 fecha: {type: 'date'},
@@ -49,11 +47,20 @@ export class ClasesController {
             },
         },
     })
-    @UseInterceptors(FileInterceptor('imagen'))
+    @UseInterceptors(FileInterceptor('imagen', {
+        limits: { fileSize: 10 * 1024 * 1024} }), TransformInterceptor)
     async create(@Body() crearClaseDto: CrearClaseDto, @UploadedFile() file?: Express.Multer.File): Promise<RespuestaClaseDto> {
         try {
+
+            // Validación de disponibilidad
+            if (typeof crearClaseDto.disponibilidad !== 'number') {
+                throw new BadRequestException('Disponibilidad debe ser un número');
+            }
+            console.log('Tipo:', typeof crearClaseDto.disponibilidad); // Ahora debería ser "number"
+            console.log('Valor:', crearClaseDto.disponibilidad); // Ahora debería ser un número válido
+
             // Crea la clase en la base de datos sin la imagen
-            const nuevaClase = await this.clasesService.crear(crearClaseDto);
+            const nuevaClase = await this.clasesService.crear(crearClaseDto, file);
             
             // Verifica si hay un archivo y lo sube a Cloudinary usando el `id` de la clase creada
             if (file) {
