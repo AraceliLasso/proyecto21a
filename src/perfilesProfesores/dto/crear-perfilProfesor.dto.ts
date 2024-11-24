@@ -18,9 +18,11 @@ export class CrearPerfilProfesorDto {
     @IsNotEmpty()
     certificacion: string;
 
-    @ApiProperty({ description: "URL de la imagen del perfil del", required: true })
-    @IsString()
-    @IsNotEmpty()
-    imagen: string;
+    @ApiProperty({
+        type: 'string',
+        format: 'binary', 
+        description: 'Imagen del perfil del profesor',
+    })
+    imagen: any;
 
 }

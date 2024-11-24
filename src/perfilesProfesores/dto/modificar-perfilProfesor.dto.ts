@@ -15,8 +15,11 @@ export class ModificarPerfilProfesorDto {
     @IsString()
     certificacion?: string;
 
-    @ApiProperty({ description: "URL de la imagen del perfil del", required: false })
-    @IsString()
-    imagen?: string;
+    @ApiProperty({
+        type: 'string',
+        format: 'binary', 
+        description: 'Imagen del perfil del profesor',
+    })
+    imagen: any;
 
 }

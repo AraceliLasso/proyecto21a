@@ -23,7 +23,7 @@ export class FileUploadService {
         file: Express.Multer.File, 
         entityType: 'clase' |  'usuario' | 'perfilProfesor',
         entityId?: string
-    ){
+    ): Promise<{ imgUrl: string }>{
         const fileUploadDto: FileUploadDto = {
             fieldname: file.fieldname,
             buffer: file.buffer,
@@ -31,8 +31,27 @@ export class FileUploadService {
             mimetype: file.mimetype,
             size: file.size
         }
+        
+        if (!['clase', 'usuario', 'perfilProfesor'].includes(entityType)) {
+            throw new Error('El tipo de entidad proporcionado no es válido');
+        }
+    
+        if (!file || !file.buffer || !file.originalname) {
+            throw new Error('El archivo proporcionado no es válido');
+        }
 
-        const url = await this.cloudinaryService.uploadFile(fileUploadDto.buffer, fileUploadDto.originalname)
+        // Determinamos la carpeta según el tipo de entidad
+        const folder = this.getFolderForEntityType(entityType);
+        console.log(`Folder generado para ${entityType}: ${folder}`);
+
+
+        const cleanFileName = file.originalname.replace(/[^a-zA-Z0-9_-]/g, '').split('.')[0];
+        const uniqueId = Date.now();
+        const publicId = `${folder}/${cleanFileName}_${uniqueId}`;
+        console.log('Public ID generado:', publicId);
+
+        const url = await this.cloudinaryService.uploadFile(fileUploadDto.buffer, folder, fileUploadDto.originalname)
+        console.log('Archivo subido a URL:', url);
 
         // Actualizar la URL de la imagen en la entidad correspondiente usando los servicios
         switch (entityType) {
@@ -97,6 +116,19 @@ export class FileUploadService {
         } catch (error) {
             console.error('Error al eliminar el archivo de Cloudinary:', error);
             throw new InternalServerErrorException('Error al eliminar el archivo de Cloudinary');
+        }
+    }
+
+    private getFolderForEntityType(entityType: string): string {
+        switch (entityType) {
+            case 'clase':
+                return 'clase';
+            case 'usuario':
+                return 'usuario';
+            case 'perfilProfesor':
+                return 'profesor';
+            default:
+                throw new Error('Tipo de entidad no compatible');
         }
     }
 }

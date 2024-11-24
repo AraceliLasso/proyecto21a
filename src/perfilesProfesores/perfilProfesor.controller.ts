@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ApiOperation, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { ApiConsumes, ApiOperation, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { PerfilesProfesoresService } from "./perfilProfesor.service";
 import { RespuestaPerfilProfesorDto } from "./dto/respuesta-perfilProfesor.dto";
 import { AuthGuard } from "src/guard/auth.guard";
@@ -27,10 +27,14 @@ export class PerfilesProfesoresController{
     @UseGuards(AuthGuard, RolesGuard)
     @Roles('admin' , 'profesor')
     @ApiSecurity('bearer')
+    @ApiConsumes('multipart/form-data')
     @UseInterceptors(FileInterceptor('imagen'))
     async crearPerfilProfesor(@Param('usuarioId') usuarioId: string, // ID del usuario asociado
-    @Body()  crearPerfilProfesorDto: CrearPerfilProfesorDto): Promise<RespuestaPerfilProfesorDto> {
-        return this.perfilesProfesoresService.crearPerfilProfesor(usuarioId, crearPerfilProfesorDto);
+    @Body()  crearPerfilProfesorDto: CrearPerfilProfesorDto,
+    @UploadedFile() imagen: Express.Multer.File
+): Promise<RespuestaPerfilProfesorDto> {
+        const perfil = await this.perfilesProfesoresService.crearPerfilProfesor(usuarioId, crearPerfilProfesorDto, imagen);
+        return perfil;
     }
 
 
@@ -72,6 +76,7 @@ export class PerfilesProfesoresController{
     @UseGuards(AuthGuard, RolesGuard)
     @Roles('admin' , 'profesor')
     @ApiSecurity('bearer')
+    @ApiConsumes('multipart/form-data')
     @UseInterceptors(FileInterceptor('imagen'))
     async update(
         @Param('id') id: string, 

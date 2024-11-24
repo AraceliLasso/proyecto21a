@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Not, Repository } from "typeorm";
 import { PerfilProfesor } from "./perfilProfesor.entity";
@@ -6,7 +6,8 @@ import { CrearPerfilProfesorDto } from "./dto/crear-perfilProfesor.dto";
 import { ModificarPerfilProfesorDto } from "./dto/modificar-perfilProfesor.dto";
 import { ClasesService } from "src/clases/clase.service";
 import { Clase } from "src/clases/clase.entity";
-import { Usuario } from "src/usuarios/usuario.entity";
+import { rolEnum, Usuario } from "src/usuarios/usuario.entity";
+import { CloudinaryService } from "src/file-upload/cloudinary.service";
 
 @Injectable()
 export class PerfilesProfesoresService{
@@ -18,13 +19,14 @@ export class PerfilesProfesoresService{
         private readonly clasesRepository:  Repository<Clase>,
 
         @InjectRepository(Usuario)
-        private readonly usuariosRepository: Repository<Usuario>
+        private readonly usuariosRepository: Repository<Usuario>,
+        private readonly cloudinaryService: CloudinaryService
     ){}
     //*(cuando inscripciones este listo)
     //GET alumnos inscriptos a la clase del profesor
     
 
-    async crearPerfilProfesor(usuarioId: string, crearPerfilProfesor: CrearPerfilProfesorDto): Promise<PerfilProfesor>{
+    async crearPerfilProfesor(usuarioId: string, crearPerfilProfesor: CrearPerfilProfesorDto, imagen: Express.Multer.File,): Promise<PerfilProfesor>{
         // Buscar el usuario
     const usuario = await this.usuariosRepository.findOne({ where: { id: usuarioId } });
     if (!usuario) {
@@ -36,13 +38,36 @@ export class PerfilesProfesoresService{
         throw new BadRequestException(`El usuario ya tiene un perfil de profesor`);
     }
 
+    // Subir la imagen a Cloudinary
+    let imagenUrl: string | null = null;
+    if (imagen) {
+        try {
+           // Como uploadFile devuelve un string, directamente lo asignamos a imagenUrl
+            imagenUrl = await this.cloudinaryService.uploadFile(imagen.buffer, imagen.originalname);
+        } catch (error) {
+            console.error('Error al subir la imagen a Cloudinary:', error);
+            throw new InternalServerErrorException('No se pudo subir la imagen');
+        }
+    }
+
     // Crear el perfil
     const nuevoPerfil = this.perfilesProfesoresRepository.create({
         ...crearPerfilProfesor,
+        imagen: imagenUrl, // Asignar la URL de la imagen al perfil
         usuario, // Asociar el usuario al perfil
     });
 
-    return this.perfilesProfesoresRepository.save(nuevoPerfil);
+    const perfilGuardado = await this.perfilesProfesoresRepository.save(nuevoPerfil);
+
+    // Actualizar el rol del usuario a profesor
+    usuario.rol = rolEnum.PROFESOR
+    await this.usuariosRepository.save(usuario);
+
+     // Consultar y devolver el perfil actualizado, incluyendo el usuario con el rol actualizado
+        return this.perfilesProfesoresRepository.findOne({
+        where: { id: perfilGuardado.id },
+        relations: ['usuario'], // Incluye al usuario en la respuesta
+    });
 }
 
 

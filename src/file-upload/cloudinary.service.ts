@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import { v2 as cloudinary, UploadApiOptions} from 'cloudinary';
+import * as crypto from 'crypto';
 
 
 @Injectable()
@@ -16,11 +17,30 @@ export class CloudinaryService {
         });
     }
 
-    async uploadFile(buffer: Buffer, originalName?: string): Promise<string>{
+    async uploadFile(buffer: Buffer, folder: string, originalName?: string): Promise<string>{
+        const cleanFileName = originalName
+        ? originalName.replace(/[^a-zA-Z0-9_-]/g, '').split('.')[0] // Limpia el nombre
+        : `file_${Date.now()}`; // Genera un nombre predeterminado si no se proporciona uno
+
+        const hash = require('crypto').createHash('sha1').update(buffer).digest('hex'); // Hash del archivo
+        
+        // Busca en Cloudinary si ya existe un archivo con el mismo hash
+    const existingFiles = await cloudinary.api.resources({
+        type: 'upload',
+        prefix: folder // Busca dentro de la carpeta específica
+    });
+
+    const existingFile = existingFiles.resources.find(file => file.etag === hash);
+
+    if (existingFile) {
+        console.log('Archivo duplicado detectado, no se subirá nuevamente.');
+        return existingFile.secure_url; // Retorna la URL existente
+    }
+
         const options: UploadApiOptions = {
-            folder: 'upload', 
-            public_id: originalName,
-            resource_type: 'auto' 
+            folder, // Usamos la carpeta específica pasada como argumento
+            public_id: cleanFileName,//  ID único del archivo
+            resource_type: 'auto' // Automáticamente detecta el tipo
         }
 
         return new Promise((resolve, reject) => {
@@ -28,7 +48,9 @@ export class CloudinaryService {
                 options,
                 (error, result) => {
                     error ? reject(error) : resolve(result.secure_url)
+                    console.log('Archivo subido con éxito:', result);
                 },
+                
             );
             stream.write(buffer);
             stream.end();
