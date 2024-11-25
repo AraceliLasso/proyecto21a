@@ -36,31 +36,31 @@ export class RespuestaClaseDto {
         format: 'binary', 
         description: 'Imagen de la clase',
     })
-    imagen: any;
+    imagen: string;
 
     @ApiProperty({
         type: () => RespuestaPerfilProfesorDto, // Se indica que la categoría es un DTO
         description: "El perfil del profesor de la clase",
-        required: true,
+        required: false,
         })
-        perfilProfesor: RespuestaPerfilProfesorDto;
+        perfilProfesor?: RespuestaPerfilProfesorDto;
 
     @ApiProperty({
     type: () => RespuestaCategoriaDto, // Se indica que la categoría es un DTO
     description: "La categoría del producto",
-    required: true,
+    required: false,
     })
-    categoria: RespuestaCategoriaDto;
+    categoria?: RespuestaCategoriaDto;
 
-    constructor(clases: Clase, categoria: RespuestaCategoriaDto) {
+    constructor(clases: Clase, categoria?: RespuestaCategoriaDto, perfilProfesor?: RespuestaPerfilProfesorDto,) {
     this.id = clases.id;
     this.nombre = clases.nombre;
     this.descripcion = clases.descripcion;
     this.fecha = clases.fecha;
     this.disponibilidad = clases.disponibilidad;
-    this.imagen = clases.imagen;
-    //this.perfilProfesorId = clases.perfilProfesor; debo hacer lo mismo que con categoria (ver)
-    this.categoria = categoria;
+    this.imagen = clases.imagen || null;
+    this.perfilProfesor = perfilProfesor || null; 
+    this.categoria = categoria || null;
     
     }
 

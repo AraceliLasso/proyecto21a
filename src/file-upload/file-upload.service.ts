@@ -24,20 +24,13 @@ export class FileUploadService {
         entityType: 'clase' |  'usuario' | 'perfilProfesor',
         entityId?: string
     ): Promise<{ imgUrl: string }>{
-        const fileUploadDto: FileUploadDto = {
-            fieldname: file.fieldname,
-            buffer: file.buffer,
-            originalname: file.originalname,
-            mimetype: file.mimetype,
-            size: file.size
-        }
-        
-        if (!['clase', 'usuario', 'perfilProfesor'].includes(entityType)) {
-            throw new Error('El tipo de entidad proporcionado no es válido');
-        }
     
         if (!file || !file.buffer || !file.originalname) {
             throw new Error('El archivo proporcionado no es válido');
+        }
+
+        if (!['clase', 'usuario', 'perfilProfesor'].includes(entityType)) {
+            throw new Error('El tipo de entidad proporcionado no es válido');
         }
 
         // Determinamos la carpeta según el tipo de entidad
@@ -45,35 +38,30 @@ export class FileUploadService {
         console.log(`Folder generado para ${entityType}: ${folder}`);
 
 
-        const cleanFileName = file.originalname.replace(/[^a-zA-Z0-9_-]/g, '').split('.')[0];
-        const uniqueId = Date.now();
-        const publicId = `${folder}/${cleanFileName}_${uniqueId}`;
-        console.log('Public ID generado:', publicId);
-
-        const url = await this.cloudinaryService.uploadFile(fileUploadDto.buffer, folder, fileUploadDto.originalname)
-        console.log('Archivo subido a URL:', url);
+        const url = await this.cloudinaryService.uploadFile(
+            file.buffer,
+            folder,
+            file.originalname
+        );
+        console.log(`Archivo subido a ${url}`);
 
         // Actualizar la URL de la imagen en la entidad correspondiente usando los servicios
         switch (entityType) {
             case 'clase':
                 // Primero obtenemos la clase actual para no sobrescribir las demás propiedades
                 const clase = await this.clasesService.findOne(entityId, {
-                    relations: ['perfilProfesor', 'categoria'],});  // Suponiendo que tienes un método findOne
-
-                
-                if (!clase) {
+                    relations: ['perfilProfesor', 'categoria'],});  
+            
+            if (!clase) {
                 throw new Error('Clase no encontrada');
             }
+            console.log('Perfil del Profesor:', clase.perfilProfesor);
+            console.log('ID del Perfil:', clase.perfilProfesor?.id);
 
-             // Verificar que el perfilProfesorId existe
-        // if (!clase.perfilProfesor || !clase.perfilProfesor.id) {
-        //     throw new Error('El perfil del profesor no existe o no tiene un ID');
-        // }
 
-            // Crear una instancia del DTO con solo la imagen
-            const actualizarImagenClaseDto: ActualizarImagenClaseDto = {
-            imagen: url
-            };
+            if (!clase.categoria) {
+                throw new Error('La categoría no existe');
+            }
 
         // Actualizamos solo la propiedad imagen, manteniendo las demás propiedades intactas
         await this.clasesService.update(entityId, {
@@ -82,19 +70,14 @@ export class FileUploadService {
             categoriaId: clase.categoria.id ,
             perfilProfesorId: clase.perfilProfesor.id,
         });
+            break;
 
-                break;
         case 'usuario':
             // Llamar a `actualizarUsuarios` pasando la URL en el DTO
-            const actualizarImagenUsuarioDto: ActualizarImagenUsuarioDto = { imagen: url };
-            await this.usuariosService.actualizarUsuarios(entityId, actualizarImagenUsuarioDto);
+            await this.usuariosService.actualizarUsuarios(entityId, { imagen: url });
             break;
 
             case 'perfilProfesor':
-        // Verificar que se proporcione el ID de la entidad
-        if (!entityId) {
-            throw new Error('El ID del perfil del profesor es obligatorio');
-        }
 
         // Buscar el perfil del profesor en la base de datos
         const perfilProfesor = await this.perfilesProfesoresService.obtenerPerfilProfesorId(entityId);

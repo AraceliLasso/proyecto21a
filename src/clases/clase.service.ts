@@ -28,10 +28,11 @@ export class ClasesService{
     // POST
     async crear(crearClaseDto: CrearClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
         console.log('Datos del DTO recibidos:', crearClaseDto);
+    
         // Validar si ya existe una clase con el mismo nombre
-    const claseExistente = await this.clasesRepository.findOne({
-        where: { nombre: crearClaseDto.nombre },
-    });
+        const claseExistente = await this.clasesRepository.findOne({
+            where: { nombre: crearClaseDto.nombre },
+        });
 
     if (claseExistente) {
         throw new ConflictException(`La clase con el nombre '${crearClaseDto.nombre}' ya existe.`);
@@ -45,10 +46,10 @@ export class ClasesService{
         console.log('Categoría encontrada:', categoria);
 
         // Validar el perfil del profesor
-    const perfilProfesor = await this.perfilesProfesoresService.obtenerPerfilProfesorId(crearClaseDto.perfilProfesorId);
-    if (!perfilProfesor) {
-        throw new NotFoundException(`Perfil del profesor con ID ${crearClaseDto.perfilProfesorId} no encontrado`);
-    }
+        const perfilProfesor = await this.perfilesProfesoresService.obtenerPerfilProfesorId(crearClaseDto.perfilProfesorId);
+        if (!perfilProfesor) {
+            throw new NotFoundException(`Perfil del profesor con ID ${crearClaseDto.perfilProfesorId} no encontrado`);
+        }
 
     console.log('Perfil del profesor encontrado:', perfilProfesor);
 
@@ -93,8 +94,11 @@ export class ClasesService{
     async findOne(id: string, options?: { relations: string[] }): Promise<RespuestaClaseDto> {
         const clase = await this.clasesRepository.findOne({
             where: { id },
-            relations: options?.relations || ['categoria', 'perfilProfesor'], // Carga la relación de categoría
+            relations: options?.relations || ['categoria', 'perfilProfesor'], 
         });
+
+        console.log('Resultado de la consulta:', clase);
+
         if (!clase) {
             throw new NotFoundException(`Clase con ID ${id} no encontrado`);
         }

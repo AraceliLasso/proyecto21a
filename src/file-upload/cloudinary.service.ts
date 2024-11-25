@@ -22,12 +22,16 @@ export class CloudinaryService {
         ? originalName.replace(/[^a-zA-Z0-9_-]/g, '').split('.')[0] // Limpia el nombre
         : `file_${Date.now()}`; // Genera un nombre predeterminado si no se proporciona uno
 
-        const hash = require('crypto').createHash('sha1').update(buffer).digest('hex'); // Hash del archivo
+        const uniqueId = crypto.randomBytes(4).toString('hex'); // ID único para evitar conflictos
+        const publicId = `${folder}/${cleanFileName}_${uniqueId}`; // Public ID estructurado
+
+        // Intentar buscar archivos duplicados por hash
+        const hash = crypto.createHash('sha1').update(buffer).digest('hex');
         
         // Busca en Cloudinary si ya existe un archivo con el mismo hash
-    const existingFiles = await cloudinary.api.resources({
+        const existingFiles = await cloudinary.api.resources({
         type: 'upload',
-        prefix: folder // Busca dentro de la carpeta específica
+        prefix: folder /// Filtrar por la carpeta específica
     });
 
     const existingFile = existingFiles.resources.find(file => file.etag === hash);
@@ -47,8 +51,12 @@ export class CloudinaryService {
             const stream = cloudinary.uploader.upload_stream(
                 options,
                 (error, result) => {
-                    error ? reject(error) : resolve(result.secure_url)
-                    console.log('Archivo subido con éxito:', result);
+                    if (error) {
+                        reject(error);
+                    } else {
+                        console.log('Archivo subido con éxito:', result.secure_url);
+                        resolve(result.secure_url); // Retornar la URL segura
+                    }
                 },
                 
             );
