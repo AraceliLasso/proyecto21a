@@ -13,6 +13,7 @@ import { LoginUsuarioDto } from "./dtos/login-usuario.dto";
 import { UsuarioAdminDto } from "./dtos/admin-usuario.dto";
 import { ActualizarUsuarioDto } from "./dtos/actualizar-usuario.dto";
 import { ActualizarPerfilDto } from "src/auth/dtos/actualizar-usuarioGoogle.dto";
+import { ActualizarImagenUsuarioDto } from "./dtos/actualizar-imagenusuario.dto";
 // import { actualizarPerfil } from "../auth/dto/update-usuariogoogle.dt";
 //import { MailService } from "src/notifications/mail.service";
 
@@ -31,7 +32,10 @@ export class UsuariosService {
     }
 
     async login(loginUsuario: LoginUsuarioDto): Promise<{ usuario: Partial<Usuario>, token: string }> {
-        const usuario = await this.usuariosRepository.findOneBy({ email: loginUsuario.email.toLowerCase() });
+        const usuario = await this.usuariosRepository.findOne({ 
+            where: {email: loginUsuario.email.toLowerCase()},
+            relations: ['membresia', 'inscripciones'],
+        });
         console.log('Email recibido en el login:', loginUsuario.email);
         console.log('Usuario encontrado:', usuario);
 
@@ -50,6 +54,7 @@ export class UsuariosService {
         // }
 
         const token = await this.createToken(usuario);
+        
         // Elimina campos sensibles como contrasena
         const { contrasena, ...usuarioSinContrasena } = usuario;
 
@@ -187,19 +192,24 @@ export class UsuariosService {
     }
 
 
-    async actualizarUsuarios(id: string, actualizarUsuario: ActualizarUsuarioDto): Promise<Usuario> {
+    async actualizarUsuarios(id: string, actualizarImagenUsuario: ActualizarImagenUsuarioDto): Promise<Usuario> {
         const usuario = await this.usuariosRepository.findOne({ where: { id } });
         if (!usuario) {
             throw new Error(`Usuario con ${id} no fue encontrado`);
         }
 
-        if (actualizarUsuario.contrasena) {
+        if (actualizarImagenUsuario.contrasena) {
 
             const salt = await bcrypt.genSalt(10);
-            actualizarUsuario.contrasena = await bcrypt.hash(actualizarUsuario.contrasena, salt);
+            actualizarImagenUsuario.contrasena = await bcrypt.hash(actualizarImagenUsuario.contrasena, salt);
         }
 
-        Object.assign(usuario, actualizarUsuario);
+        // Asignar la URL de la imagen si está presente en el DTO
+        if (actualizarImagenUsuario.imagen) {
+            usuario.imagen = actualizarImagenUsuario.imagen;
+        }
+
+        Object.assign(usuario, actualizarImagenUsuario);
         await this.usuariosRepository.save(usuario)
         return usuario;
     }

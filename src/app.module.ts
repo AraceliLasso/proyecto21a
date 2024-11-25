@@ -15,6 +15,7 @@ import { MembresiaModule } from './membresias/membresia.module';
 import { SeedModule } from './seeds/seeds-module';
 import { InscripcionModule } from './inscripciones/inscripcion.module';
 import { StripeModule } from './stripe/stripe.module';
+import { CloudinaryService } from './file-upload/cloudinary.service';
 
 
 @Module({
@@ -41,7 +42,7 @@ import { StripeModule } from './stripe/stripe.module';
     StripeModule
   ],
 controllers: [AppController],
-providers: [AppService],
+providers: [AppService, CloudinaryService],
 exports: []
 })
 

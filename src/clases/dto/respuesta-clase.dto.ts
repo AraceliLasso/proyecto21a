@@ -2,6 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsNumber, IsString, IsUUID } from "class-validator";
 import { RespuestaCategoriaDto } from "src/categorias/dto/respuesta-categoria.dto";
 import { Clase } from "../clase.entity";
+import { RespuestaPerfilProfesorDto } from "src/perfilesProfesores/dto/respuesta-perfilProfesor.dto";
 
 export class RespuestaClaseDto {
     @ApiProperty({
@@ -30,32 +31,36 @@ export class RespuestaClaseDto {
     @IsNotEmpty()
     disponibilidad: number;
 
-    @ApiProperty({ description: "URL de la imagen de la clase", required: true })
-    @IsString()
-    @IsNotEmpty()
+    @ApiProperty({
+        type: 'string',
+        format: 'binary', 
+        description: 'Imagen de la clase',
+    })
     imagen: string;
 
-    @ApiProperty({ description: "ID del profesor", required: true })
-    @IsUUID()
-    @IsNotEmpty()
-    perfilProfesorId: string;
+    @ApiProperty({
+        type: () => RespuestaPerfilProfesorDto, // Se indica que la categoría es un DTO
+        description: "El perfil del profesor de la clase",
+        required: false,
+        })
+        perfilProfesor?: RespuestaPerfilProfesorDto;
 
     @ApiProperty({
     type: () => RespuestaCategoriaDto, // Se indica que la categoría es un DTO
     description: "La categoría del producto",
-    required: true,
+    required: false,
     })
-    categoria: RespuestaCategoriaDto;
+    categoria?: RespuestaCategoriaDto;
 
-    constructor(clases: Clase, categoria: RespuestaCategoriaDto) {
+    constructor(clases: Clase, categoria?: RespuestaCategoriaDto, perfilProfesor?: RespuestaPerfilProfesorDto,) {
     this.id = clases.id;
     this.nombre = clases.nombre;
     this.descripcion = clases.descripcion;
     this.fecha = clases.fecha;
     this.disponibilidad = clases.disponibilidad;
-    this.imagen = clases.imagen;
-    //this.perfilProfesorId = clases.perfilProfesor; debo hacer lo mismo que con categoria (ver)
-    this.categoria = categoria;
+    this.imagen = clases.imagen || null;
+    this.perfilProfesor = perfilProfesor || null; 
+    this.categoria = categoria || null;
     
     }
 

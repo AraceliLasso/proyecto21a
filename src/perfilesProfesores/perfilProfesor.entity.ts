@@ -26,8 +26,8 @@ export class PerfilProfesor {
     @OneToMany(() => Clase, (clases) => clases.perfilProfesor)
     clases: Clase[]
 
-    // @OneToOne(()=>Usuario, (usuario)=> usuario.perfilProfesor)
-    // @JoinColumn()
-    // usuario:Usuario
+    @OneToOne(()=>Usuario, (usuario)=> usuario.perfilProfesor)
+    @JoinColumn()
+    usuario:Usuario
 
 }

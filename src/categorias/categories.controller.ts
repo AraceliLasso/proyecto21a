@@ -44,9 +44,9 @@ export class CategoriesController {
     @Post()
     @ApiOperation({ summary: 'Crear una nueva categoría' })
     @ApiResponse({ status: 201, description: 'Categoría creada', type: RespuestaCategoriaDto })
-    @UseGuards(AuthGuard, RolesGuard)
-    @Roles('admin')
-    @ApiSecurity('bearer')
+    // @UseGuards(AuthGuard, RolesGuard)
+    // @Roles('admin')
+    // @ApiSecurity('bearer')
     async create(@Body() crearCategoriaDto: CrearCategoriaDto): Promise<RespuestaCategoriaDto> {
         const newCategory = await this.categoriesService.create(crearCategoriaDto);
         return new RespuestaCategoriaDto(newCategory.id, newCategory.nombre);

@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, InternalServerErrorException, NotFoundException, Param, ParseUUIDPipe, Post, Put, Query, UseGuards } from "@nestjs/common";
-import { ApiOperation, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, InternalServerErrorException, NotFoundException, Param, ParseUUIDPipe, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { ClasesService } from "./clase.service";
 import { RespuestaClaseDto } from "./dto/respuesta-clase.dto";
 import { CrearClaseDto } from "./dto/crear-clase.dto";
@@ -9,12 +9,17 @@ import { Roles } from "src/decorators/roles.decorators";
 import { Clase } from "./clase.entity";
 import { ModificarClaseDto } from "./dto/modificar-clase.dto";
 import { SearchDto } from "./dto/search-logica.dto";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { FileUploadService } from "src/file-upload/file-upload.service";
+import { ImageUploadPipe } from "src/pipes/pipes/image/image-upload.pipe";
+import { TransformInterceptor } from "./interceptor";
 
 @ApiTags("Clases")
 @Controller("clases")
 export class ClasesController {
     constructor(
         private readonly clasesService: ClasesService,
+        private readonly fileUploadService: FileUploadService
     ) { }
     
     // POST
@@ -24,15 +29,54 @@ export class ClasesController {
     @ApiResponse({ status: 500, description: 'Error inesperado al crear la clase' })
     // @UseGuards(AuthGuard, RolesGuard)
     // @Roles('admin', 'profesor')
-    @ApiSecurity('bearer')
-    async create(@Body() crearClaseDto: CrearClaseDto): Promise<RespuestaClaseDto> {
+    //@ApiSecurity('bearer')
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        description: 'Datos para actualizar la clase, incluyendo la opción de subir una imagen',
+        schema: {
+            type: 'object',
+            properties: {
+                imagen: { type: 'string', format: 'binary'},
+                nombre: { type: 'string' },
+                descripcion: { type: 'string' },
+                fecha: {type: 'date'},
+                disponibilidad: {type: 'number'},
+                categoriaId: {type: 'string'},
+                perfilProfesorId: {type: 'string'}
+
+            },
+        },
+    })
+    @UseInterceptors(FileInterceptor('imagen', {
+        limits: { fileSize: 10 * 1024 * 1024} }), TransformInterceptor)
+    async create(@Body() crearClaseDto: CrearClaseDto, @UploadedFile() file?: Express.Multer.File): Promise<RespuestaClaseDto> {
         try {
-            return await this.clasesService.crear(crearClaseDto); // Nota: `crear` debe coincidir con el nombre correcto del método en el servicio.
+
+            // Validación de disponibilidad
+            if (typeof crearClaseDto.disponibilidad !== 'number') {
+                throw new BadRequestException('Disponibilidad debe ser un número');
+            }
+            console.log('Tipo:', typeof crearClaseDto.disponibilidad); // Ahora debería ser "number"
+            console.log('Valor:', crearClaseDto.disponibilidad); // Ahora debería ser un número válido
+
+            // Crea la clase en la base de datos sin la imagen
+            const nuevaClase = await this.clasesService.crear(crearClaseDto, file);
+            
+            // Verifica si hay un archivo y lo sube a Cloudinary usando el `id` de la clase creada
+            if (file) {
+            const uploadResult = await this.fileUploadService.uploadFile(file, 'clase', nuevaClase.id);
+            const imagenUrl = uploadResult.imgUrl;
+            // Actualiza la clase con la URL de la imagen
+            await this.clasesService.modificarImagenClase(nuevaClase.id, imagenUrl);
+            nuevaClase.imagen = imagenUrl; // Asigna la URL al objeto de la clase
+        }
+            return nuevaClase; 
         } catch (error) {
             console.error('Error al crear la clase:', error);
             throw new InternalServerErrorException('Error inesperado al crear la clase');
         }
     }
+
     @Post('search')
     @ApiOperation({ summary: 'Buscar clases por nombre, categoría, profesor o descripción' })
     @ApiResponse({ status: 200, description: 'Clases no encontradas', type: [Clase] })
@@ -83,11 +127,38 @@ export class ClasesController {
     @ApiResponse({ status: 404, description: 'Clase no encontrada' })
     // @UseGuards(AuthGuard, RolesGuard)
     // @Roles('admin', 'profesor')
-    @ApiSecurity('bearer')
+    //@ApiSecurity('bearer')
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        description: 'Datos para actualizar la clase, incluyendo la opción de subir una imagen',
+        schema: {
+            type: 'object',
+            properties: {
+                imagen: {
+                    type: 'string',
+                    format: 'binary'
+                },
+                nombre: { type: 'string' },
+                descripcion: { type: 'string' },
+                fecha: {type: 'date'},
+                disponibilidad: {type: 'number'},
+                categoriaId: {type: 'string'},
+                perfilProfesorId: {type: 'string'}
+
+            },
+        },
+    })
+    @UseInterceptors(FileInterceptor('imagen'))
     async update(
         @Param("id") id: string,
-        @Body() modificarClaseDto: ModificarClaseDto): Promise<RespuestaClaseDto> {
+        @Body() modificarClaseDto: ModificarClaseDto, @UploadedFile(new ImageUploadPipe()) file?: Express.Multer.File): Promise<RespuestaClaseDto> {
         try {
+            // Si hay un archivo, súbelo a Cloudinary
+        if (file) {
+            const uploadResult = await this.fileUploadService.uploadFile(file, 'clase', id);
+            modificarClaseDto.imagen = uploadResult.imgUrl; // Asigna la URL de la imagen al DTO
+        }
+
             const modificarClase = await this.clasesService.update(id, modificarClaseDto);
             if (!modificarClase) {
                 throw new NotFoundException('Clase no encontrada');
@@ -106,7 +177,7 @@ export class ClasesController {
     @ApiResponse({ status: 404, description: 'Clase no encontrada' })
     // @UseGuards(AuthGuard, RolesGuard)
     // @Roles('admin', 'profesor')
-    @ApiSecurity('bearer')
+    //@ApiSecurity('bearer')
     async delete(@Param('id', new ParseUUIDPipe()) id: string): Promise<{ message: string }> {
         const resultMessage = await this.clasesService.remove(id);
         return { message: resultMessage };

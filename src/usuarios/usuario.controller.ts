@@ -49,7 +49,7 @@ export class UsuariosController{
         // );
         return {
             message: `Usuario creado exitosamente`,
-            usuarioId: usuario.id
+            usuario
         };                                                                                                          
     }
 
