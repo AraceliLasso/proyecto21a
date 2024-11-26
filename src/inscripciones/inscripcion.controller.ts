@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, HttpException, HttpStatus, NotFoundException, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, HttpException, HttpStatus, NotFoundException, Param, Patch, Post } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { InscripcionesService } from "./inscripcion.service";
 import { CrearInscripcionDto } from "./dtos/crear-inscripcion.dto";
@@ -23,22 +23,26 @@ export class InscripcionController {
             throw new HttpException('Error al crear la inscripcion', HttpStatus.BAD_REQUEST);
         }
     }
-    //*Eliminar la inscripcion
-    @Delete(':usuarioId/:claseId')
-    @ApiOperation({ summary: 'Eliminar una inscripción por usuario y clase' })
-    @ApiResponse({ status: 204, description: 'Inscripción eliminada exitosamente' })
-    @ApiResponse({ status: 404, description: 'Inscripción no encontrada' })
-    async eliminarInscripcion(
-        @Param('usuarioId') usuarioId: string,
-        @Param('claseId') claseId: string,
-    ): Promise<void> {
-        const resultado = await this.inscripcionesService.eliminarInscripcion(usuarioId, claseId);
-
-        if (!resultado) {
-            throw new NotFoundException(`No se encontró la inscripción del usuario con ID ${usuarioId} en la clase con ID ${claseId}.`);
-        }
-
-        return; // HTTP 204 No Content
-    }
+   //* Actualizar el estado de la inscripción (de activa a inactiva)
+   @Patch(':usuarioId/:claseId')
+   @ApiOperation({ summary: 'Actualizar el estado de la inscripción por usuario y clase' })
+   @ApiResponse({ status: 200, description: 'Estado de la inscripción actualizado con éxito' })
+   @ApiResponse({ status: 404, description: 'Inscripción no encontrada' })
+   @ApiResponse({ status: 400, description: 'Error al actualizar el estado de la inscripción' })
+   async actualizarEstadoInscripcion(
+       @Param('usuarioId') usuarioId: string,
+       @Param('claseId') claseId: string,
+   ): Promise<string> {
+       try {
+           // Llamamos al servicio para actualizar el estado sin necesidad de recibir el estado en el body
+           const estadoActualizado = await this.inscripcionesService.actualizarEstadoInscripcion(
+               usuarioId,
+               claseId
+           );
+           return estadoActualizado;
+       } catch (error) {
+           throw new HttpException('Error al actualizar el estado de la inscripción', HttpStatus.BAD_REQUEST);
+       }
+   }
 
 }

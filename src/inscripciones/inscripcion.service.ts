@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Repository } from "typeorm";
-import { Inscripcion } from "./inscripcion.entity";
+import { EstadoInscripcion, Inscripcion } from "./inscripcion.entity";
 import { CrearInscripcionDto } from "./dtos/crear-inscripcion.dto";
 import { Usuario } from "src/usuarios/usuario.entity";
 import { Clase } from "src/clases/clase.entity";
@@ -45,19 +45,27 @@ export class InscripcionesService {
         });
         return this.inscripcionesRepository.save(inscripcion);
     }
-    async eliminarInscripcion(usuarioId: string, claseId: string): Promise<string> {
+      // Actualizar el estado de la inscripción
+      async actualizarEstadoInscripcion(usuarioId: string, claseId: string): Promise<string> {
+        const inscripcion = await this.inscripcionesRepository.findOne({
+            where: { usuario: { id: usuarioId }, clase: { id: claseId } },
+            relations: ['usuario', 'clase'],
+        });
 
-        // Verificar la existencia de la inscripción
-        //* Aseguramos que las relaciones estén cargadas
-        const verificarInscripcion = await this.inscripcionesRepository.findOne({ where: { usuario: { id: usuarioId }, clase: { id: claseId } }, relations: ["usuario", "clase"] })
-        if (!verificarInscripcion) { throw new NotFoundException("No se encontró la inscripción del usuario en esta clase.") }
+        if (!inscripcion) {
+            throw new NotFoundException('No se encontró la inscripción');
+        }
+
         // Verificar que el usuario tenga una membresía activa
         const membresiaActiva = await this.membresiaService.obtenerMembresiaActivaPorUsuario(usuarioId);
         if (!membresiaActiva) {
-            throw new BadRequestException("El usuario no tiene mebresia activa.El usuario no tiene una membresía activa. No se puede gestionar la inscripción.")
+            throw new BadRequestException('El usuario no tiene una membresía activa');
         }
-        // Eliminar la inscripción
-        await this.inscripcionesRepository.remove(verificarInscripcion);
-        return "Inscripcione eliminada exitosamente"
+
+        // Actualizar el estado de la inscripción a 'INACTIVA' (valor predefinido)
+        inscripcion.estado = EstadoInscripcion.INACTIVA;
+        await this.inscripcionesRepository.save(inscripcion);
+
+        return `Estado de la inscripción actualizado a INACTIVA`;
     }
 }
