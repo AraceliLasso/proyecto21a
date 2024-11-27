@@ -51,6 +51,7 @@ export class FileUploadService {
                 // Primero obtenemos la clase actual para no sobrescribir las demás propiedades
                 const clase = await this.clasesService.findOne(entityId, {
                     relations: ['perfilProfesor', 'categoria'],});  
+            console.log("Clase guardada", clase)
             
             if (!clase) {
                 throw new Error('Clase no encontrada');
@@ -62,17 +63,24 @@ export class FileUploadService {
             if (!clase.categoria) {
                 throw new Error('La categoría no existe');
             }
+            // Maneja las relaciones para evitar errores
+            const perfilProfesorId = clase.perfilProfesor?.id || null;
 
         // Actualizamos solo la propiedad imagen, manteniendo las demás propiedades intactas
         await this.clasesService.update(entityId, {
             ...clase,   // Propiedades existentes
             imagen: url, // Actualizamos solo la imagen
-            categoriaId: clase.categoria.id ,
-            perfilProfesorId: clase.perfilProfesor.id,
+            categoriaId: clase.categoria ? clase.categoria.id : null,
+            perfilProfesorId: perfilProfesorId ?? null
         });
             break;
 
         case 'usuario':
+            // Valida si `entityId` está presente
+                if (!entityId) {
+                    throw new Error('No se proporcionó un ID de usuario para actualizar.');
+                }
+                
             // Llamar a `actualizarUsuarios` pasando la URL en el DTO
             await this.usuariosService.actualizarUsuarios(entityId, { imagen: url });
             break;
@@ -80,7 +88,7 @@ export class FileUploadService {
             case 'perfilProfesor':
 
         // Buscar el perfil del profesor en la base de datos
-        const perfilProfesor = await this.perfilesProfesoresService.obtenerPerfilProfesorId(entityId);
+        const perfilProfesor = await this.perfilesProfesoresService.obtenerPerfilProfesorPorUsuarioId(entityId);
         if (!perfilProfesor) {
             throw new Error('Perfil del profesor no encontrado');
         }

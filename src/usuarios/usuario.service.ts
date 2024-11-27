@@ -4,7 +4,7 @@ import { CrearUsuarioDto } from "./dtos/crear-usuario.dto";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from 'bcrypt';
 // import { usuarioWithAdminDto } from "./dto/admin-usuario.dto";
-import { HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from "@nestjs/common";
 
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -14,6 +14,7 @@ import { UsuarioAdminDto } from "./dtos/admin-usuario.dto";
 import { ActualizarUsuarioDto } from "./dtos/actualizar-usuario.dto";
 import { ActualizarPerfilDto } from "src/auth/dtos/actualizar-usuarioGoogle.dto";
 import { ActualizarImagenUsuarioDto } from "./dtos/actualizar-imagenusuario.dto";
+import { CloudinaryService } from "src/file-upload/cloudinary.service";
 // import { actualizarPerfil } from "../auth/dto/update-usuariogoogle.dt";
 //import { MailService } from "src/notifications/mail.service";
 
@@ -23,6 +24,7 @@ export class UsuariosService {
         @InjectRepository(Usuario)
         private readonly usuariosRepository: Repository<Usuario>,
         private readonly jwtService: JwtService,
+        private readonly cloudinaryService: CloudinaryService,
         //private readonly mailService: MailService
     ) { }
 
@@ -104,7 +106,7 @@ export class UsuariosService {
         return this.usuariosRepository.findOne({ where: {id}})
     }
 
-    async crearUsuario(crearUsuario: CrearUsuarioDto): Promise<Usuario>{
+    async crearUsuario(crearUsuario: CrearUsuarioDto, imagen?: Express.Multer.File): Promise<Usuario>{
         try{
         // Verificar que las contraseñas coinciden antes de cualquier procesamiento
         if(crearUsuario.contrasena !== crearUsuario.confirmarContrasena){
@@ -115,6 +117,13 @@ export class UsuariosService {
             const nuevoUsuario = new Usuario();
             Object.assign(nuevoUsuario, crearUsuario);// Asignar los datos del DTO al nuevo usuario
             console.log('Usuario antes de guardar:', nuevoUsuario);
+
+            // Subir la imagen si existe
+            if (imagen) {
+                const imageUrl = await this.cloudinaryService.uploadFile(imagen.buffer,'usuario', imagen.originalname);
+                nuevoUsuario.imagen = imageUrl;
+            }
+
 
             const hashedcontrasena = await bcrypt.hash(crearUsuario.contrasena, 10);
             nuevoUsuario.contrasena = hashedcontrasena;// Asignar la contraseña encriptada al nuevo usuario
@@ -192,24 +201,31 @@ export class UsuariosService {
     }
 
 
-    async actualizarUsuarios(id: string, actualizarImagenUsuario: ActualizarImagenUsuarioDto): Promise<Usuario> {
+    async actualizarUsuarios(id: string, actualizarUsuarioDto: ActualizarUsuarioDto, imagen?: Express.Multer.File): Promise<Usuario> {
         const usuario = await this.usuariosRepository.findOne({ where: { id } });
         if (!usuario) {
             throw new Error(`Usuario con ${id} no fue encontrado`);
         }
 
-        if (actualizarImagenUsuario.contrasena) {
-
+        // Si la contraseña está presente, encriptarla
+        if (actualizarUsuarioDto.contrasena) {
             const salt = await bcrypt.genSalt(10);
-            actualizarImagenUsuario.contrasena = await bcrypt.hash(actualizarImagenUsuario.contrasena, salt);
+            actualizarUsuarioDto.contrasena = await bcrypt.hash(actualizarUsuarioDto.contrasena, salt);
         }
 
-        // Asignar la URL de la imagen si está presente en el DTO
-        if (actualizarImagenUsuario.imagen) {
-            usuario.imagen = actualizarImagenUsuario.imagen;
+        // Subir la imagen a Cloudinary si se proporciona
+        if (imagen) {
+            try {
+                const imageUrl = await this.cloudinaryService.uploadFile(imagen.buffer, imagen.originalname);
+                actualizarUsuarioDto.imagen = imageUrl; // Asignar la URL al DTO
+            } catch (error) {
+                console.error('Error al subir la imagen a Cloudinary:', error);
+                throw new InternalServerErrorException('Error al subir la imagen');
+            }
         }
 
-        Object.assign(usuario, actualizarImagenUsuario);
+        // Actualizar las propiedades del usuario con los datos proporcionados
+        Object.assign(usuario, actualizarUsuarioDto);
         await this.usuariosRepository.save(usuario)
         return usuario;
     }

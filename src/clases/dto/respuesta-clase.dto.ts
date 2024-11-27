@@ -36,7 +36,7 @@ export class RespuestaClaseDto {
         format: 'binary', 
         description: 'Imagen de la clase',
     })
-    imagen: string;
+    imagen?: string;
 
     @ApiProperty({
         type: () => RespuestaPerfilProfesorDto, // Se indica que la categoría es un DTO

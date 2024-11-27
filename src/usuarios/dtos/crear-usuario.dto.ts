@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 import { IsBoolean, IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
 
 export class CrearUsuarioDto {
@@ -52,12 +53,15 @@ export class CrearUsuarioDto {
         required: true,
     })
     @IsNumber()
+    @Type(() => Number)
     edad: number;
 
-    @ApiProperty({ description: "La foto del usuario" })
-    @IsString()
-    @IsOptional()
-    imagen?: string | null;
+    @ApiProperty({
+        type: 'string',
+        format: 'binary', 
+        description: 'Imagen del usuario',
+    })
+    imagen?: any;
 
     @ApiProperty({
         type: Number,
@@ -66,6 +70,7 @@ export class CrearUsuarioDto {
     })
     @IsNotEmpty()
     @IsNumber()
+    @Type(() => Number)
     telefono: number;
 
 

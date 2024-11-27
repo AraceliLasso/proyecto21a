@@ -52,20 +52,33 @@ export class PerfilesProfesoresController{
         return this.perfilesProfesoresService.obtenerPerfilProfesorClase();
     }
 
-    @Get(':id')
-    @ApiOperation({ summary: 'Obtener un perfil por ID' })
+    @Get(':usuarioId')
+    @ApiOperation({ summary: 'Obtener un perfil por UsuarioID' })
     @ApiResponse({ status: 200, description: 'Perfil de profesor encontrado', type: PerfilProfesor })
     @ApiResponse({ status: 404, description: 'Perfil de profesor no encontrado' })
-    async findOne(@Param('id',  ParseUUIDPipe) id: string): Promise<PerfilProfesor> {
-        return this.perfilesProfesoresService.obtenerPerfilProfesorId(id);
+    async findOne(@Param('usuarioId',  ParseUUIDPipe)usuarioId: string): Promise<PerfilProfesor> {
+        return this.perfilesProfesoresService.obtenerPerfilProfesorPorUsuarioId(usuarioId);
     }
+
+
 
     @Get(':perfilProfesorId/clases')
     @ApiOperation({ summary: 'Obtener los perfiles de profesores por clase' })
     @ApiResponse({ status: 200, description: 'Perfiles obtenidos', type: [Clase] })
     @ApiResponse({ status: 404, description: 'Perfil de profesor no encontrado' })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin' , 'profesor')
+    @ApiSecurity('bearer')
     async findPerfilByClases(@Param('perfilProfesorId') perfilProfesorId: string) {
         return this.perfilesProfesoresService.obtenerPerfilProfesorIdYClase(perfilProfesorId);
+    }
+
+    @Get(':perfilProfesorId/activas')
+    @ApiOperation({ summary: 'Obtener los perfiles de profesores por clase activas' })
+    @ApiResponse({ status: 200, description: 'Perfiles obtenidos', type: [Clase] })
+    @ApiResponse({ status: 404, description: 'Perfil de profesor no encontrado' })
+    async findPerfilByClasesActivas(@Param('perfilProfesorId') perfilProfesorId: string) {
+        return this.perfilesProfesoresService.obtenerPerfilProfesorConClasesActivas(perfilProfesorId);
     }
 
 

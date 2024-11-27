@@ -90,13 +90,13 @@ export class PerfilesProfesoresService{
     }
 
     //Obtengo el perfil del profesor por id
-    async obtenerPerfilProfesorId(id: string) : Promise<PerfilProfesor>{
+    async obtenerPerfilProfesorPorUsuarioId(usuarioId: string) : Promise<PerfilProfesor>{
         const perfilProfesor = await this.perfilesProfesoresRepository.findOne(
-            { where: {id},
+            { where: { usuario: { id: usuarioId } },
             relations: ['usuario', 'clases'],
         })
         if(!perfilProfesor){
-            throw new NotFoundException(`Perfil de profesor con ID ${id} no encontrado`);
+            throw new NotFoundException(`Perfil de profesor con ID ${usuarioId} no encontrado`);
         }
         return perfilProfesor;      
     }
@@ -110,7 +110,19 @@ export class PerfilesProfesoresService{
         return perfilProfesor;      
     }
 
-  
+    
+    async obtenerPerfilProfesorConClasesActivas(id: string): Promise<PerfilProfesor> {
+        const perfilProfesor = await this.perfilesProfesoresRepository.createQueryBuilder('perfilProfesor')
+            .leftJoinAndSelect('perfilProfesor.clases', 'clase', 'clase.estado = true') // Filtra solo las clases activas
+            .where('perfilProfesor.id = :id', { id })
+            .getOne();
+    
+        if (!perfilProfesor) {
+            throw new NotFoundException(`Perfil de profesor con ID ${id} no encontrado`);
+        }
+    
+        return perfilProfesor;
+    }  
 
 
     async modificarPerfilProfesor(id: string, modificarPerfilProfesor: Partial<ModificarPerfilProfesorDto>): Promise<PerfilProfesor>{

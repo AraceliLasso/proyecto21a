@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Put, Query, Req, UnauthorizedException, UseGuards } from "@nestjs/common";
-import { ApiOperation, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, InternalServerErrorException, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Put, Query, Req, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { IsUUID } from "class-validator";
 import { UsuariosService } from "./usuario.service";
 import { CrearUsuarioDto } from "./dtos/crear-usuario.dto";
@@ -12,6 +12,8 @@ import { Usuario } from "./usuario.entity";
 import { Roles } from "src/decorators/roles.decorators";
 import { AuthGuard } from "src/guard/auth.guard";
 import { RolesGuard } from "src/guard/roles.guard";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { FileUploadService } from "src/file-upload/file-upload.service";
 
 
 
@@ -22,7 +24,8 @@ import { RolesGuard } from "src/guard/roles.guard";
 export class UsuariosController{
     constructor(
         private readonly usuariosService: UsuariosService,
-        private readonly mailService: MailService
+        private readonly mailService: MailService,
+        private readonly fileUploadService: FileUploadService
     ) {}
 
     @Post('login')
@@ -37,8 +40,28 @@ export class UsuariosController{
     @ApiOperation({ summary: 'Crear un nuevo usuario' })
     @ApiResponse({ status: 201, description: 'Usuario creado exitosamente', type: CrearUsuarioDto })
     @ApiResponse({ status: 500, description: 'Error inesperado al crear el usuario' })
-    async crearUsuario(@Body() crearUsuario: CrearUsuarioDto, @Req() request){
-        const usuario = await this.usuariosService.crearUsuario(crearUsuario)
+    @UseInterceptors(FileInterceptor('imagen')) 
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        description: 'Datos para registrar el usuario, incluyendo la opción de subir una imagen',
+        schema: {
+        type: 'object',
+        properties: {
+        nombre: { type: 'string' },
+        email: { type: 'string' },
+        contrasena: { type: 'string' },
+        confirmarContrasena: { type: 'string' },
+        edad: { type: 'number' },
+        telefono: {type: 'number'}, 
+        imagen: {
+            type: 'string',
+            format: 'binary',
+        },
+        },
+        },
+    })
+    async crearUsuario(@Body() crearUsuario: CrearUsuarioDto, @UploadedFile() imagen: Express.Multer.File, @Req() request){
+        const usuario = await this.usuariosService.crearUsuario(crearUsuario,imagen)
 
          //Enviar correo de confirmación
         // await this.mailService.sendMail(
@@ -95,15 +118,45 @@ export class UsuariosController{
     }
 
     @Put(':id')
+    @UseInterceptors(FileInterceptor('imagen')) 
     @ApiOperation({ summary: 'Actualizar un usuario por ID' })
     @ApiResponse({ status: 200, description: 'Usuario actualizado', type: ActualizarUsuarioDto })
     @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
-    @UseGuards(AuthGuard)
-    @ApiSecurity('bearer')
     @HttpCode(HttpStatus.OK)
-    async actualizarUsuarios(@Param('id') id: string, @Body() actualizarUsuarios: ActualizarUsuarioDto): Promise<Usuario>{
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        description: 'Datos para actualizar el usuario, incluyendo la opción de subir una imagen',
+        schema: {
+            type: 'object',
+            properties: {
+                nombre: { type: 'string' },
+                edad: { type: 'number' },
+                telefono: {type: 'number'},
+                email: {type: 'string'},
+                contrasena: {type: 'string'},
+                imagen: {
+                    type: 'string',
+                    format: 'binary'
+                },
+
+            },
+        },
+    })
+    async actualizarUsuarios(@Param('id') id: string, @Body() actualizarUsuarios: ActualizarUsuarioDto, @UploadedFile() imagen: Express.Multer.File): Promise<Usuario>{
+        try{
+        if (imagen) {
+            const uploadResult = await this.fileUploadService.uploadFile(imagen, 'usuario', id);
+            actualizarUsuarios.imagen = uploadResult.imgUrl; // Asigna la URL de la imagen al DTO
+        }
         const usuario = await this.usuariosService.actualizarUsuarios(id, actualizarUsuarios) 
+        if (!usuario) {
+            throw new NotFoundException('Usuario no encontrado');
+        }
         return usuario;
+    } catch (error) {
+        console.error('Error al actualizar el usuario:', error);
+        throw new InternalServerErrorException('Error inesperado al actualizar el usuario');
+    }
     }
 
 
