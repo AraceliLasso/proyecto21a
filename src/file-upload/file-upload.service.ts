@@ -76,6 +76,11 @@ export class FileUploadService {
             break;
 
         case 'usuario':
+            // Valida si `entityId` está presente
+                if (!entityId) {
+                    throw new Error('No se proporcionó un ID de usuario para actualizar.');
+                }
+                
             // Llamar a `actualizarUsuarios` pasando la URL en el DTO
             await this.usuariosService.actualizarUsuarios(entityId, { imagen: url });
             break;
