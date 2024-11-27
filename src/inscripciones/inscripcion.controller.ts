@@ -6,6 +6,7 @@ import { UsuariosService } from "src/usuarios/usuario.service";
 import { IsUUID } from "class-validator";
 import { InscripcionRespuestaDto } from "./dtos/respuesta-inscripicon.dto";
 import { EstadoInscripcion } from "./inscripcion.entity";
+import { InscripcionConClaseDto } from "./dtos/conClase-inscripcion.dto";
 
 @ApiTags("Inscripciones")
 @Controller("inscripciones")
@@ -58,46 +59,16 @@ export class InscripcionController {
             throw new HttpException('Error al actualizar el estado de la inscripción', HttpStatus.BAD_REQUEST);
         }
     }
-    //get de inscripciones de un usuario con las clases relacionadas
-    @Get(":id")
-    @ApiOperation({ summary: 'Obtener inscripciones de usuario por ID' })
-    @ApiResponse({ status: 200, description: 'Inscripciones obtenidas', type: [InscripcionRespuestaDto] })
-    @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
-    async inscripcionesDeUsuarioPorId(@Param("id", new ParseUUIDPipe()) id: string): Promise<InscripcionRespuestaDto[]> {
-        const usuario = await this.usuariosService.obtenerUsuarioPorId(id);
-
-        if (!usuario) {
-            throw new HttpException('Usuario no encontrado', HttpStatus.NOT_FOUND);
-        }
-
-        const inscripcionesActivas = usuario.inscripciones.filter(
-            inscripcion => inscripcion.estado === EstadoInscripcion.ACTIVA
-        );
-
-        if (inscripcionesActivas.length === 0) {
-            throw new HttpException('No se encontraron inscripciones activas', HttpStatus.NOT_FOUND);
-        }
-
-        // Mapear manualmente las inscripciones a `InscripcionRespuestaDto`
-        return inscripcionesActivas.map(inscripcion => ({
-            id: inscripcion.id,
-            fechaInscripcion: inscripcion.fechaInscripcion,
-            fechaVencimiento: inscripcion.fechaVencimiento,
-            estado: inscripcion.estado,
-            clase: {
-                id: inscripcion.clase.id,
-                nombre: inscripcion.clase.nombre,
-                descripcion: inscripcion.clase.descripcion,
-                fecha: inscripcion.clase.fecha,
-                disponibilidad: inscripcion.clase.disponibilidad,
-                imagen: inscripcion.clase.imagen || null,
-                perfilProfesor: inscripcion.clase.perfilProfesor || null,
-                categoria: inscripcion.clase.categoria || null,
-            },
-        }));
-    }
-
-
+        //*get de inscripciones de un usuario con las clases relacionadas
+    @Get('usuario/:usuarioId')
+    @ApiOperation({ summary: 'Obtener las inscripciones de un usuario por ID' })
+    @ApiResponse({ status: 200, description: 'Lista de inscripciones encontradas', type: [InscripcionConClaseDto] })
+    @ApiResponse({ status: 404, description: 'Usuario no encontrado o no tiene inscripciones' })
+    async obtenerInscripcionesPorUsuarioId(@Param('usuarioId') usuarioId: string) {
+        const inscripcionesConClase = await this.inscripcionesService.obtenerInscripcionesConClase(usuarioId);
+        return inscripcionesConClase;
+      }
+    
 
 
     //get de inscripciones de una clase específica

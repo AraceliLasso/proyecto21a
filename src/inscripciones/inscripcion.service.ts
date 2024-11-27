@@ -9,6 +9,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Membresia } from "src/membresias/membresia.entity";
 import { Categoria } from "src/categorias/categories.entity";
 import { InscripcionRespuestaDto } from "./dtos/respuesta-inscripicon.dto";
+import { InscripcionConClaseDto } from "./dtos/conClase-inscripcion.dto";
 
 @Injectable()
 export class InscripcionesService {
@@ -90,4 +91,58 @@ export class InscripcionesService {
             relations: ['clase'], // Cargar la relación con las clases
         });
     }
+    // Obtener las inscripciones de un usuario específico junto con la clase asociada.
+    async obtenerInscripcionesConClase(usuarioId: string) {
+        // Buscar todas las inscripciones del usuario y cargar las clases asociadas
+        const inscripciones = await this.inscripcionesRepository.find({
+          where: { usuario: { id: usuarioId } },
+          relations: ['clase'], // Cargar la relación con la clase
+        });
+    
+        // Mapear las inscripciones para devolver tanto la inscripción como la clase
+        return inscripciones.map(inscripcion => ({
+          id: inscripcion.id,
+          fechaInscripcion: inscripcion.fechaInscripcion,
+          fechaVencimiento: inscripcion.fechaVencimiento,
+          estado: inscripcion.estado,
+          clase: {
+            id: inscripcion.clase.id,
+            nombre: inscripcion.clase.nombre,
+            descripcion: inscripcion.clase.descripcion,
+            fecha: inscripcion.clase.fecha,
+            disponibilidad: inscripcion.clase.disponibilidad,
+            categoria: inscripcion.clase.categoria, // Asegúrate de tener esta relación cargada si es necesario
+          }
+        }));
+      }
+  
+    // async obtenerInscripcionesPorUsuario(usuarioId: string): Promise<InscripcionConClaseDto[]> {
+    //     // Verificar si el usuario existe
+    //     const usuario = await this.usuariosRepository.findOne({ where: { id: usuarioId } });
+    //     if (!usuario) {
+    //         throw new NotFoundException('Usuario no encontrado');
+    //     }
+
+    //     // Obtener las inscripciones del usuario
+    //     const inscripciones = await this.inscripcionesRepository.find({
+    //         where: { usuario: { id: usuarioId } },
+    //         relations: ['clase'], // Asegúrate de que se incluyan las clases relacionadas
+    //     });
+
+    //     // Verificar si el usuario tiene inscripciones
+    //     if (inscripciones.length === 0) {
+    //         throw new NotFoundException('No se encontraron inscripciones para este usuario');
+    //     }
+
+    //     // Mapear las inscripciones a nuestro DTO de respuesta
+    //     const inscripcionesDto = inscripciones.map((inscripcion) => ({
+    //         id: inscripcion.id,
+    //         fechaInscripcion: inscripcion.fechaInscripcion,
+    //         fechaVencimiento: inscripcion.fechaVencimiento,
+    //         estado: inscripcion.estado,
+    //         clase: inscripcion.clase,  // Incluimos la clase relacionada
+    //     }));
+
+    //     return inscripcionesDto;
+    // }
 }
