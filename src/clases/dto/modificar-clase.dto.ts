@@ -28,15 +28,15 @@ export class ModificarClaseDto {
     })
     imagen: any;
 
-    @ApiProperty({ description: "ID de la categoría", required: true })
+    @ApiProperty({ description: "ID de la categoría", required: false })
     @IsUUID()
     @IsNotEmpty()
-    categoriaId: string;
+    categoriaId?: string;
 
-    @ApiProperty({ description: "ID del profesor", required: true })
+    @ApiProperty({ description: "ID del profesor", required: false })
     @IsUUID()
     @IsNotEmpty()
-    perfilProfesorId: string;
+    perfilProfesorId?: string;
 
 }
 

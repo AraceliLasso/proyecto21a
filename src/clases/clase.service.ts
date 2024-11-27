@@ -34,9 +34,9 @@ export class ClasesService{
             where: { nombre: crearClaseDto.nombre },
         });
 
-    if (claseExistente) {
-        throw new ConflictException(`La clase con el nombre '${crearClaseDto.nombre}' ya existe.`);
-    }
+        if (claseExistente) {
+            throw new ConflictException(`La clase con el nombre '${crearClaseDto.nombre}' ya existe.`);
+        }
 
 
         const categoria = await this.categoriesService.findOne(crearClaseDto.categoriaId);
@@ -51,9 +51,14 @@ export class ClasesService{
             throw new NotFoundException(`Perfil del profesor con ID ${crearClaseDto.perfilProfesorId} no encontrado`);
         }
 
-    console.log('Perfil del profesor encontrado:', perfilProfesor);
+        if (!crearClaseDto.perfilProfesorId) {
+            throw new Error('El perfilProfesorId es requerido y no puede ser nulo.');
+        }
 
+        console.log('Perfil del profesor encontrado:', perfilProfesor);
+    
         let imageUrl: string | undefined;
+        if(file){
         try {
             // Subir la imagen a Cloudinary y obtener la URL
             imageUrl = await this.cloudinaryService.uploadFile(file.buffer, file.originalname);
@@ -61,27 +66,87 @@ export class ClasesService{
         } catch (error) {
             console.error('Error al subir la imagen a Cloudinary:', error);
             throw new InternalServerErrorException('Error al subir la imagen');
-        
-    }
-        const clase = this.clasesRepository.create({
-            ...crearClaseDto,
-            categoria,
-            perfilProfesor,
-            imagen: imageUrl, // Asignar la URL de la imagen si se proporcionó
-        });
-    
-        console.log('Datos de la clase preparados para guardar:', clase);
-        try {
-            const savedClase = await this.clasesRepository.save(clase);
-            return new RespuestaClaseDto(savedClase, {
-            id: categoria.id,
-            nombre: categoria.nombre,
-            });
-        } catch (error) {
-            console.error('Error al crear el producto:', error);
-            throw new InternalServerErrorException('Error al guardar el producto');
         }
-        } 
+    }
+
+    const nuevaClase = await this.clasesRepository.save({
+        ...crearClaseDto,
+        perfilProfesor,
+        perfilProfesorId: perfilProfesor.id,
+        categoria,
+        imagen: imageUrl
+    });
+    
+    console.log("Nueva clase en service", nuevaClase)
+
+    // try {
+    //     await this.clasesRepository.save(nuevaClase);
+    // } catch (error) {
+    //     console.error('Error al guardar la clase:', error);
+    //     throw new InternalServerErrorException('No se pudo guardar la clase');
+    // }
+
+
+    
+    // Cargar las relaciones explícitamente
+    const claseConRelaciones = await this.clasesRepository.findOne({
+        where: { id: nuevaClase.id },
+        relations: ['perfilProfesor', 'categoria'],
+    });
+
+    console.log("ClaseConRelaciones", claseConRelaciones)
+    return claseConRelaciones;
+    
+    }
+    // Crear y guardar la clase
+//     const clase = await this.clasesRepository.save({
+//         nombre: crearClaseDto.nombre,
+//         descripcion: crearClaseDto.descripcion,
+//         fecha: crearClaseDto.fecha,
+//         disponibilidad: crearClaseDto.disponibilidad,
+//         imagen: imageUrl,
+//         categoria: { id: crearClaseDto.categoriaId },
+//         perfilProfesor: { id: crearClaseDto.perfilProfesorId },
+//     });
+
+//     console.log('Clase guardada sin relaciones:', clase);
+
+
+//     // Cargar las relaciones necesarias
+//     const claseConRelaciones = await this.clasesRepository.findOne({
+//         where: { id: clase.id },
+//         relations: ['perfilProfesor', 'categoria'],
+//     });
+
+//     console.log('Clase guardada con relaciones:', claseConRelaciones);
+
+//     if (!claseConRelaciones) {
+//         throw new InternalServerErrorException('Error al cargar las relaciones de la clase');
+//     }
+
+//     // Devolver el DTO de respuesta
+//     return new RespuestaClaseDto(claseConRelaciones);
+// }
+
+        // const clase = this.clasesRepository.create({
+        //     ...crearClaseDto,
+        //     categoria,
+        //     perfilProfesor,
+        //     imagen: imageUrl, // Asignar la URL de la imagen si se proporcionó
+        // });
+    
+        // console.log('Datos de la clase preparados para guardar:', clase);
+        // try {
+        //     const savedClase = await this.clasesRepository.save(clase);
+        //     return new RespuestaClaseDto(savedClase, {
+        //     id: categoria.id,
+        //     nombre: categoria.nombre,
+        //     });
+        // } catch (error) {
+        //     console.error('Error al crear el producto:', error);
+        //     throw new InternalServerErrorException('Error al guardar el producto');
+        // }
+        // } 
 
      // GET
         async get(page: number, limit: number) {
@@ -151,10 +216,31 @@ export class ClasesService{
                 throw new NotFoundException(`Perfil de profesor con ID ${modificarClaseDto.perfilProfesorId} no encontrado`);
             }
             clase.perfilProfesor = perfilProfesor;
+        }else if (!clase.perfilProfesor) {
+            // Lanza un error solo si no hay perfil asociado en la entidad actual
+            throw new InternalServerErrorException('El perfil del profesor es obligatorio para actualizar la clase.');
         }
 
+        if (modificarClaseDto.categoriaId) {
+            const categoria = await this.categoriesService.findOne(
+                modificarClaseDto.categoriaId ,
+            );
+            if (!categoria) {
+                throw new NotFoundException(`Categoría con ID ${modificarClaseDto.categoriaId} no encontrada`);
+            }
+            clase.categoria = categoria;
+        }
+
+        Object.assign(clase, modificarClaseDto);
+        
         try{
-        const modificarclase = await this.clasesRepository.save(clase);
+            // Guardar la clase con las actualizaciones realizadas
+        const modificarclase = await this.clasesRepository.save({
+            ...clase, // Todos los datos existentes
+            perfilProfesor: clase.perfilProfesor, // Garantiza que la relación no se pierda
+        });
+
+        // Crear el DTO de respuesta para la categoría
         const categoryDto = new RespuestaCategoriaDto(modificarclase.categoria.id, modificarclase.categoria.nombre);
 
         return new RespuestaClaseDto(modificarclase, categoryDto);
