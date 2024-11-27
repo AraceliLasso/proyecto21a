@@ -25,7 +25,7 @@ export class Inscripcion {
         description: "Fecha de inscripcion",
         required: true,
     })
-    @Column({ nullable: false, unique: true })
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     fechaInscripcion: Date;
 
 
@@ -34,7 +34,7 @@ export class Inscripcion {
         description: "Fecha de vencimiento de la inscripcions",
         required: true,
     })
-    @Column({ nullable: false, unique: true })
+    @Column({ type: 'timestamp', nullable: true })
     fechaVencimiento: Date;
 
     @Column({
