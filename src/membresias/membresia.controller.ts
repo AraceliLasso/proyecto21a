@@ -12,12 +12,15 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiSecuri
 import { ActualizarPrecioMembresiaDto } from './dtos/actualizar-membresia.dto';
 import * as express from 'express';
 import { CrearMembresiaDto } from './dtos/crear-membresia.dto';
+import { StripeService } from 'src/stripe/stripe.service';
 @ApiTags("Membresias")
 @Controller('membresias')
 export class MembresiaController {
     constructor(
         private readonly membresiaService: MembresiaService,
-        private readonly usuariosService: UsuariosService
+        private readonly usuariosService: UsuariosService,
+        private readonly stripeService: StripeService,
+        
     ) { }
     //*endpoint para crear membresias como admin
     @Post()
