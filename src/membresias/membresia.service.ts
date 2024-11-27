@@ -123,16 +123,16 @@ export class MembresiaService {
     async obtenerMembresiaActivaPorUsuario(userId: string): Promise<Membresia> {
         const membresia = await this.membresiasRepository.findOne({
             where: {
-                usuario: { id: userId }, // Buscar membresía por id de usuario
+                usuario: { id: userId },
                 activa: true,
-                fechaExpiracion: MoreThan(new Date()), // Verifica que esté activa y no haya expirado
+                fechaExpiracion: MoreThan(new Date()),
             },
         });
-
+    
         if (!membresia) {
-            throw new NotFoundException('El usuario no tiene una membresía activa para cancelar.');
+            throw new NotFoundException('El usuario no tiene una membresía activa');
         }
-
+    
         return membresia;
     }
     async obtenerMembresiasActivas(page: number, limit: number) {

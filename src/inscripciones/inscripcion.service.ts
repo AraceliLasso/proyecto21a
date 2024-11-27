@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Repository } from "typeorm";
-import { Inscripcion } from "./inscripcion.entity";
+import { EstadoInscripcion, Inscripcion } from "./inscripcion.entity";
 import { CrearInscripcionDto } from "./dtos/crear-inscripcion.dto";
 import { Usuario } from "src/usuarios/usuario.entity";
 import { Clase } from "src/clases/clase.entity";
@@ -8,6 +8,8 @@ import { MembresiaService } from "src/membresias/membresia.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Membresia } from "src/membresias/membresia.entity";
 import { Categoria } from "src/categorias/categories.entity";
+import { InscripcionRespuestaDto } from "./dtos/respuesta-inscripicon.dto";
+import { InscripcionConClaseDto } from "./dtos/conClase-inscripcion.dto";
 
 @Injectable()
 export class InscripcionesService {
@@ -23,41 +25,124 @@ export class InscripcionesService {
         @InjectRepository(Categoria)
         private readonly categoriaRepository: Repository<Categoria>,
         private readonly membresiaService: MembresiaService,
-        
-    ) { }
-    async crearInscripcion(crearInscripcon: CrearInscripcionDto): Promise<Inscripcion> {
-        const { usuarioId, claseId } = crearInscripcon
-        // verificando existencia de usuario y clase
-        const verificarUsuario = await this.usuariosRepository.findOne({ where: { id: usuarioId } });
-        if (!verificarUsuario) { throw new NotFoundException("Usuario no encontrado") }
 
-        const verificarClase = await this.clasesRepository.findOne({ where: { id: claseId } });
-        if (!verificarClase) { throw new NotFoundException("Clase no encontrada") }
-        // verificar que el usuario tenga una membresia activa
+    ) { }
+    async crearInscripcion(crearInscripcionDto: CrearInscripcionDto): Promise<Inscripcion> {
+        const { usuarioId, claseId } = crearInscripcionDto;
+
+        // Verificar si el usuario existe
+        const usuario = await this.usuariosRepository.findOne({ where: { id: usuarioId } });
+        if (!usuario) {
+            throw new NotFoundException('Usuario no encontrado');
+        }
+
+        // Verificar si la clase existe
+        const clase = await this.clasesRepository.findOne({ where: { id: claseId } });
+        if (!clase) {
+            throw new NotFoundException('Clase no encontrada');
+        }
+
+        // Verificar si el usuario tiene una membresía activa
         const membresiaActiva = await this.membresiaService.obtenerMembresiaActivaPorUsuario(usuarioId);
         if (!membresiaActiva) {
-            throw new BadRequestException("El usuario no tiene mebresia activa")
+            throw new BadRequestException('El usuario no tiene una membresía activa');
         }
-        //* Crear la inscripcion
+
+        // Crear la inscripción
         const inscripcion = this.inscripcionesRepository.create({
-            usuario: verificarUsuario,
-            clase: verificarClase
+            usuario,
+            clase,
+            fechaInscripcion: new Date(), // Asignamos la fecha actual de inscripción
+            fechaVencimiento: membresiaActiva.fechaExpiracion, // Asumimos que la membresía tiene una fecha de vencimiento
         });
+
         return this.inscripcionesRepository.save(inscripcion);
     }
-    async eliminarInscripcion(usuarioId: string, claseId: string): Promise<string> {
+    
+    // Actualizar el estado de la inscripción
+    async actualizarEstadoInscripcion(usuarioId: string, claseId: string): Promise<string> {
+        const inscripcion = await this.inscripcionesRepository.findOne({
+            where: { usuario: { id: usuarioId }, clase: { id: claseId } },
+            relations: ['usuario', 'clase'],
+        });
 
-        // Verificar la existencia de la inscripción
-        //* Aseguramos que las relaciones estén cargadas
-        const verificarInscripcion = await this.inscripcionesRepository.findOne({ where: { usuario: { id: usuarioId }, clase: { id: claseId } }, relations: ["usuario", "clase"] })
-        if (!verificarInscripcion) { throw new NotFoundException("No se encontró la inscripción del usuario en esta clase.") }
+        if (!inscripcion) {
+            throw new NotFoundException('No se encontró la inscripción');
+        }
+
         // Verificar que el usuario tenga una membresía activa
         const membresiaActiva = await this.membresiaService.obtenerMembresiaActivaPorUsuario(usuarioId);
         if (!membresiaActiva) {
-            throw new BadRequestException("El usuario no tiene mebresia activa.El usuario no tiene una membresía activa. No se puede gestionar la inscripción.")
+            throw new BadRequestException('El usuario no tiene una membresía activa');
         }
-        // Eliminar la inscripción
-        await this.inscripcionesRepository.remove(verificarInscripcion);
-        return "Inscripcione eliminada exitosamente"
+
+        // Actualizar el estado de la inscripción a 'INACTIVA' (valor predefinido)
+        inscripcion.estado = EstadoInscripcion.INACTIVA;
+        await this.inscripcionesRepository.save(inscripcion);
+
+        return `Estado de la inscripción actualizado a INACTIVA`;
     }
+    async obtenerInscripcionesActivasPorUsuario(usuarioId: string): Promise<Inscripcion[]> {
+        return this.inscripcionesRepository.find({
+            where: {
+                usuario: { id: usuarioId },
+                estado: EstadoInscripcion.ACTIVA,
+            },
+            relations: ['clase'], // Cargar la relación con las clases
+        });
+    }
+    // Obtener las inscripciones de un usuario específico junto con la clase asociada.
+    async obtenerInscripcionesConClase(usuarioId: string) {
+        // Buscar todas las inscripciones del usuario y cargar las clases asociadas
+        const inscripciones = await this.inscripcionesRepository.find({
+          where: { usuario: { id: usuarioId } },
+          relations: ['clase'], // Cargar la relación con la clase
+        });
+    
+        // Mapear las inscripciones para devolver tanto la inscripción como la clase
+        return inscripciones.map(inscripcion => ({
+          id: inscripcion.id,
+          fechaInscripcion: inscripcion.fechaInscripcion,
+          fechaVencimiento: inscripcion.fechaVencimiento,
+          estado: inscripcion.estado,
+          clase: {
+            id: inscripcion.clase.id,
+            nombre: inscripcion.clase.nombre,
+            descripcion: inscripcion.clase.descripcion,
+            fecha: inscripcion.clase.fecha,
+            disponibilidad: inscripcion.clase.disponibilidad,
+            categoria: inscripcion.clase.categoria, // Asegúrate de tener esta relación cargada si es necesario
+          }
+        }));
+      }
+  
+    // async obtenerInscripcionesPorUsuario(usuarioId: string): Promise<InscripcionConClaseDto[]> {
+    //     // Verificar si el usuario existe
+    //     const usuario = await this.usuariosRepository.findOne({ where: { id: usuarioId } });
+    //     if (!usuario) {
+    //         throw new NotFoundException('Usuario no encontrado');
+    //     }
+
+    //     // Obtener las inscripciones del usuario
+    //     const inscripciones = await this.inscripcionesRepository.find({
+    //         where: { usuario: { id: usuarioId } },
+    //         relations: ['clase'], // Asegúrate de que se incluyan las clases relacionadas
+    //     });
+
+    //     // Verificar si el usuario tiene inscripciones
+    //     if (inscripciones.length === 0) {
+    //         throw new NotFoundException('No se encontraron inscripciones para este usuario');
+    //     }
+
+    //     // Mapear las inscripciones a nuestro DTO de respuesta
+    //     const inscripcionesDto = inscripciones.map((inscripcion) => ({
+    //         id: inscripcion.id,
+    //         fechaInscripcion: inscripcion.fechaInscripcion,
+    //         fechaVencimiento: inscripcion.fechaVencimiento,
+    //         estado: inscripcion.estado,
+    //         clase: inscripcion.clase,  // Incluimos la clase relacionada
+    //     }));
+
+    //     return inscripcionesDto;
+    // }
 }

@@ -63,9 +63,10 @@ export class StripeController {
   @ApiOperation({ summary: 'Create a Stripe Checkout session' })
   @ApiResponse({ status: 200, description: 'Checkout session created' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async createCheckoutSession() {
+  async createCheckoutSession(membresiaId: string, precio: number, email: string) {
     try {
-      const session = await this.stripeService.createCheckoutSession();
+      // Aquí le pasamos los tres parámetros al método
+      const session = await this.stripeService.crearSesionDePago(membresiaId, precio, email);
       return { sessionId: session.id }; // Regresamos el ID de la sesión de Stripe al frontend
     } catch (error) {
       console.error('Error creating checkout session:', error);

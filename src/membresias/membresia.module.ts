@@ -6,6 +6,7 @@ import { Membresia } from "./membresia.entity";
 import { Usuario } from "src/usuarios/usuario.entity";
 import { UsuariosService } from "src/usuarios/usuario.service";
 import { UsuarioModule } from "src/usuarios/usuario.module";
+import { StripeService } from "src/stripe/stripe.service";
 import { CloudinaryService } from "src/file-upload/cloudinary.service";
 
 @Module({
@@ -14,7 +15,7 @@ import { CloudinaryService } from "src/file-upload/cloudinary.service";
       UsuarioModule,  // Importa UsuarioModule para tener acceso a UsuariosService
     ],
     controllers: [MembresiaController],
-    providers: [MembresiaService, UsuariosService, CloudinaryService],
+    providers: [MembresiaService, UsuariosService, StripeService, CloudinaryService],
     exports: [MembresiaService],
   })
   export class MembresiaModule {}
