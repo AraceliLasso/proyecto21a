@@ -98,55 +98,7 @@ export class ClasesService{
     return claseConRelaciones;
     
     }
-    // Crear y guardar la clase
-//     const clase = await this.clasesRepository.save({
-//         nombre: crearClaseDto.nombre,
-//         descripcion: crearClaseDto.descripcion,
-//         fecha: crearClaseDto.fecha,
-//         disponibilidad: crearClaseDto.disponibilidad,
-//         imagen: imageUrl,
-//         categoria: { id: crearClaseDto.categoriaId },
-//         perfilProfesor: { id: crearClaseDto.perfilProfesorId },
-//     });
 
-//     console.log('Clase guardada sin relaciones:', clase);
-
-
-//     // Cargar las relaciones necesarias
-//     const claseConRelaciones = await this.clasesRepository.findOne({
-//         where: { id: clase.id },
-//         relations: ['perfilProfesor', 'categoria'],
-//     });
-
-//     console.log('Clase guardada con relaciones:', claseConRelaciones);
-
-//     if (!claseConRelaciones) {
-//         throw new InternalServerErrorException('Error al cargar las relaciones de la clase');
-//     }
-
-//     // Devolver el DTO de respuesta
-//     return new RespuestaClaseDto(claseConRelaciones);
-// }
-
-        // const clase = this.clasesRepository.create({
-        //     ...crearClaseDto,
-        //     categoria,
-        //     perfilProfesor,
-        //     imagen: imageUrl, // Asignar la URL de la imagen si se proporcionó
-        // });
-    
-        // console.log('Datos de la clase preparados para guardar:', clase);
-        // try {
-        //     const savedClase = await this.clasesRepository.save(clase);
-        //     return new RespuestaClaseDto(savedClase, {
-        //     id: categoria.id,
-        //     nombre: categoria.nombre,
-        //     });
-        // } catch (error) {
-        //     console.error('Error al crear el producto:', error);
-        //     throw new InternalServerErrorException('Error al guardar el producto');
-        // }
-        // } 
 
      // GET
         async get(page: number, limit: number) {
@@ -237,7 +189,7 @@ export class ClasesService{
             // Guardar la clase con las actualizaciones realizadas
         const modificarclase = await this.clasesRepository.save({
             ...clase, // Todos los datos existentes
-            perfilProfesor: clase.perfilProfesor, // Garantiza que la relación no se pierda
+            perfilProfesorId: clase.perfilProfesor.id, // Garantiza que la relación no se pierda
         });
 
         // Crear el DTO de respuesta para la categoría
@@ -335,6 +287,26 @@ export class ClasesService{
     //Solo actualiza la imagen, no esta en funcionamiento, se usa update
     async modificarImagenClase(claseId: string, imagen: string): Promise<void> {
         await this.clasesRepository.update(claseId, { imagen });
+    }
+
+
+    //Funcion para cambiar de estado activo o no una clase
+    async modificarEstado(id: string, estado: boolean): Promise<Clase> {
+        const clase = await this.clasesRepository.findOne({ where: { id } });
+    
+        if (!clase) {
+            throw new NotFoundException('Clase no encontrada');
+        }
+    
+        clase.estado = estado;
+        await this.clasesRepository.save(clase);
+
+        return this.clasesRepository.findOne({ where: { id } });
+    }
+
+
+    async filtrarClasesActivas(): Promise<Clase[]> {
+        return this.clasesRepository.find({ where: { estado: true } });
     }
 
 }

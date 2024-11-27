@@ -82,4 +82,7 @@ export class Clase {
 
     @OneToMany(() => Inscripcion, (inscripciones) => inscripciones.clase, )
     inscripciones: Inscripcion[];
+
+    @Column({ default: true }) // Por defecto, la clase estará activa
+    estado: boolean;
 }
