@@ -61,6 +61,13 @@ export class MembresiaController {
       if (!membresia.activa) {
         throw new HttpException('Esta membresía ya no está disponible', HttpStatus.BAD_REQUEST);
       }
+      
+// Crear la sesión de pago con Stripe
+const session = await this.stripeService.crearSesionDePago(
+    membresiaId,
+    membresia.precio,
+    usuario.email,
+  );
     
       usuario.membresia = membresia;
       await this.usuariosService.update(usuario);
