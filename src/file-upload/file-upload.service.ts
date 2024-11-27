@@ -83,7 +83,7 @@ export class FileUploadService {
             case 'perfilProfesor':
 
         // Buscar el perfil del profesor en la base de datos
-        const perfilProfesor = await this.perfilesProfesoresService.obtenerPerfilProfesorId(entityId);
+        const perfilProfesor = await this.perfilesProfesoresService.obtenerPerfilProfesorPorUsuarioId(entityId);
         if (!perfilProfesor) {
             throw new Error('Perfil del profesor no encontrado');
         }

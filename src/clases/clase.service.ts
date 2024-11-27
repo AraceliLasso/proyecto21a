@@ -46,7 +46,7 @@ export class ClasesService{
         console.log('Categoría encontrada:', categoria);
 
         // Validar el perfil del profesor
-        const perfilProfesor = await this.perfilesProfesoresService.obtenerPerfilProfesorId(crearClaseDto.perfilProfesorId);
+        const perfilProfesor = await this.perfilesProfesoresService.obtenerPerfilProfesorPorUsuarioId(crearClaseDto.perfilProfesorId);
         if (!perfilProfesor) {
             throw new NotFoundException(`Perfil del profesor con ID ${crearClaseDto.perfilProfesorId} no encontrado`);
         }
