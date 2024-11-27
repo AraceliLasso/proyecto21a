@@ -126,7 +126,11 @@ export class PerfilesProfesoresService{
 
 
     async modificarPerfilProfesor(id: string, modificarPerfilProfesor: Partial<ModificarPerfilProfesorDto>): Promise<PerfilProfesor>{
+
+        console.log('Buscando perfil de profesor con ID:', id);
         const perfilProfesor = await this.perfilesProfesoresRepository.findOne({ where: { id } });
+
+        console.log('PerfilProfesor encontrado:', perfilProfesor);
         if (!perfilProfesor) {
         throw new NotFoundException(`Perfil del profesor con ID ${id} no encontrado`);
         } 
