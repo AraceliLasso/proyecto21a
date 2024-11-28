@@ -43,7 +43,7 @@ export class PerfilesProfesoresService{
     if (imagen) {
         try {
            // Como uploadFile devuelve un string, directamente lo asignamos a imagenUrl
-            imagenUrl = await this.cloudinaryService.uploadFile(imagen.buffer, imagen.originalname);
+            imagenUrl = await this.cloudinaryService.uploadFile(imagen.buffer,'perfilProfesor', imagen.originalname);
         } catch (error) {
             console.error('Error al subir la imagen a Cloudinary:', error);
             throw new InternalServerErrorException('No se pudo subir la imagen');
@@ -88,6 +88,17 @@ export class PerfilesProfesoresService{
     async obtenerPerfilProfesorClase(): Promise <PerfilProfesor[]>{
         return await this.perfilesProfesoresRepository.find({ relations: ['clases'] })
     }
+
+    async obtenerPerfilProfesorPorId(id: string) : Promise<PerfilProfesor>{
+        const perfilProfesor = await this.perfilesProfesoresRepository.findOne(
+            { where: { id: id  },
+        })
+        if(!perfilProfesor){
+            throw new NotFoundException(`Perfil de profesor con ID ${id} no encontrado`);
+        }
+        return perfilProfesor;      
+    }
+
 
     //Obtengo el perfil del profesor por id
     async obtenerPerfilProfesorPorUsuarioId(usuarioId: string) : Promise<PerfilProfesor>{

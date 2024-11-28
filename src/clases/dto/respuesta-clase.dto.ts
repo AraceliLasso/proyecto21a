@@ -3,6 +3,7 @@ import { IsNotEmpty, IsNumber, IsString, IsUUID } from "class-validator";
 import { RespuestaCategoriaDto } from "src/categorias/dto/respuesta-categoria.dto";
 import { Clase } from "../clase.entity";
 import { RespuestaPerfilProfesorDto } from "src/perfilesProfesores/dto/respuesta-perfilProfesor.dto";
+import { plainToClass, Type } from "class-transformer";
 
 export class RespuestaClaseDto {
     @ApiProperty({
@@ -42,26 +43,27 @@ export class RespuestaClaseDto {
         type: () => RespuestaPerfilProfesorDto, // Se indica que la categoría es un DTO
         description: "El perfil del profesor de la clase",
         required: false,
-        })
-        perfilProfesor?: RespuestaPerfilProfesorDto;
+    })
+    @Type(() => RespuestaPerfilProfesorDto) // Decorador para la transformación del perfilProfesor
+    perfilProfesor?: RespuestaPerfilProfesorDto;
 
     @ApiProperty({
-    type: () => RespuestaCategoriaDto, // Se indica que la categoría es un DTO
-    description: "La categoría del producto",
-    required: false,
+        type: () => RespuestaCategoriaDto, // Se indica que la categoría es un DTO
+        description: "La categoría del producto",
+        required: false,
     })
     categoria?: RespuestaCategoriaDto;
 
-    constructor(clases: Clase, categoria?: RespuestaCategoriaDto, perfilProfesor?: RespuestaPerfilProfesorDto,) {
-    this.id = clases.id;
-    this.nombre = clases.nombre;
-    this.descripcion = clases.descripcion;
-    this.fecha = clases.fecha;
-    this.disponibilidad = clases.disponibilidad;
-    this.imagen = clases.imagen || null;
-    this.perfilProfesor = perfilProfesor || null; 
-    this.categoria = categoria || null;
-    
+    constructor(clase: Clase) {
+        this.id = clase.id;
+        this.nombre = clase.nombre;
+        this.descripcion = clase.descripcion;
+        this.fecha = clase.fecha;
+        this.disponibilidad = clase.disponibilidad;
+        this.imagen = clase.imagen || null;
+        console.log('Perfil Profesor antes de asignar:', clase.perfilProfesor);
+        this.perfilProfesor = clase.perfilProfesor ? plainToClass(RespuestaPerfilProfesorDto, clase.perfilProfesor): null;
+        this.categoria = clase.categoria ? plainToClass(RespuestaCategoriaDto, clase.categoria) : null;
     }
 
     
