@@ -5,8 +5,8 @@ import { google } from 'googleapis';
 @Injectable()
 export class MailService {
     private oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,     // Client ID de Google
-        process.env.GOOGLE_CLIENT_SECRET, // Client Secret de Google
+        process.env.GOOGLEAUTH_CLIENT_ID,     // Client ID de Google
+        process.env.GOOGLEAUTH_CLIENT_SECRET, // Client Secret de Google
         'https://developers.google.com/oauthplayground'
     );
 
@@ -24,8 +24,8 @@ export class MailService {
             auth: {
                 type: 'OAuth2',
                 user: process.env.EMAIL_USER,
-                clientId: process.env.GOOGLE_CLIENT_ID,
-                clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+                clientId: process.env.GOOGLEAUTH_CLIENT_ID,
+                clientSecret: process.env.GOOGLEAUTH_CLIENT_SECRET,
                 refreshToken: process.env.REFRESH_TOKEN,
             },
         });
