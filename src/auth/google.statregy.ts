@@ -8,8 +8,8 @@ export class OAuth2Strategy extends PassportStrategy(Strategy, 'oauth2') {
     super({
         authorizationURL: 'https://provider.com/oauth2/authorize',
         tokenURL: 'https://provider.com/oauth2/token',
-        clientID: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        clientID: process.env.GOOGLEAUTH_CLIENT_ID,
+        clientSecret: process.env.GOOGLEAUTH_CLIENT_SECRET,
         callbackURL: 'http://localhost:3000/api/auth/callback',
         scope: ['profile', 'email'],
         });

@@ -75,7 +75,7 @@ export class FileUploadService {
             ...clase,   // Propiedades existentes
             imagen: url, // Actualizamos solo la imagen
             categoriaId: clase.categoria ? clase.categoria.id : null,
-            perfilProfesorId: perfilProfesorId 
+            perfilProfesorId: perfilProfesorId
         });
             break;
 
