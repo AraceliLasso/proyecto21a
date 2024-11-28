@@ -21,7 +21,7 @@ const PostgresDataSource = {
     password: process.env.DB_PASSWORD,
    // url: process.env.DB_URL, Si paso el db_name, db_host, db_port, db_username, db_password no debo enviar la url porque es una combinacion de todos ellos
     synchronize: true,
-    //ssl: false,
+    ssl: false,
     //ssl:{ rejectUnauthorized: false }, 
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     migrations:['./dist/migration/*{.ts,.js}'],
