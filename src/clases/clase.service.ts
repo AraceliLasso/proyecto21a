@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Clase } from "./clase.entity";
 import { Repository } from "typeorm";
@@ -29,6 +29,11 @@ export class ClasesService{
     async crear(crearClaseDto: CrearClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
         console.log('Datos del DTO recibidos:', crearClaseDto);
     
+        if (!crearClaseDto.perfilProfesorId) {
+            throw new BadRequestException('El perfilProfesorId es obligatorio.');
+        }
+
+
         // Validar si ya existe una clase con el mismo nombre
         const claseExistente = await this.clasesRepository.findOne({
             where: { nombre: crearClaseDto.nombre },
@@ -38,22 +43,25 @@ export class ClasesService{
             throw new ConflictException(`La clase con el nombre '${crearClaseDto.nombre}' ya existe.`);
         }
 
-
         const categoria = await this.categoriesService.findOne(crearClaseDto.categoriaId);
         if (!categoria) {
             throw new NotFoundException(`Categoría con ID ${crearClaseDto.categoriaId} no encontrada`);
         }
         console.log('Categoría encontrada:', categoria);
 
+
+        // Desestructurar el DTO
+        const { perfilProfesorId, categoriaId, ...restoDatos } = crearClaseDto;
+
         // Validar el perfil del profesor
-        const perfilProfesor = await this.perfilesProfesoresService.obtenerPerfilProfesorPorUsuarioId(crearClaseDto.perfilProfesorId);
+        const perfilProfesor = await this.perfilProfesorRepository.findOne({ where: { id: perfilProfesorId } });
         if (!perfilProfesor) {
             throw new NotFoundException(`Perfil del profesor con ID ${crearClaseDto.perfilProfesorId} no encontrado`);
         }
-
-        if (!crearClaseDto.perfilProfesorId) {
-            throw new Error('El perfilProfesorId es requerido y no puede ser nulo.');
-        }
+        
+        // if (!crearClaseDto.perfilProfesorId) {
+        //     throw new Error('El perfilProfesorId es requerido y no puede ser nulo.');
+        // }
 
         console.log('Perfil del profesor encontrado:', perfilProfesor);
     
@@ -61,7 +69,7 @@ export class ClasesService{
         if(file){
         try {
             // Subir la imagen a Cloudinary y obtener la URL
-            imageUrl = await this.cloudinaryService.uploadFile(file.buffer, file.originalname);
+            imageUrl = await this.cloudinaryService.uploadFile(file.buffer, 'clase', file.originalname);
             console.log('Archivo subido a URL:', imageUrl);
         } catch (error) {
             console.error('Error al subir la imagen a Cloudinary:', error);
@@ -69,24 +77,18 @@ export class ClasesService{
         }
     }
 
+    
+
     const nuevaClase = await this.clasesRepository.save({
-        ...crearClaseDto,
+        ...restoDatos,
         perfilProfesor,
         perfilProfesorId: perfilProfesor.id,
         categoria,
-        imagen: imageUrl
+        categoriaId,
+        imagen: imageUrl,
     });
     
     console.log("Nueva clase en service", nuevaClase)
-
-    // try {
-    //     await this.clasesRepository.save(nuevaClase);
-    // } catch (error) {
-    //     console.error('Error al guardar la clase:', error);
-    //     throw new InternalServerErrorException('No se pudo guardar la clase');
-    // }
-
-
     
     // Cargar las relaciones explícitamente
     const claseConRelaciones = await this.clasesRepository.findOne({
@@ -95,6 +97,12 @@ export class ClasesService{
     });
 
     console.log("ClaseConRelaciones", claseConRelaciones)
+
+    if (!claseConRelaciones) {
+        throw new NotFoundException('No se pudo cargar la clase con sus relaciones.');
+    }
+
+
     return claseConRelaciones;
     
     }
@@ -108,23 +116,23 @@ export class ClasesService{
         });
     }
 
-    async findOne(id: string, options?: { relations: string[] }): Promise<RespuestaClaseDto> {
+    async findOne(claseId: string): Promise<RespuestaClaseDto> {
         const clase = await this.clasesRepository.findOne({
-            where: { id },
-            relations: options?.relations || ['categoria', 'perfilProfesor'], 
+            where: { id: claseId },
+            relations: ['categoria', 'perfilProfesor'], 
         });
 
         console.log('Resultado de la consulta:', clase);
 
         if (!clase) {
-            throw new NotFoundException(`Clase con ID ${id} no encontrado`);
+            throw new NotFoundException(`Clase con ID ${claseId} no encontrado`);
         }
 
         // Crea el DTO de categoría
         const categoryDto = new RespuestaCategoriaDto(clase.categoria.id, clase.categoria.nombre);
 
         // Devuelve el DTO de producto con el DTO de categoría
-        return new RespuestaClaseDto(clase, categoryDto);
+        return new RespuestaClaseDto(clase);
     }
 
     // PUT
@@ -164,10 +172,12 @@ export class ClasesService{
             const perfilProfesor = await this.perfilProfesorRepository.findOne({
                 where: { id: modificarClaseDto.perfilProfesorId },
             });
+            console.log("if (modificarClaseDto.perfilProfesorId)", perfilProfesor)
             if (!perfilProfesor) {
                 throw new NotFoundException(`Perfil de profesor con ID ${modificarClaseDto.perfilProfesorId} no encontrado`);
             }
             clase.perfilProfesor = perfilProfesor;
+            console.log("clase.perfilProfesor", perfilProfesor)
         }else if (!clase.perfilProfesor) {
             // Lanza un error solo si no hay perfil asociado en la entidad actual
             throw new InternalServerErrorException('El perfil del profesor es obligatorio para actualizar la clase.');
@@ -195,7 +205,7 @@ export class ClasesService{
         // Crear el DTO de respuesta para la categoría
         const categoryDto = new RespuestaCategoriaDto(modificarclase.categoria.id, modificarclase.categoria.nombre);
 
-        return new RespuestaClaseDto(modificarclase, categoryDto);
+        return new RespuestaClaseDto(modificarclase,);
         }catch (error){
             console.error('Error al actualizar la clase:', error);
             throw new InternalServerErrorException('Error al actualizar la clase');
