@@ -1,5 +1,5 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ApiConsumes, ApiOperation, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { BadRequestException, Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { PerfilesProfesoresService } from "./perfilProfesor.service";
 import { RespuestaPerfilProfesorDto } from "./dto/respuesta-perfilProfesor.dto";
 import { AuthGuard } from "src/guard/auth.guard";
@@ -11,6 +11,7 @@ import { Clase } from "src/clases/clase.entity";
 import { ModificarPerfilProfesorDto } from "./dto/modificar-perfilProfesor.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { FileUploadService } from "src/file-upload/file-upload.service";
+import { ModificarEstadoDto } from "./dto/modificar-estadoPerfilProfesor.dto";
 
 
 @ApiTags("PerfilProfesor")
@@ -48,6 +49,9 @@ export class PerfilesProfesoresController{
     @Get('clase')
     @ApiOperation({ summary: 'Listar todos los perfiles de profesores por clases asignadas' })
     @ApiResponse({ status: 200, description: 'Lista de perfiles de profesores con sus clases asignadas', type: [PerfilProfesor] })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin' , 'profesor')
+    @ApiSecurity('bearer')
     async encontrarTodosPorClase(): Promise<PerfilProfesor[]> {
         return this.perfilesProfesoresService.obtenerPerfilProfesorClase();
     }
@@ -56,6 +60,9 @@ export class PerfilesProfesoresController{
     @ApiOperation({ summary: 'Obtener un perfil por UsuarioID' })
     @ApiResponse({ status: 200, description: 'Perfil de profesor encontrado', type: PerfilProfesor })
     @ApiResponse({ status: 404, description: 'Perfil de profesor no encontrado' })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin' , 'profesor')
+    @ApiSecurity('bearer')
     async findOne(@Param('usuarioId',  ParseUUIDPipe)usuarioId: string): Promise<PerfilProfesor> {
         return this.perfilesProfesoresService.obtenerPerfilProfesorPorUsuarioId(usuarioId);
     }
@@ -113,6 +120,24 @@ export class PerfilesProfesoresController{
         throw new BadRequestException('Error al actualizar el perfil del profesor: ' + error.message);
         }
     }
+
+
+    @Patch(':id/estado')
+    @ApiOperation({ summary: 'Modificar el estado de un perfil profesor' })
+    @ApiResponse({ status: 201, description: 'Estado del perfil profesor modificado exitosamente', type: [PerfilProfesor] })
+    @ApiResponse({ status: 400, description: 'Datos inválidos' })
+    @ApiResponse({ status: 500, description: 'Error inesperado al modificar el estado del perfil profesor' })
+    @ApiBody({ description: 'Cuerpo para modificar el estado del perfil profesor', type: ModificarEstadoDto })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin')
+    @ApiSecurity('bearer')
+    async cambiarEstado(
+        @Param('id') id: string,   // ID del profesor
+        @Body() modificarEstadoDto: ModificarEstadoDto, // El nuevo estado
+    ) {
+        return this.perfilesProfesoresService.cambiarEstadoPerfilProfesor(id, modificarEstadoDto.estado);
+    }
+
 
     @Delete(':id')
     @ApiOperation({ summary: 'Eliminar un perfil de profesor por ID' })
