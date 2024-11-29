@@ -48,6 +48,9 @@ export class PerfilesProfesoresController{
     @Get('clase')
     @ApiOperation({ summary: 'Listar todos los perfiles de profesores por clases asignadas' })
     @ApiResponse({ status: 200, description: 'Lista de perfiles de profesores con sus clases asignadas', type: [PerfilProfesor] })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin' , 'profesor')
+    @ApiSecurity('bearer')
     async encontrarTodosPorClase(): Promise<PerfilProfesor[]> {
         return this.perfilesProfesoresService.obtenerPerfilProfesorClase();
     }
