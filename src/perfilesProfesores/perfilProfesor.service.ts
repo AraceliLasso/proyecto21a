@@ -85,7 +85,13 @@ export class PerfilesProfesoresService{
     //Obtengo todos los perfiles de los profesores 
     async obtenerPerfilProfesor(): Promise <PerfilProfesor[]>{
         return await this.perfilesProfesoresRepository.find({
-            relations: ['clases'],
+            relations: ['clases', 'usuario'],
+            select: {
+                usuario: {
+                    id: true, // Solo incluye el ID del usuario relacionado
+                },
+                
+            },
             where: { clases: { estado: true } },
     })
     }

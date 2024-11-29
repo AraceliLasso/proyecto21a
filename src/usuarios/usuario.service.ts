@@ -83,7 +83,8 @@ export class UsuariosService {
 
         const usuarios = await this.usuariosRepository.find({
             skip: offset,
-            take: limit
+            take: limit,
+            relations: ['perfilProfesor']
         });
 
         return usuarios.map(usuario => {
@@ -95,7 +96,16 @@ export class UsuariosService {
             usuarioDto.telefono = usuario.telefono;
 
             // Aquí verificamos si el usuario es admin según su rol
-            usuarioDto.admin = usuario.rol === rolEnum.ADMIN;
+           // usuarioDto.admin = usuario.rol === rolEnum.ADMIN;
+
+            // Determina el rol del usuario
+        if (usuario.rol === rolEnum.ADMIN) {
+            usuarioDto.rol = 'admin';
+        } else if (usuario.perfilProfesor) { // Si tiene un perfil de profesor asociado
+            usuarioDto.rol = 'profesor';
+        } else {
+            usuarioDto.rol = 'cliente';
+        }
 
             return usuarioDto;
         });

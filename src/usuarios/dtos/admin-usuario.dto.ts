@@ -50,11 +50,20 @@ export class UsuarioAdminDto {
     telefono: number;
 
 
+    // @ApiProperty({
+    //     type: Boolean,
+    //     description: "Indica si el usuario tiene permisos de administrador",
+    //     required: true,
+    // })
+    // @IsBoolean()
+    // admin: boolean;
+
     @ApiProperty({
-        type: Boolean,
-        description: "Indica si el usuario tiene permisos de administrador",
+        type: String,
+        description: "El rol del usuario",
         required: true,
     })
-    @IsBoolean()
-    admin: boolean;
+    @IsNotEmpty()
+    @IsString()
+    rol: string; 
 }
