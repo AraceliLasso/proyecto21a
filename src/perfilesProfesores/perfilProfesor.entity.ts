@@ -30,4 +30,7 @@ export class PerfilProfesor {
     @JoinColumn()
     usuario:Usuario
 
+    @Column({ default: true }) // Por defecto, el perfil estará activo
+    estado: boolean
+
 }

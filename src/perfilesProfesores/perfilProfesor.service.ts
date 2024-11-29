@@ -84,7 +84,10 @@ export class PerfilesProfesoresService{
 
     //Obtengo todos los perfiles de los profesores relacionado con usuario
     async obtenerPerfilProfesor(): Promise <PerfilProfesor[]>{
-        return await this.perfilesProfesoresRepository.find()
+        return await this.perfilesProfesoresRepository.find({
+            relations: ['clases'],
+            where: { clases: { estado: true } },
+    })
     }
 
     //Obtengo los perfiles por clases
@@ -107,7 +110,7 @@ export class PerfilesProfesoresService{
     async obtenerPerfilProfesorPorUsuarioId(usuarioId: string) : Promise<PerfilProfesor>{
         const perfilProfesor = await this.perfilesProfesoresRepository.findOne(
             { where: { usuario: { id: usuarioId } },
-            relations: ['clases'],
+            relations: ['clases', 'usuario'],
         })
         if(!perfilProfesor){
             throw new NotFoundException(`Perfil de profesor con ID ${usuarioId} no encontrado`);
@@ -117,7 +120,7 @@ export class PerfilesProfesoresService{
 
     //Obtengo el perfil del profesor por id
     async obtenerPerfilProfesorIdYClase(id: string) : Promise<PerfilProfesor>{
-        const perfilProfesor = await this.perfilesProfesoresRepository.findOne({ where: {id}, relations: ['clases'],})
+        const perfilProfesor = await this.perfilesProfesoresRepository.findOne({ where: {id}, relations: ['clases', 'usuario'],})
         if(!perfilProfesor){
             throw new NotFoundException(`Perfil de profesor con ID ${id} no encontrado`);
         }
@@ -168,7 +171,7 @@ export class PerfilesProfesoresService{
         }
 
         // Si hay una nueva imagen, actualiza también la imagen del usuario
-        if (modificarPerfilProfesor.imagen) {
+        if (modificarPerfilProfesor.imagen && perfilProfesor.usuario) {
             perfilProfesor.usuario.imagen = modificarPerfilProfesor.imagen;
             await this.usuariosRepository.save(perfilProfesor.usuario); // Guarda los cambios en el usuario
         }
@@ -176,6 +179,22 @@ export class PerfilesProfesoresService{
 
         Object.assign(perfilProfesor, modificarPerfilProfesor);
         return this.perfilesProfesoresRepository.save(perfilProfesor);
+    }
+
+    async cambiarEstadoPerfilProfesor(id: string, estado: boolean): Promise<PerfilProfesor> {
+        console.log('Buscando perfil de profesor con ID:', id);
+        const perfilProfesor = await this.perfilesProfesoresRepository.findOne({ where: { id } });
+    
+        console.log('PerfilProfesor encontrado:', perfilProfesor);
+        if (!perfilProfesor) {
+            throw new NotFoundException(`Perfil del profesor con ID ${id} no encontrado`);
+        }
+    
+        // Cambiar el estado lógico
+        perfilProfesor.estado = estado;
+        await this.perfilesProfesoresRepository.save(perfilProfesor);
+    
+        return perfilProfesor;;
     }
 
     async eliminarPerfilProfesor(id: string): Promise<string> {
