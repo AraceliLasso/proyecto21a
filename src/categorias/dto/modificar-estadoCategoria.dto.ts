@@ -3,7 +3,7 @@ import { IsBoolean } from "class-validator";
 
 export class ModificarEstadoDto {
     @ApiProperty({
-        description: 'Indica si el perfil del profesor está habilitado (true) o deshabilitado (false)',
+        description: 'Indica si la categoria está habilitada (true) o deshabilitada (false)',
         example: true, 
     })
     @IsBoolean()

@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Param, UseGuards, Patch, HttpException, HttpStatus, Put, BadRequestException, Delete } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiSecurity } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiSecurity, ApiBody } from "@nestjs/swagger";
 import { AuthGuard } from "src/guard/auth.guard";
 import { RolesGuard } from "src/guard/roles.guard";
 import { Roles } from "src/decorators/roles.decorators";
@@ -9,6 +9,7 @@ import { RespuestaCategoriaDto } from "./dto/respuesta-categoria.dto";
 import { ModificarCategoriaDto } from "./dto/modificar-categoria.dto";
 import { Categoria } from "./categories.entity";
 import { Clase } from "src/clases/clase.entity";
+import { ModificarEstadoDto } from "./dto/modificar-estadoCategoria.dto";
 
 @ApiTags('Categorias')
 @Controller('categorias')
@@ -21,8 +22,18 @@ export class CategoriesController {
     @Get()
     @ApiOperation({ summary: 'Listar todas las categorías' })
     @ApiResponse({ status: 200, description: 'Lista de categorías', type: [Categoria] })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin')
+    @ApiSecurity('bearer')
     async findAll(): Promise<Categoria[]> {
         return this.categoriesService.findAll();
+    }
+
+    @Get('activas')
+    @ApiOperation({ summary: 'Listar todas las categorías activas' })
+    @ApiResponse({ status: 200, description: 'Lista de categorías activas', type: [Categoria] })
+    async findAllActivas(): Promise<Categoria[]> {
+        return this.categoriesService.obtenerCategoriasActivas();
     }
 
     @Get(':id')
@@ -41,18 +52,26 @@ export class CategoriesController {
         return this.categoriesService.findClasesByCategory(categoriaId);
     }
 
+
     @Post()
     @ApiOperation({ summary: 'Crear una nueva categoría' })
     @ApiResponse({ status: 201, description: 'Categoría creada', type: RespuestaCategoriaDto })
-    // @UseGuards(AuthGuard, RolesGuard)
-    // @Roles('admin')
-    // @ApiSecurity('bearer')
+    @ApiResponse({ status: 400, description: 'La categoría ya existe.' })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin')
+    @ApiSecurity('bearer')
     async create(@Body() crearCategoriaDto: CrearCategoriaDto): Promise<RespuestaCategoriaDto> {
         const newCategory = await this.categoriesService.create(crearCategoriaDto);
         return new RespuestaCategoriaDto(newCategory.id, newCategory.nombre);
     }
 
     @Put(':id')
+    @ApiOperation({ summary: 'Modificar una categoría' })
+    @ApiResponse({ status: 201, description: 'Categoría modificada', type: ModificarCategoriaDto })
+    @ApiResponse({ status: 404, description: 'Categoría no encontrada' })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin')
+    @ApiSecurity('bearer')
     async update(
         @Param('id') id: string, 
         @Body() modificarCategoriaDto: ModificarCategoriaDto
@@ -64,6 +83,24 @@ export class CategoriesController {
         }
     }
 
+    @Patch(':id/estado')
+    @ApiOperation({ summary: 'Modificar el estado de una categoria' })
+    @ApiResponse({ status: 201, description: 'Estado de la categoria modificado exitosamente', type: [Categoria] })
+    @ApiResponse({ status: 400, description: 'Datos inválidos' })
+    @ApiResponse({ status: 500, description: 'Error inesperado al modificar el estado de la categoria' })
+    @ApiBody({ description: 'Cuerpo para modificar el estado de la categoria', type: ModificarEstadoDto })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin')
+    @ApiSecurity('bearer')
+    async cambiarEstado(
+        @Param('id') id: string,   
+        @Body() modificarEstadoDto: ModificarEstadoDto, // El nuevo estado
+    ) {
+        return this.categoriesService.cambiarEstadoCategoria(id, modificarEstadoDto.estado);
+    }
+
+
+
     @Delete(':id')
     @ApiOperation({ summary: 'Eliminar una categoria por ID' })
     @ApiResponse({ status: 204, description: 'Categoria eliminada exitosamente' })
@@ -72,6 +109,7 @@ export class CategoriesController {
         const resultMessage = await this.categoriesService.removeCategory(id);
         return { message: resultMessage };
     }
+
 
 }
 
