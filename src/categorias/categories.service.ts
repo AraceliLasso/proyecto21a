@@ -54,6 +54,14 @@ export class CategoriesService {
         return await this.categoryRepository.find();
     }
 
+    async findOneActiva(id: string): Promise<Categoria> {
+        const category = await this.categoryRepository.findOne({ where: { id } });
+        if (!category.estado) {
+            throw new NotFoundException(`Categoria con ID ${id} no encontrada`);
+        }
+        return category;
+    }
+
     async findOne(id: string): Promise<Categoria> {
         const category = await this.categoryRepository.findOne({ where: { id } });
         if (!category) {
@@ -63,15 +71,26 @@ export class CategoriesService {
     }
 
     //Gestion de Search
-    async findClasesByCategory(categoryId: string): Promise<Clase[]> {
+    async findClasesByCategory(categoryId: string): Promise<any> {
         const category = await this.categoryRepository.findOne({
         where: { id: categoryId },
         relations: ['clases'],
         });
-        if (!category) {
+
+        if (!category.estado) {
         throw new HttpException("Categoria no encontrada", HttpStatus.NOT_FOUND);
         }
-      return category.clases; // Esto devuelve un array de clases
+
+        // Filtra las clases activas
+        const clasesActivas = category.clases.filter(clase => clase.estado); // Ajusta el campo según tu entidad
+
+        // Devuelve la información de la categoría activa con sus clases activas
+        return {
+        id: category.id,
+        nombre: category.nombre, // Asegúrate de que estos campos existan en tu entidad
+        clases: clasesActivas,
+    };
+
     }
 
     async update(id: string, modificarCategoriaDto: ModificarCategoriaDto): Promise<Categoria> {
@@ -82,16 +101,37 @@ export class CategoriesService {
         
         // Verificar si el nombre ya existe en otra categoría
         if (modificarCategoriaDto.nombre) {
+            const normalizedNombre = modificarCategoriaDto.nombre.trim().toLowerCase();// Normaliza a minúsculas
+            // Buscar si ya existe otra categoría con el mismo nombre (ignorando mayúsculas)
             const existingCategory = await this.categoryRepository.findOne({
-                where: { nombre: modificarCategoriaDto.nombre },
+                where: { nombre: normalizedNombre},
             });
             if (existingCategory && existingCategory.id !== id) {
                 throw new BadRequestException(`El nombre de la categoría "${modificarCategoriaDto.nombre}" ya existe`);
             }
+
+            // Verificar si el nombre propuesto es igual al actual al normalizarlo
+            if (category.nombre.toLowerCase() === normalizedNombre) {
+                throw new BadRequestException(`El nombre de la categoría "${modificarCategoriaDto.nombre}" ya existe`);
+            }
+
+            // Asignar el nombre normalizado
+            category.nombre = modificarCategoriaDto.nombre.trim();
         }
 
         Object.assign(category, modificarCategoriaDto);
-        return this.categoryRepository.save(category);
+
+        try {
+            return await this.categoryRepository.save(category);
+        } catch (error) {
+            if (error instanceof QueryFailedError && error.driverError?.code === '23505') {
+                throw new HttpException(
+                    'Ya existe una categoría con ese nombre.',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+            throw error;
+    }
     }
 
 

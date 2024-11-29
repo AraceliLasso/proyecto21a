@@ -36,10 +36,21 @@ export class CategoriesController {
         return this.categoriesService.obtenerCategoriasActivas();
     }
 
+    @Get(':id/activas')
+    @ApiOperation({ summary: 'Obtener una categoría activa por ID' })
+    @ApiResponse({ status: 200, description: 'Categoría encontrada', type: Categoria })
+    @ApiResponse({ status: 404, description: 'Categoría no encontrada' })
+    async findOneActiva(@Param('id') id: string): Promise<Categoria> {
+        return this.categoriesService.findOneActiva(id);
+    }
+
     @Get(':id')
     @ApiOperation({ summary: 'Obtener una categoría por ID' })
     @ApiResponse({ status: 200, description: 'Categoría encontrada', type: Categoria })
     @ApiResponse({ status: 404, description: 'Categoría no encontrada' })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin')
+    @ApiSecurity('bearer')
     async findOne(@Param('id') id: string): Promise<Categoria> {
         return this.categoriesService.findOne(id);
     }
