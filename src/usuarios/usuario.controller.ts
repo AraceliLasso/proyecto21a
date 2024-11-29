@@ -80,9 +80,9 @@ export class UsuariosController{
     @ApiOperation({ summary: 'Obtener todos los usuarios' })
     @ApiResponse({ status: 200, description: 'Usuarios obtenidos', type: [UsuarioAdminDto] })
     @HttpCode(HttpStatus.OK)
-    // @UseGuards(AuthGuard, RolesGuard)
-    // @Roles('admin')
-    // @ApiSecurity('bearer')
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin', 'profesor')
+    @ApiSecurity('bearer')
     @ApiQuery({ name: 'page', required: false, description: 'Número de página', example: 1 })
     @ApiQuery({ name: 'limit', required: false, description: 'Cantidad de resultados por página', example: 5 })
     async obtenerUsuariosPag(
