@@ -39,7 +39,10 @@ async crearUsuarioGoogle(payload: LoginGoogleDto) {
 
     try{
     // Buscar si el usuario ya está registrado
-    let usuario = await this.usuariosService.encontrarPorEmail(payload.email);
+    let usuario = await this.usuariosRepository.findOne({
+        where: { email: payload.email },
+        relations: ['membresia', 'inscripciones'],
+    });
     let esNuevoUsuario = false;
 
     // Si no existe, crear el usuario con los datos proporcionados y predeterminados
@@ -49,21 +52,37 @@ async crearUsuarioGoogle(payload: LoginGoogleDto) {
         esNuevoUsuario = true; // Marca al usuario como nuevo
     }
 
-    return{
-        usuario: {
-            nombre: usuario.nombre,
-            email: usuario.email,
-            telefono: usuario.telefono ?? null,
-            edad: usuario.edad ?? null,
-            rol: usuario.rol || "cliente",
-            imagen: usuario.imagen ?? null
-        },
-        esNuevoUsuario, // Devuelve si el usuario es nuevo
-    }  
-    } catch (error) {
-        console.error('Error en la autenticación OAuth:', error);
-        throw new UnauthorizedException('No se pudo autenticar al usuario');
-    }
+    // Generar el token JWT
+    const token = await this.generateJwtToken(usuario);
+
+    // Construir la respuesta sin contraseña
+    const { contrasena, ...usuarioSinContrasena } = usuario;
+
+
+    return {
+        usuario: usuarioSinContrasena,
+        esNuevoUsuario,
+        token,
+    };
+} catch (error) {
+    console.error('Error en la autenticación OAuth:', error);
+    throw new UnauthorizedException('No se pudo autenticar al usuario');
+}
+    // return{
+    //     usuario: {
+    //         nombre: usuario.nombre,
+    //         email: usuario.email,
+    //         telefono: usuario.telefono ?? null,
+    //         edad: usuario.edad ?? null,
+    //         rol: usuario.rol || "cliente",
+    //         imagen: usuario.imagen ?? null
+    //     },
+    //     esNuevoUsuario, // Devuelve si el usuario es nuevo
+    // }  
+    // } catch (error) {
+    //     console.error('Error en la autenticación OAuth:', error);
+    //     throw new UnauthorizedException('No se pudo autenticar al usuario');
+    // }
 }
 
 async generateJwtToken(usuario: Partial<Usuario>): Promise<string> {

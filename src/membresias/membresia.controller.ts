@@ -12,12 +12,15 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiSecuri
 import { ActualizarPrecioMembresiaDto } from './dtos/actualizar-membresia.dto';
 import * as express from 'express';
 import { CrearMembresiaDto } from './dtos/crear-membresia.dto';
+import { StripeService } from 'src/stripe/stripe.service';
 @ApiTags("Membresias")
 @Controller('membresias')
 export class MembresiaController {
     constructor(
         private readonly membresiaService: MembresiaService,
-        private readonly usuariosService: UsuariosService
+        private readonly usuariosService: UsuariosService,
+        private readonly stripeService: StripeService,
+        
     ) { }
     //*endpoint para crear membresias como admin
     @Post()
@@ -39,31 +42,39 @@ export class MembresiaController {
     @ApiResponse({ status: 200, description: 'Membresía comprada con éxito y asignada al usuario' })
     @ApiResponse({ status: 404, description: 'Membresía no encontrada' })
     @ApiResponse({ status: 400, description: 'Error al procesar la compra' })
-    @UseGuards(AuthGuard) // Asegúrate de que solo usuarios autenticados puedan acceder
-    async comprarMembresia(@Param('membresiaId') membresiaId: string, @Body() body: { usuarioId: string }) {
-        const usuario = await this.usuariosService.obtenerUsuarioPorId(body.usuarioId);  // Encontramos al usuario que compra
-        if (!usuario) {
-            throw new HttpException('Usuario no encontrado', HttpStatus.NOT_FOUND);
-        }
-
-        const membresia = await this.membresiaService.obtenerMembresiaPorId(membresiaId);  // Encontramos la membresía
-        if (!membresia) {
-            throw new HttpException('Membresía no encontrada', HttpStatus.NOT_FOUND);
-        }
-
-        // Verificamos que la membresía esté activa antes de permitir la compra
-        if (!membresia.activa) {
-            throw new HttpException('Esta membresía ya no está disponible', HttpStatus.BAD_REQUEST);
-        }
-
-        // Aquí puedes agregar lógica de pago si es necesario
-
-        // Asignamos la membresía al usuario
-        usuario.membresia = membresia;
-        await this.usuariosService.update(usuario);  // Actualizamos al usuario con la nueva membresía
-
-        return { message: 'Membresía comprada y asignada con éxito', membresia, usuario };
+    @ApiBearerAuth() // Indica en Swagger que este endpoint requiere autenticación
+    @UseGuards(AuthGuard) // Protege el endpoint
+    async comprarMembresia(
+      @Param('membresiaId') membresiaId: string,
+      @Request() req: any, // Extrae al usuario autenticado
+    ) {
+      const usuario = await this.usuariosService.obtenerUsuarioPorId(req.user.id);
+      if (!usuario) {
+        throw new HttpException('Usuario no encontrado', HttpStatus.NOT_FOUND);
+      }
+    
+      const membresia = await this.membresiaService.obtenerMembresiaPorId(membresiaId);
+      if (!membresia) {
+        throw new HttpException('Membresía no encontrada', HttpStatus.NOT_FOUND);
+      }
+    
+      if (!membresia.activa) {
+        throw new HttpException('Esta membresía ya no está disponible', HttpStatus.BAD_REQUEST);
+      }
+      
+// Crear la sesión de pago con Stripe
+const session = await this.stripeService.crearSesionDePago(
+    membresiaId,
+    membresia.precio,
+    usuario.email,
+  );
+    
+      usuario.membresia = membresia;
+      await this.usuariosService.update(usuario);
+    
+      return { message: 'Membresía comprada y asignada con éxito', membresia, usuario };
     }
+    
     @Get()
     @ApiOperation({ summary: 'Obtener todas las membresías' })
     @ApiResponse({ status: 200, description: 'Membresías obtenidas correctamente', type: [Membresia] })
