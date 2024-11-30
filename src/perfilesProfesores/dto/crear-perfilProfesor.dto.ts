@@ -22,7 +22,8 @@ export class CrearPerfilProfesorDto {
         type: 'string',
         format: 'binary', 
         description: 'Imagen del perfil del profesor',
+        required: false
     })
-    imagen: any;
+    imagen?: any;
 
 }

@@ -20,8 +20,8 @@ export class PerfilProfesor {
     @Column({ nullable: false })
     certificacion: string;
 
-    @Column({ nullable: false })
-    imagen: string;
+    @Column({ nullable: true })
+    imagen?: string;
 
     @OneToMany(() => Clase, (clases) => clases.perfilProfesor)
     clases: Clase[]

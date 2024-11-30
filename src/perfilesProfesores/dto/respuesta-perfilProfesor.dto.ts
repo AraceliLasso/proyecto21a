@@ -26,10 +26,10 @@ export class RespuestaPerfilProfesorDto {
     @IsNotEmpty()
     certificacion: string;
 
-    @ApiProperty({ description: "URL de la imagen del perfil del profesor", required: true })
+    @ApiProperty({ description: "URL de la imagen del perfil del profesor", required: false })
     @IsString()
-    @IsNotEmpty()
-    imagen: string;
+    
+    imagen?: string;
 
 
 }
