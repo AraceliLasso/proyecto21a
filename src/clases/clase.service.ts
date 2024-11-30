@@ -11,21 +11,24 @@ import { PerfilProfesor } from "src/perfilesProfesores/perfilProfesor.entity";
 import { SearchDto } from "./dto/search-logica.dto";
 import { CloudinaryService } from "src/file-upload/cloudinary.service";
 import { PerfilesProfesoresService } from "src/perfilesProfesores/perfilProfesor.service";
+import { Inscripcion } from "src/inscripciones/inscripcion.entity";
+import { InscripcionRespuestaDto } from "src/inscripciones/dtos/respuesta-inscripicon.dto";
+import { InscripcionesService } from "src/inscripciones/inscripcion.service";
 
 @Injectable()
 export class ClasesService{
     constructor (
         @InjectRepository(Clase)
         private readonly clasesRepository: Repository<Clase>,
+        @InjectRepository(Inscripcion)
+        private readonly inscripcionesRepository: Repository<Inscripcion>,
         private readonly categoriesService: CategoriesService,
         private readonly cloudinaryService: CloudinaryService,
-        private readonly perfilesProfesoresService: PerfilesProfesoresService,
-
         @InjectRepository(PerfilProfesor)
         private readonly perfilProfesorRepository: Repository<PerfilProfesor>,
     ){}
 
-    // POST
+    // POSTt
     async crear(crearClaseDto: CrearClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
         console.log('Datos del DTO recibidos:', crearClaseDto);
     
@@ -319,4 +322,52 @@ export class ClasesService{
         return this.clasesRepository.find({ where: { estado: true } });
     }
 
+
+    async obtenerInscripcionesPorClaseId(
+        page: number,
+        limit: number,
+        claseId: string,
+    ): Promise<InscripcionRespuestaDto[]> {
+        const take = Math.max(1, Math.min(limit, 50)); // Máximo de 50 resultados por página
+        const skip = (page - 1) * take;
+
+        // Buscar todas las inscripciones con la relación a la clase
+        const inscripciones = await this.inscripcionesRepository.find({
+            where: { clase: { id: claseId } }, // Asegúrate de que `clase` es el nombre correcto de la relación
+            relations: ['clase'], // Cambia `class` por `clase` si es el nombre real de la relación
+            skip,
+            take,
+        });
+
+        // Si no hay inscripciones, lanzar excepción
+        if (!inscripciones.length) {
+            throw new NotFoundException(
+                `No se encontraron inscripciones para la clase con id: ${claseId}`,
+            );
+        }
+
+        // Mapear las inscripciones al formato de DTO
+        return inscripciones.map((inscripcion) => {
+            const { id, fechaInscripcion, fechaVencimiento, estado, clase: entidadClase } = inscripcion;
+
+            // Transformar la clase al formato esperado
+            const claseDto: RespuestaClaseDto = {
+                id: entidadClase.id,
+                nombre: entidadClase.nombre,
+                descripcion: entidadClase.descripcion,
+                fecha: entidadClase.fecha,
+                disponibilidad: entidadClase.disponibilidad,
+            };
+
+            // Retornar el DTO de la inscripción
+            return {
+                id,
+                fechaInscripcion,
+                fechaVencimiento,
+                estado,
+                clase: claseDto,
+            };
+        });
+
+    }
 }

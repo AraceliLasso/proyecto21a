@@ -24,7 +24,7 @@ import { FileUploadService } from "src/file-upload/file-upload.service";
 export class UsuariosController{
     constructor(
         private readonly usuariosService: UsuariosService,
-        private readonly mailService: MailService,
+        // private readonly mailService: MailService,
         private readonly fileUploadService: FileUploadService
     ) {}
 
@@ -95,7 +95,12 @@ export class UsuariosController{
     }
 
 
-    
+     //get de TODAS las inscripciones de TODAS las clases de un ID profesor 
+    //  @Get()
+    //  async inscripcionesDeClasesPorProfesor() {
+ 
+    //  }
+ 
 
 
     @Get(':id')
@@ -116,6 +121,8 @@ export class UsuariosController{
         }
         return new UsuarioRespuestaDto(usuario)
     }
+
+    
 
     @Put(':id')
     @UseInterceptors(FileInterceptor('imagen')) 

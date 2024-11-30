@@ -16,9 +16,12 @@ import { PerfilesProfesoresService } from 'src/perfilesProfesores/perfilProfesor
 
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Clase, PerfilProfesor, Categoria, Usuario]), ],
-  providers: [FileUploadService, ClasesService, CategoriesService, UsuariosService, CloudinaryService, PerfilesProfesoresService],
-  controllers: [ClasesController],
+  imports: [
+    TypeOrmModule.forFeature([Usuario]),
+   ClasesModule
+  ],
+  providers: [FileUploadService, ClasesService, UsuariosService, CloudinaryService, PerfilesProfesoresService, CategoriesService],
+  controllers: [],
   exports: [FileUploadService,  CloudinaryService]
 })
 
