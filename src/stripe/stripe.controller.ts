@@ -59,18 +59,34 @@ export class StripeController {
       return { message: 'Webhook processing failed', error: error.message };
     }
   }
+
   @Post('checkout')
   @ApiOperation({ summary: 'Create a Stripe Checkout session' })
   @ApiResponse({ status: 200, description: 'Checkout session created' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async createCheckoutSession(membresiaId: string, precio: number, email: string) {
+  async createCheckoutSession(@Body() body: { membresiaId: string, precio: number, email: string }) {
     try {
-      // Aquí le pasamos los tres parámetros al método
-      const session = await this.stripeService.crearSesionDePago(membresiaId, precio, email);
-      return { sessionId: session.id }; // Regresamos el ID de la sesión de Stripe al frontend
+      console.log('Body recibido:', body);
+      return await this.stripeService.crearSesionDePago(body.membresiaId, body.precio, body.email); // Regresamos el ID de la sesión de Stripe al frontend
     } catch (error) {
       console.error('Error creating checkout session:', error);
       throw new Error('Failed to create checkout session');
+    }
+  }
+
+  @Post('create-invoice')
+  @ApiOperation({ summary: 'Crear una factura sin cliente en Stripe' })
+  @ApiResponse({ status: 200, description: 'Factura creada y enviada' })
+  @ApiResponse({ status: 500, description: 'Error al crear la factura' })
+  async createInvoice(
+    @Body() body: { email: string, items: { amount: number, currency: string, description: string }[] },
+  ) {
+    try {
+      const invoice = await this.stripeService.crearFacturaSinCliente(body.email, body.items);
+      return { message: 'Factura creada y enviada correctamente', invoice };
+    } catch (error) {
+      console.error('Error al crear la factura:', error);
+      throw new Error('No se pudo crear la factura');
     }
   }
 }

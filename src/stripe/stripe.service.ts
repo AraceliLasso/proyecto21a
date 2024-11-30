@@ -72,4 +72,34 @@ export class StripeService {
       throw new Error('Failed to retrieve session');
     }
   }
+  async crearFacturaSinCliente(email: string, items: { amount: number; currency: string; description: string }[]) {
+    try {
+      // Crea un cliente temporal utilizando el email
+      const customer = await this.stripe.customers.create({
+        email,
+      });
+  
+      // Crea los elementos de la factura
+      for (const item of items) {
+        await this.stripe.invoiceItems.create({
+          customer: customer.id,
+          amount: item.amount, // En centavos
+          currency: item.currency,
+          description: item.description,
+        });
+      }
+  
+      // Crea la factura y la envía al cliente
+      const invoice = await this.stripe.invoices.create({
+        customer: customer.id,
+        auto_advance: true, // Envía la factura automáticamente
+      });
+  
+      // Retorna la factura creada
+      return invoice;
+    } catch (error) {
+      console.error('Error al crear la factura:', error);
+      throw new Error('No se pudo crear la factura');
+    }
+  }
 }
