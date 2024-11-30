@@ -26,7 +26,7 @@ export class PerfilesProfesoresService{
     //GET alumnos inscriptos a la clase del profesor
     
 
-    async crearPerfilProfesor(usuarioId: string, crearPerfilProfesor: CrearPerfilProfesorDto, imagen: Express.Multer.File,): Promise<PerfilProfesor>{
+    async crearPerfilProfesor(usuarioId: string, crearPerfilProfesor: CrearPerfilProfesorDto, imagen?: Express.Multer.File,): Promise<PerfilProfesor>{
         // Buscar el usuario
     const usuario = await this.usuariosRepository.findOne({ where: { id: usuarioId } });
     if (!usuario) {

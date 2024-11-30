@@ -32,7 +32,7 @@ export class PerfilesProfesoresController{
     @UseInterceptors(FileInterceptor('imagen'))
     async crearPerfilProfesor(@Param('usuarioId') usuarioId: string, // ID del usuario asociado
     @Body()  crearPerfilProfesorDto: CrearPerfilProfesorDto,
-    @UploadedFile() imagen: Express.Multer.File
+    @UploadedFile() imagen?: Express.Multer.File
 ): Promise<RespuestaPerfilProfesorDto> {
         const perfil = await this.perfilesProfesoresService.crearPerfilProfesor(usuarioId, crearPerfilProfesorDto, imagen);
         return perfil;
