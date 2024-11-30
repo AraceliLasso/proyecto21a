@@ -43,6 +43,12 @@ export class ClasesService{
             .where('LOWER(clase.nombre) = :nombre', { nombre: normalizedName })
             .getOne();
 
+
+            // Validar si ya existe una clase con el nombre
+        // const claseExistente = await this.clasesRepository.findOne({
+        //     where: { nombre: normalizedName },
+        // });
+
         if (claseExistente) {
             throw new HttpException(
                 `La clase con el nombre "${crearClaseDto.nombre}" ya existe.`,
@@ -58,10 +64,10 @@ export class ClasesService{
 
 
         // Desestructurar el DTO
-        const { perfilProfesorId, categoriaId, ...restoDatos } = crearClaseDto;
+        //const { perfilProfesorId, categoriaId, ...restoDatos } = crearClaseDto;
 
         // Validar el perfil del profesor
-        const perfilProfesor = await this.perfilProfesorRepository.findOne({ where: { id: perfilProfesorId } });
+        const perfilProfesor = await this.perfilProfesorRepository.findOne({ where: { id: crearClaseDto.perfilProfesorId } });
         if (!perfilProfesor) {
             throw new NotFoundException(`Perfil del profesor con ID ${crearClaseDto.perfilProfesorId} no encontrado`);
         }
@@ -82,31 +88,32 @@ export class ClasesService{
     }
 
 
-    const nuevaClase = await this.clasesRepository.save({
-        ...restoDatos,
+    const nuevaClase = await this.clasesRepository.create({
+        ...crearClaseDto,
         perfilProfesor,
-        perfilProfesorId: perfilProfesor.id,
+        nombre: crearClaseDto.nombre.trim(),
+        //perfilProfesorId: perfilProfesor.id,
         categoria,
-        categoriaId,
+        //categoriaId,
         imagen: imageUrl,
     });
     
     console.log("Nueva clase en service", nuevaClase)
     
     // Cargar las relaciones explícitamente
-    const claseConRelaciones = await this.clasesRepository.findOne({
-        where: { id: nuevaClase.id },
-        relations: ['perfilProfesor', 'categoria'],
-    });
+    // const claseConRelaciones = await this.clasesRepository.findOne({
+    //     where: { id: nuevaClase.id },
+    //     relations: ['perfilProfesor', 'categoria'],
+    // });
 
-    console.log("ClaseConRelaciones", claseConRelaciones)
+    // console.log("ClaseConRelaciones", claseConRelaciones)
 
-    if (!claseConRelaciones) {
-        throw new NotFoundException('No se pudo cargar la clase con sus relaciones.');
-    }
+    // if (!claseConRelaciones) {
+    //     throw new NotFoundException('No se pudo cargar la clase con sus relaciones.');
+    // }
 
     
-    return claseConRelaciones;
+    return await this.clasesRepository.save(nuevaClase);
     } catch (error) {
         if (error instanceof QueryFailedError && error.driverError?.code === '23505') {
             // Error de unicidad detectado (código específico de PostgreSQL)
