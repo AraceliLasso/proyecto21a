@@ -248,4 +248,5 @@ export class UsuariosService {
         await this.usuariosRepository.remove(usuario);
         return id;
     }
+    
 }

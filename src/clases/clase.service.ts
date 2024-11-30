@@ -14,6 +14,7 @@ import { PerfilesProfesoresService } from "src/perfilesProfesores/perfilProfesor
 import { Inscripcion } from "src/inscripciones/inscripcion.entity";
 import { InscripcionRespuestaDto } from "src/inscripciones/dtos/respuesta-inscripicon.dto";
 import { InscripcionesService } from "src/inscripciones/inscripcion.service";
+import { rolEnum, Usuario } from "src/usuarios/usuario.entity";
 
 @Injectable()
 export class ClasesService{
@@ -26,6 +27,8 @@ export class ClasesService{
         private readonly cloudinaryService: CloudinaryService,
         @InjectRepository(PerfilProfesor)
         private readonly perfilProfesorRepository: Repository<PerfilProfesor>,
+        @InjectRepository(Usuario)
+        private readonly usuariosRepository: Repository<Usuario>,
     ){}
 
     // POSTt
@@ -223,51 +226,7 @@ export class ClasesService{
         return `Clase con ID ${id} eliminada exitosamente`;
     }
 
-    // async searchClases(searchDto: SearchDto): Promise<Clase[]> {
-    //     const { claseNombre, categoriaNombre, perfilProfesorNombre, descripcion } = searchDto;
-
-    //     // Crear un array de promesas
-    //     const queries = [];
-
-    //     if (claseNombre) {
-    //         queries.push(
-    //             this.clasesRepository.createQueryBuilder('clase')
-    //                 .where('clase.nombre ILIKE :nombre', { nombre: `%${claseNombre}%` })
-    //                 .getMany(),
-    //         );
-    //     }
-
-    //     if (categoriaNombre) {
-    //         queries.push(
-    //             this.clasesRepository.createQueryBuilder('clase')
-    //                 .innerJoinAndSelect('clase.categoria', 'categoria')
-    //                 .where('categoria.nombre ILIKE :categoriaNombre', { categoriaNombre: `%${categoriaNombre}%` })
-    //                 .getMany(),
-    //         );
-    //     }
-    //     if (perfilProfesorNombre) {
-    //         queries.push(
-    //             this.clasesRepository.createQueryBuilder('clase')
-    //                 .innerJoinAndSelect('clase.perfilProfesor', 'perfilProfesor')
-    //                 .where('perfilProfesor.nombre ILIKE :perfilProfesorNombre', { perfilProfesorNombre: `%${perfilProfesorNombre}%` })
-    //                 .getMany(),
-    //         );
-    //     }
-
-    //     if (descripcion) {
-    //         queries.push(
-    //             this.clasesRepository.createQueryBuilder('clase')
-    //                 .where('clase.descripcion ILIKE :descripcion', { descripcion: `%${descripcion}%` })
-    //                 .getMany(),
-    //         );
-    //     }
-
-    //     const resultados = await Promise.all(queries);
-    //     const clasesUnicas = Array.from(new Set(resultados.flat().map(clase => clase.id)))
-    //         .map(id => resultados.flat().find(clase => clase.id === id));
-
-    //     return clasesUnicas;
-    // }
+ 
 
     async searchClases(searchDto: SearchDto): Promise<Clase[]> {
         const { claseNombre, categoriaNombre, perfilProfesorNombre, descripcion } = searchDto;
@@ -370,4 +329,49 @@ export class ClasesService{
         });
 
     }
+    async obtenerInscripcionesPorProfesor(usuarioId: string) {
+        // Verificar si el usuario es un profesor
+        const usuario = await this.usuariosRepository.findOne({
+          where: { id: usuarioId, rol: rolEnum.PROFESOR },
+          relations: ['perfilProfesor'],
+        });
+    
+        if (!usuario) {
+          throw new NotFoundException('El usuario no es un profesor o no existe.');
+        }
+    
+        // Buscar clases asociadas al perfil del profesor
+        const clases = await this.clasesRepository.find({
+          where: { perfilProfesor: usuario.perfilProfesor },
+          relations: ['inscripciones', 'inscripciones.usuario'],
+        });
+    
+        if (clases.length === 0) {
+          throw new NotFoundException('El profesor no tiene clases asociadas.');
+        }
+    
+        // Extraer las inscripciones de todas las clases
+        const inscripciones = clases.flatMap((clase) =>
+          clase.inscripciones.map((inscripcion) => ({
+            id: inscripcion.id,
+            fechaInscripcion: inscripcion.fechaInscripcion,
+            fechaVencimiento: inscripcion.fechaVencimiento,
+            estado: inscripcion.estado,
+            claseId: clase.id,
+            claseNombre: clase.nombre,
+            estudianteId: inscripcion.usuario.id,
+            estudianteNombre: inscripcion.usuario.nombre,
+          })),
+        );
+    
+        return {
+          profesorId: usuario.id,
+          nombreProfesor: usuario.nombre,
+          clases: clases.map((clase) => ({
+            id: clase.id,
+            nombre: clase.nombre,
+            inscripciones: inscripciones.filter((i) => i.claseId === clase.id),
+          })),
+        };
+      }
 }
