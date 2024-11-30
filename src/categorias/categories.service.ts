@@ -5,6 +5,7 @@ import { Categoria } from "./categories.entity";
 import { CrearCategoriaDto } from "./dto/crear-categoria.dto";
 import { Clase } from "src/clases/clase.entity";
 import { ModificarCategoriaDto } from "./dto/modificar-categoria.dto";
+import { SearchDtoo } from "src/shared/dto/search.dto";
 
 
 @Injectable()
@@ -168,6 +169,36 @@ export class CategoriesService {
         await this.categoryRepository.remove(categoria);
         return `Categoría "${nombreCategoria}" eliminada exitosamente`;
     }
+        
+    async searchCategoria(searchDtoo: SearchDtoo): Promise<Categoria[]> {
+        const { claseNombre, categoriaNombre, perfilProfesorNombre, descripcion } = searchDtoo;
+    
+        // Construcción del query para buscar categorías
+        const query = this.categoryRepository.createQueryBuilder('categoria') // 'categoria' es la entidad principal
+            .leftJoinAndSelect('categoria.profesores', 'profesor') // Suponiendo que 'categoria' tiene relación con 'profesor'
+            .leftJoinAndSelect('profesor.perfilProfesor', 'perfilProfesor'); // Relación con 'perfilProfesor' desde 'profesor'
+    
+        // Condiciones de búsqueda
+        if (claseNombre) {
+            query.andWhere('profesor.nombre ILIKE :nombre', { nombre: `%${claseNombre}%` });
+        }
+    
+        if (categoriaNombre) {
+            query.andWhere('categoria.nombre ILIKE :categoriaNombre', { categoriaNombre: `%${categoriaNombre}%` });
+        }
+    
+        if (perfilProfesorNombre) {
+            query.andWhere('perfilProfesor.nombre ILIKE :perfilProfesorNombre', { perfilProfesorNombre: `%${perfilProfesorNombre}%` });
+        }
+    
+        if (descripcion) {
+            query.andWhere('categoria.descripcion ILIKE :descripcion', { descripcion: `%${descripcion}%` });
+        }
+    
+        // Ejecutar la consulta y obtener los resultados
+        const categorias = await query.getMany(); // Cambiado de 'profesores' a 'categorias'
+        return categorias;
+    }
 
 
-    }       
+        }       
