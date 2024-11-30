@@ -27,7 +27,7 @@ export class ClasesController {
     @Post()
     @ApiOperation({ summary: 'Crear una nueva clase' })
     @ApiResponse({ status: 201, description: 'Clase creada exitosamente', type: RespuestaClaseDto })
-    @ApiResponse({ status: 500, description: 'Error inesperado al crear la clase' })
+    @ApiResponse({ status: 400, description: 'La clase ya existe.' })
     @UseGuards(AuthGuard, RolesGuard)
     @Roles('admin', 'profesor')
     @ApiSecurity('bearer')
@@ -51,7 +51,7 @@ export class ClasesController {
     @UseInterceptors(FileInterceptor('imagen', {
         limits: { fileSize: 10 * 1024 * 1024} }), TransformInterceptor)
     async create(@Body() crearClaseDto: CrearClaseDto, @UploadedFile() file?: Express.Multer.File): Promise<RespuestaClaseDto> {
-        try {
+        
 
             // Validación de disponibilidad
             if (typeof crearClaseDto.disponibilidad !== 'number') {
@@ -72,18 +72,15 @@ export class ClasesController {
             nuevaClase.imagen = imagenUrl; // Asigna la URL al objeto de la clase
         }
             return nuevaClase; 
-        } catch (error) {
-            console.error('Error al crear la clase:', error);
-            throw new InternalServerErrorException('Error inesperado al crear la clase');
-        }
+        
     }
 
     //Para habilitar o deshabilitar una clase
     @Patch(':id')
-    @ApiOperation({ summary: 'Modificar el estado de una nueva clase' })
+    @ApiOperation({ summary: 'Modificar el estado de una clase' })
     @ApiResponse({ status: 201, description: 'Estado de la clase modificado exitosamente', type: [Clase] })
     @ApiResponse({ status: 400, description: 'Datos inválidos' })
-    @ApiResponse({ status: 500, description: 'Error inesperado al modificar el estado la clase' })
+    @ApiResponse({ status: 500, description: 'Error inesperado al modificar el estado de la clase' })
     @ApiBody({ description: 'Cuerpo para modificar el estado de una clase', type: ModificarEstadoDto })
     @UseGuards(AuthGuard, RolesGuard)
     @Roles('admin')
@@ -154,7 +151,7 @@ export class ClasesController {
     @Put(":id")
     @ApiOperation({ summary: 'Actualizar una clase existente' })
     @ApiResponse({ status: 200, description: 'Clase actualizada exitosamente', type: RespuestaClaseDto })
-    @ApiResponse({ status: 404, description: 'Clase no encontrada' })
+    @ApiResponse({ status: 400, description: 'La clase ya existe.' })
     @UseGuards(AuthGuard, RolesGuard)
     @Roles('admin', 'profesor')
     @ApiSecurity('bearer')
@@ -182,7 +179,7 @@ export class ClasesController {
     async update(
         @Param("id") id: string,
         @Body() modificarClaseDto: ModificarClaseDto, @UploadedFile(new ImageUploadPipe()) file?: Express.Multer.File): Promise<RespuestaClaseDto> {
-        try {
+        
             // Si hay un archivo, súbelo a Cloudinary
         if (file) {
             const uploadResult = await this.fileUploadService.uploadFile(file, 'clase', id);
@@ -194,10 +191,7 @@ export class ClasesController {
                 throw new NotFoundException('Clase no encontrada');
             }
             return modificarClase;
-        } catch (error) {
-            console.error('Error al actualizar el clase:', error);
-            throw new InternalServerErrorException('Error inesperado al actualizar la clase');
-        }
+    
     }
 
     // DELETE
@@ -205,9 +199,9 @@ export class ClasesController {
     @ApiOperation({ summary: 'Eliminar una clase por ID' })
     @ApiResponse({ status: 204, description: 'Clase eliminada exitosamente' })
     @ApiResponse({ status: 404, description: 'Clase no encontrada' })
-    // @UseGuards(AuthGuard, RolesGuard)
-    // @Roles('admin', 'profesor')
-    //@ApiSecurity('bearer')
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin', 'profesor')
+    @ApiSecurity('bearer')
     async delete(@Param('id', new ParseUUIDPipe()) id: string): Promise<{ message: string }> {
         const resultMessage = await this.clasesService.remove(id);
         return { message: resultMessage };
