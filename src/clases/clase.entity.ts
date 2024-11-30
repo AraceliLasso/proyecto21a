@@ -68,14 +68,21 @@ export class Clase {
     categoriaId: string;
 
     
-    @ManyToOne(() => Categoria, (categoria) => categoria.clases, { eager: true })
+    @ManyToOne(() => Categoria, (categoria) => categoria.clases, )
     @JoinColumn({ name: "categoriaId" })
     categoria: Categoria;
 
-    @ManyToOne(() => PerfilProfesor, (perfilProfesor) => perfilProfesor.clases, { eager: true })
+    @ManyToOne(() => PerfilProfesor, (perfilProfesor) => perfilProfesor.clases)
     @JoinColumn({ name: 'perfilProfesorId' })
     perfilProfesor: PerfilProfesor;
+    
+    
+    // @Column({ type: 'uuid', name: 'perfilProfesorId', nullable: false })
+    // perfilProfesorId: string;
 
-    @OneToMany(() => Inscripcion, (inscripciones) => inscripciones.clase, { eager: true })
+    @OneToMany(() => Inscripcion, (inscripciones) => inscripciones.clase, )
     inscripciones: Inscripcion[];
+
+    @Column({ default: true }) // Por defecto, la clase estará activa
+    estado: boolean;
 }

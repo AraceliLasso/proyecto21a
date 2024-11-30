@@ -42,39 +42,39 @@ export class MembresiaController {
     @ApiResponse({ status: 200, description: 'Membresía comprada con éxito y asignada al usuario' })
     @ApiResponse({ status: 404, description: 'Membresía no encontrada' })
     @ApiResponse({ status: 400, description: 'Error al procesar la compra' })
-    @UseGuards(AuthGuard)
+    @ApiBearerAuth() // Indica en Swagger que este endpoint requiere autenticación
+    @UseGuards(AuthGuard) // Protege el endpoint
     async comprarMembresia(
       @Param('membresiaId') membresiaId: string,
-      @Body() body: { usuarioId: string },
-      @Req() req: any, // Si necesitas extraer algo del token, como `req.user`
+      @Request() req: any, // Extrae al usuario autenticado
     ) {
-      // Verificar existencia del usuario
-      const usuario = await this.usuariosService.obtenerUsuarioPorId(body.usuarioId);
+      const usuario = await this.usuariosService.obtenerUsuarioPorId(req.user.id);
       if (!usuario) {
         throw new HttpException('Usuario no encontrado', HttpStatus.NOT_FOUND);
       }
     
-      // Verificar existencia de la membresía
       const membresia = await this.membresiaService.obtenerMembresiaPorId(membresiaId);
       if (!membresia) {
         throw new HttpException('Membresía no encontrada', HttpStatus.NOT_FOUND);
       }
     
-      // Verificar que la membresía esté activa
       if (!membresia.activa) {
         throw new HttpException('Esta membresía ya no está disponible', HttpStatus.BAD_REQUEST);
       }
+      
+// Crear la sesión de pago con Stripe
+const session = await this.stripeService.crearSesionDePago(
+    membresiaId,
+    membresia.precio,
+    usuario.email,
+  );
     
-      // Crear la sesión de pago con Stripe
-      const session = await this.stripeService.crearSesionDePago(
-        membresiaId,
-        membresia.precio,
-        usuario.email,
-      );
+      usuario.membresia = membresia;
+      await this.usuariosService.update(usuario);
     
-      // Retornar la URL de la sesión para que el cliente complete el pago
-      return { url: session.url };
+      return { message: 'Membresía comprada y asignada con éxito', membresia, usuario };
     }
+    
     @Get()
     @ApiOperation({ summary: 'Obtener todas las membresías' })
     @ApiResponse({ status: 200, description: 'Membresías obtenidas correctamente', type: [Membresia] })

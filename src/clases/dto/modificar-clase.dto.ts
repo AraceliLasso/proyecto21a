@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 import { IsNotEmpty, IsNumber, IsString, IsUUID } from "class-validator";
 
 export class ModificarClaseDto {
@@ -19,6 +20,7 @@ export class ModificarClaseDto {
     @ApiProperty({ description: "La disponibilidad de clases", required: true })
     @IsNumber()
     @IsNotEmpty()
+    @Type(() => Number)
     disponibilidad: number;
 
     @ApiProperty({
@@ -28,15 +30,18 @@ export class ModificarClaseDto {
     })
     imagen: any;
 
-    @ApiProperty({ description: "ID de la categoría", required: true })
+    @ApiProperty({ description: "ID de la categoría", required: false })
     @IsUUID()
     @IsNotEmpty()
-    categoriaId: string;
+    categoriaId?: string;
 
-    @ApiProperty({ description: "ID del profesor", required: true })
+    @ApiProperty({ description: "ID del profesor", required: false })
     @IsUUID()
     @IsNotEmpty()
-    perfilProfesorId: string;
+    perfilProfesorId?: string;
+
+
+    // estado: boolean
 
 }
 

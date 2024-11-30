@@ -43,7 +43,7 @@ export class PerfilesProfesoresService{
     if (imagen) {
         try {
            // Como uploadFile devuelve un string, directamente lo asignamos a imagenUrl
-            imagenUrl = await this.cloudinaryService.uploadFile(imagen.buffer, imagen.originalname);
+            imagenUrl = await this.cloudinaryService.uploadFile(imagen.buffer,'perfilProfesor', imagen.originalname);
         } catch (error) {
             console.error('Error al subir la imagen a Cloudinary:', error);
             throw new InternalServerErrorException('No se pudo subir la imagen');
@@ -59,8 +59,11 @@ export class PerfilesProfesoresService{
 
     const perfilGuardado = await this.perfilesProfesoresRepository.save(nuevoPerfil);
 
-    // Actualizar el rol del usuario a profesor
+    // Actualizar el rol del usuario a profesor y su imagen
     usuario.rol = rolEnum.PROFESOR
+    if (imagenUrl) {
+        usuario.imagen = imagenUrl;
+    }
     await this.usuariosRepository.save(usuario);
 
      // Consultar y devolver el perfil actualizado, incluyendo el usuario con el rol actualizado
@@ -79,9 +82,18 @@ export class PerfilesProfesoresService{
     }
 
 
-    //Obtengo todos los perfiles de los profesores relacionado con usuario
+    //Obtengo todos los perfiles de los profesores 
     async obtenerPerfilProfesor(): Promise <PerfilProfesor[]>{
-        return await this.perfilesProfesoresRepository.find({ relations: ['usuario'] })
+        return await this.perfilesProfesoresRepository.find({
+            relations: ['clases', 'usuario'],
+            select: {
+                usuario: {
+                    id: true, // Solo incluye el ID del usuario relacionado
+                },
+                
+            },
+            where: { clases: { estado: true } },
+    })
     }
 
     //Obtengo los perfiles por clases
@@ -89,11 +101,9 @@ export class PerfilesProfesoresService{
         return await this.perfilesProfesoresRepository.find({ relations: ['clases'] })
     }
 
-    //Obtengo el perfil del profesor por id
-    async obtenerPerfilProfesorId(id: string) : Promise<PerfilProfesor>{
+    async obtenerPerfilProfesorPorId(id: string) : Promise<PerfilProfesor>{
         const perfilProfesor = await this.perfilesProfesoresRepository.findOne(
-            { where: {id},
-            relations: ['usuario', 'clases'],
+            { where: { id: id  },
         })
         if(!perfilProfesor){
             throw new NotFoundException(`Perfil de profesor con ID ${id} no encontrado`);
@@ -101,36 +111,96 @@ export class PerfilesProfesoresService{
         return perfilProfesor;      
     }
 
+
+    //Obtengo el perfil del profesor por id
+    async obtenerPerfilProfesorPorUsuarioId(usuarioId: string) : Promise<PerfilProfesor>{
+        const perfilProfesor = await this.perfilesProfesoresRepository.findOne(
+            { where: { usuario: { id: usuarioId } },
+            relations: ['clases', 'usuario'],
+        })
+        if(!perfilProfesor){
+            throw new NotFoundException(`Perfil de profesor con ID ${usuarioId} no encontrado`);
+        }
+        return perfilProfesor;      
+    }
+
     //Obtengo el perfil del profesor por id
     async obtenerPerfilProfesorIdYClase(id: string) : Promise<PerfilProfesor>{
-        const perfilProfesor = await this.perfilesProfesoresRepository.findOne({ where: {id}, relations: ['clases'],})
+        const perfilProfesor = await this.perfilesProfesoresRepository.findOne({ where: {id}, relations: ['clases', 'usuario'],})
         if(!perfilProfesor){
             throw new NotFoundException(`Perfil de profesor con ID ${id} no encontrado`);
         }
         return perfilProfesor;      
     }
 
-  
+    
+    async obtenerPerfilProfesorConClasesActivas(id: string): Promise<PerfilProfesor> {
+        const perfilProfesor = await this.perfilesProfesoresRepository.createQueryBuilder('perfilProfesor')
+            .leftJoinAndSelect('perfilProfesor.clases', 'clase', 'clase.estado = true') // Filtra solo las clases activas
+            .where('perfilProfesor.id = :id', { id })
+            .getOne();
+    
+        if (!perfilProfesor) {
+            throw new NotFoundException(`Perfil de profesor con ID ${id} no encontrado`);
+        }
+    
+        return perfilProfesor;
+    }  
 
 
     async modificarPerfilProfesor(id: string, modificarPerfilProfesor: Partial<ModificarPerfilProfesorDto>): Promise<PerfilProfesor>{
-        const perfilProfesor = await this.perfilesProfesoresRepository.findOne({ where: { id } });
+
+        console.log('Buscando perfil de profesor con ID:', id);
+        const perfilProfesor = await this.perfilesProfesoresRepository.findOne(
+            { where: { id },
+            relations: ['usuario']
+        });
+
+        console.log('PerfilProfesor encontrado:', perfilProfesor);
         if (!perfilProfesor) {
         throw new NotFoundException(`Perfil del profesor con ID ${id} no encontrado`);
         } 
         
-        // Verificar si el nombre ya existe en otro perfil
-        if (modificarPerfilProfesor.nombre) {
+        // Verificar si el nombre ya existe en otro perfil, solo si el nombre ha cambiado
+        if (
+            modificarPerfilProfesor.nombre &&
+            modificarPerfilProfesor.nombre !== perfilProfesor.nombre
+        ) {
             const existingPerfilProfesor = await this.perfilesProfesoresRepository.findOne({
-                where: { nombre: modificarPerfilProfesor.nombre, id: Not(id) },
+            where: { nombre: modificarPerfilProfesor.nombre, id: Not(id) },
             });
             if (existingPerfilProfesor) {
-                throw new BadRequestException(`El nombre del perfil de profesor "${modificarPerfilProfesor.nombre}" ya existe`);
+                throw new BadRequestException(
+                    `El nombre del perfil de profesor "${modificarPerfilProfesor.nombre}" ya existe`
+                );
             }
         }
 
+        // Si hay una nueva imagen, actualiza también la imagen del usuario
+        if (modificarPerfilProfesor.imagen && perfilProfesor.usuario) {
+            perfilProfesor.usuario.imagen = modificarPerfilProfesor.imagen;
+            await this.usuariosRepository.save(perfilProfesor.usuario); // Guarda los cambios en el usuario
+        }
+
+
         Object.assign(perfilProfesor, modificarPerfilProfesor);
         return this.perfilesProfesoresRepository.save(perfilProfesor);
+    }
+
+    async cambiarEstadoPerfilProfesor(id: string, estado: boolean): Promise<PerfilProfesor> {
+        console.log('Buscando perfil de profesor con ID:', id);
+        const perfilProfesor = await this.perfilesProfesoresRepository.findOne({ where: { id } });
+    
+        console.log('PerfilProfesor encontrado:', perfilProfesor);
+        if (!perfilProfesor) {
+            throw new NotFoundException(`Perfil del profesor con ID ${id} no encontrado`);
+        }
+    
+        // Cambiar el estado lógico
+        perfilProfesor.estado = estado;
+        await this.perfilesProfesoresRepository.save(perfilProfesor);
+    
+        return perfilProfesor;;
     }
 
     async eliminarPerfilProfesor(id: string): Promise<string> {

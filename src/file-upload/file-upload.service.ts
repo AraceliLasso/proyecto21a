@@ -13,7 +13,8 @@ import { PerfilesProfesoresService } from 'src/perfilesProfesores/perfilProfesor
 
 @Injectable()
 export class FileUploadService {
-    constructor(private readonly cloudinaryService: CloudinaryService,
+    constructor(
+        private readonly cloudinaryService: CloudinaryService,
         private readonly clasesService: ClasesService,
         private readonly usuariosService: UsuariosService,
         private readonly perfilesProfesoresService: PerfilesProfesoresService
@@ -49,30 +50,42 @@ export class FileUploadService {
         switch (entityType) {
             case 'clase':
                 // Primero obtenemos la clase actual para no sobrescribir las demás propiedades
-                const clase = await this.clasesService.findOne(entityId, {
-                    relations: ['perfilProfesor', 'categoria'],});  
+                const clase = await this.clasesService.findOne(entityId);  
+            console.log("Clase guardada", clase)
+
+            const perfilProfesorId = clase.perfilProfesor ? clase.perfilProfesor.id : null;
+
+            console.log('Perfil del Profesor:', clase.perfilProfesor);
+            console.log('ID del Perfil:', clase.perfilProfesor?.id);
+            console.log('perfilProfesorId',perfilProfesorId )
+
+
             
             if (!clase) {
                 throw new Error('Clase no encontrada');
             }
-            console.log('Perfil del Profesor:', clase.perfilProfesor);
-            console.log('ID del Perfil:', clase.perfilProfesor?.id);
 
-
+            // Maneja las relaciones para evitar errores
+            
             if (!clase.categoria) {
                 throw new Error('La categoría no existe');
             }
-
+            
         // Actualizamos solo la propiedad imagen, manteniendo las demás propiedades intactas
         await this.clasesService.update(entityId, {
             ...clase,   // Propiedades existentes
             imagen: url, // Actualizamos solo la imagen
-            categoriaId: clase.categoria.id ,
-            perfilProfesorId: clase.perfilProfesor.id,
+            categoriaId: clase.categoria ? clase.categoria.id : null,
+            perfilProfesorId: perfilProfesorId
         });
             break;
 
         case 'usuario':
+            // Valida si `entityId` está presente
+                if (!entityId) {
+                    throw new Error('No se proporcionó un ID de usuario para actualizar.');
+                }
+
             // Llamar a `actualizarUsuarios` pasando la URL en el DTO
             await this.usuariosService.actualizarUsuarios(entityId, { imagen: url });
             break;
@@ -80,7 +93,7 @@ export class FileUploadService {
             case 'perfilProfesor':
 
         // Buscar el perfil del profesor en la base de datos
-        const perfilProfesor = await this.perfilesProfesoresService.obtenerPerfilProfesorId(entityId);
+        const perfilProfesor = await this.perfilesProfesoresService.obtenerPerfilProfesorPorId(entityId);
         if (!perfilProfesor) {
             throw new Error('Perfil del profesor no encontrado');
         }
