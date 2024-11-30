@@ -51,4 +51,7 @@ export class Usuario {
 
     @OneToMany(()=> Inscripcion, (inscripciones) => inscripciones.usuario, { eager: true, cascade: true })
     inscripciones:Inscripcion[];
+
+    @Column({ default: true }) // Por defecto, el usuario estará activo
+    estado: boolean;
 }
