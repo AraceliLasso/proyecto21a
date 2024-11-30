@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { PerfilesProfesoresService } from "./perfilProfesor.service";
 import { RespuestaPerfilProfesorDto } from "./dto/respuesta-perfilProfesor.dto";
@@ -12,6 +12,7 @@ import { ModificarPerfilProfesorDto } from "./dto/modificar-perfilProfesor.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { FileUploadService } from "src/file-upload/file-upload.service";
 import { ModificarEstadoDto } from "./dto/modificar-estadoPerfilProfesor.dto";
+import { SearchDtoo } from "src/shared/dto/search.dto";
 
 
 @ApiTags("PerfilProfesor")
@@ -150,6 +151,24 @@ export class PerfilesProfesoresController{
     async remove(@Param('id') id: string): Promise<{ message: string }> {
         const resultMessage = await this.perfilesProfesoresService.eliminarPerfilProfesor(id);
         return { message: resultMessage };
+    }
+
+
+    @Post('search')
+    @ApiOperation({ summary: 'Buscar profesores por nombre, categoría, perfil o descripción' })
+    @ApiResponse({ status: 200, description: 'Profesores encontrados', type: [PerfilProfesor] })
+    @ApiResponse({ status: 404, description: 'No se encontraron profesores' })
+    async searchProfesores(@Body() searchDtoo: SearchDtoo): Promise<PerfilProfesor[]> {
+        try {
+            const profesores = await this.perfilesProfesoresService.searchperfilProfesor(searchDtoo);
+            if (!profesores || profesores.length === 0) {
+                throw new NotFoundException('No se encontraron profesores');
+            }
+            return profesores;
+        } catch (error) {
+            console.error('Error al buscar profesores:', error);
+            throw new InternalServerErrorException('Error inesperado al buscar profesores');
+        }
     }
 
 

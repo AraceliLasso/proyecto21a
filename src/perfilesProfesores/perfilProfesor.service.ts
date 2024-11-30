@@ -8,6 +8,7 @@ import { ClasesService } from "src/clases/clase.service";
 import { Clase } from "src/clases/clase.entity";
 import { rolEnum, Usuario } from "src/usuarios/usuario.entity";
 import { CloudinaryService } from "src/file-upload/cloudinary.service";
+import { SearchDtoo } from "src/shared/dto/search.dto";
 
 @Injectable()
 export class PerfilesProfesoresService{
@@ -217,6 +218,37 @@ export class PerfilesProfesoresService{
         const nombrePerfil = perfilProfesor.nombre;
         await this.perfilesProfesoresRepository.remove(perfilProfesor);
         return `Perfil del profesor "${nombrePerfil}" eliminado exitosamente`;
+    }
+
+     // Función de búsqueda para profesores
+     async searchperfilProfesor(searchDtoo: SearchDtoo): Promise<PerfilProfesor[]> {
+        const { claseNombre, categoriaNombre, perfilProfesorNombre, descripcion } = searchDtoo;
+    
+        // Construcción del query para buscar profesores
+        const query = this.perfilesProfesoresRepository.createQueryBuilder('profesor') 
+            .leftJoinAndSelect('profesor.categoria', 'categoria') 
+            .leftJoinAndSelect('profesor.perfilProfesor', 'perfilProfesor'); 
+    
+        // Condiciones de búsqueda
+        if (claseNombre) {
+            query.andWhere('profesor.nombre ILIKE :nombre', { nombre: `%${claseNombre}%` });
+        }
+    
+        if (categoriaNombre) {
+            query.andWhere('categoria.nombre ILIKE :categoriaNombre', { categoriaNombre: `%${categoriaNombre}%` });
+        }
+    
+        if (perfilProfesorNombre) {
+            query.andWhere('perfilProfesor.nombre ILIKE :perfilProfesorNombre', { perfilProfesorNombre: `%${perfilProfesorNombre}%` });
+        }
+    
+        if (descripcion) {
+            query.andWhere('profesor.descripcion ILIKE :descripcion', { descripcion: `%${descripcion}%` });
+        }
+    
+        // Ejecutar la consulta y obtener los resultados
+        const profesores = await query.getMany();
+        return profesores;
     }
     
 }

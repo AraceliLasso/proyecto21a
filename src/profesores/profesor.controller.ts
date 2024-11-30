@@ -19,9 +19,9 @@ export class ProfesoresController {
     @ApiOperation({ summary: 'Buscar profesores por nombre, categoría, perfil o descripción' })
     @ApiResponse({ status: 200, description: 'Profesores encontrados', type: [Profesores] })
     @ApiResponse({ status: 404, description: 'No se encontraron profesores' })
-    async searchProfesores(@Body() searchDto: SearchDtoo): Promise<Profesores[]> {
+    async searchProfesores(@Body() searchDtoo: SearchDtoo): Promise<Profesores[]> {
         try {
-            const profesores = await this.profesoresService.searchProfesores(searchDto);
+            const profesores = await this.profesoresService.searchProfesores(searchDtoo);
             if (!profesores || profesores.length === 0) {
                 throw new NotFoundException('No se encontraron profesores');
             }
