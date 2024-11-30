@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Patch, HttpException, HttpStatus, Put, BadRequestException, Delete } from "@nestjs/common";
+import { Controller, Get, Post, Body, Param, UseGuards, Patch, HttpException, HttpStatus, Put, BadRequestException, Delete, NotFoundException, InternalServerErrorException } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiSecurity, ApiBody } from "@nestjs/swagger";
 import { AuthGuard } from "src/guard/auth.guard";
 import { RolesGuard } from "src/guard/roles.guard";
@@ -10,6 +10,7 @@ import { ModificarCategoriaDto } from "./dto/modificar-categoria.dto";
 import { Categoria } from "./categories.entity";
 import { Clase } from "src/clases/clase.entity";
 import { ModificarEstadoDto } from "./dto/modificar-estadoCategoria.dto";
+import { SearchDtoo } from "src/shared/dto/search.dto";
 
 @ApiTags('Categorias')
 @Controller('categorias')
@@ -120,6 +121,24 @@ export class CategoriesController {
         const resultMessage = await this.categoriesService.removeCategory(id);
         return { message: resultMessage };
     }
+
+    @Post('search')
+@ApiOperation({ summary: 'Buscar categorías por nombre, clase, profesor o descripción' })
+@ApiResponse({ status: 200, description: 'Categorías encontradas', type: [Categoria] })
+@ApiResponse({ status: 404, description: 'No se encontraron categorías' })
+async searchCategorias(@Body() searchDtoo: SearchDtoo) {
+    try {
+        const categorias = await this.categoriesService.searchCategoria(searchDtoo);
+        if (!categorias || categorias.length === 0) {
+            throw new NotFoundException('No se encontraron categorías');
+        }
+        return categorias;
+    } catch (error) {
+        console.error('Error al buscar categorías:', error);
+        throw new InternalServerErrorException('Error inesperado al buscar categorías');
+    }
+}
+
 
 
 }

@@ -36,7 +36,8 @@ export class PerfilesProfesoresController{
 ): Promise<RespuestaPerfilProfesorDto> {
         const perfil = await this.perfilesProfesoresService.crearPerfilProfesor(usuarioId, crearPerfilProfesorDto, imagen);
         return perfil;
-    }
+    };
+    
 
 
     @Get()
