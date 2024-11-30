@@ -39,7 +39,7 @@ export class PerfilesProfesoresService{
     }
 
     // Subir la imagen a Cloudinary
-    let imagenUrl: string | null = null;
+    let imagenUrl: string | null = usuario.imagen || null;// Usa la imagen del usuario si existe
     if (imagen) {
         try {
            // Como uploadFile devuelve un string, directamente lo asignamos a imagenUrl
