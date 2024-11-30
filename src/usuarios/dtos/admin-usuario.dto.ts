@@ -66,4 +66,11 @@ export class UsuarioAdminDto {
     @IsNotEmpty()
     @IsString()
     rol: string; 
+
+    @ApiProperty({
+        description: 'Indica si el usuario está habilitado (true) o deshabilitado (false)',
+        example: true, 
+    })
+    @IsBoolean()
+    estado: boolean;
 }

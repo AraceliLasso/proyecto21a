@@ -4,7 +4,7 @@ import { CrearUsuarioDto } from "./dtos/crear-usuario.dto";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from 'bcrypt';
 // import { usuarioWithAdminDto } from "./dto/admin-usuario.dto";
-import { HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from "@nestjs/common";
 
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -15,6 +15,7 @@ import { ActualizarUsuarioDto } from "./dtos/actualizar-usuario.dto";
 import { ActualizarPerfilDto } from "src/auth/dtos/actualizar-usuarioGoogle.dto";
 import { ActualizarImagenUsuarioDto } from "./dtos/actualizar-imagenusuario.dto";
 import { CloudinaryService } from "src/file-upload/cloudinary.service";
+import { ModificarRolDto } from "./dtos/modificar-rolUsuario.dto";
 // import { actualizarPerfil } from "../auth/dto/update-usuariogoogle.dt";
 //import { MailService } from "src/notifications/mail.service";
 
@@ -94,6 +95,8 @@ export class UsuariosService {
             usuarioDto.edad = usuario.edad;
             usuarioDto.email = usuario.email;
             usuarioDto.telefono = usuario.telefono;
+            usuarioDto.estado = usuario.estado;
+
 
             // Aquí verificamos si el usuario es admin según su rol
            // usuarioDto.admin = usuario.rol === rolEnum.ADMIN;
@@ -123,6 +126,12 @@ export class UsuariosService {
             throw new HttpException('Las contraseñas no coinciden', 400)
         }
 
+        // Verificar si el correo ya existe
+        const usuarioExistente = await this.usuariosRepository.findOne({ where: { email: crearUsuario.email } });
+        if (usuarioExistente) {
+            throw new HttpException('El email ya está registrado', 400);
+        }
+
             // Crear una nueva instancia de usuario
             const nuevoUsuario = new Usuario();
             Object.assign(nuevoUsuario, crearUsuario);// Asignar los datos del DTO al nuevo usuario
@@ -142,8 +151,11 @@ export class UsuariosService {
             return this.usuariosRepository.save(nuevoUsuario)
         } catch (error) {
             console.error('Error al crear el usuario:', error);
-            throw new HttpException('Error al crear el usuario', 500);
+            if (error instanceof HttpException) {
+                throw error; // Re-lanzar excepciones controladas
+            }
         }
+        throw new HttpException('Error al crear el usuario', 500);
     }
 
     async crearUsuarioOAuth(perfil: any): Promise<Usuario> {
@@ -239,6 +251,45 @@ export class UsuariosService {
         await this.usuariosRepository.save(usuario)
         return usuario;
     }
+
+    async modificarRol(id: string, modificarRolDto: ModificarRolDto): Promise<Usuario>{
+        const usuario = await this.usuariosRepository.findOne({ where: { id } });
+
+        if (!usuario) {
+            throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+        }
+
+        if (usuario.rol === modificarRolDto.rol) {
+            throw new BadRequestException(`El usuario ya tiene el rol "${modificarRolDto.rol}"`);
+        }
+
+        usuario.rol = modificarRolDto.rol;
+
+        try {
+            const usuarioActualizado =  await this.usuariosRepository.save(usuario);
+            return usuarioActualizado;
+        } catch (error) {
+            console.error("Error al modificar el rol del usuario:", error);
+            throw new BadRequestException("No se pudo modificar el rol del usuario");
+        }
+    }
+
+
+    async modificarEstadoUsuario(id: string, estado: boolean): Promise<Usuario> {
+        const usuario = await this.usuariosRepository.findOne({ where: { id } });
+    
+        if (!usuario) {
+            throw new NotFoundException('Usuario no encontrado');
+        }
+    
+        usuario.estado = estado;
+        await this.usuariosRepository.save(usuario);
+
+        return this.usuariosRepository.findOne({ where: { id } });
+    
+    }
+
+
 
     async eliminarUsuarios(id: string): Promise<string> {
         const usuario = await this.usuariosRepository.findOne({ where: { id } });

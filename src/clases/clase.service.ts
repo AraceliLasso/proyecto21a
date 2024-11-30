@@ -1,7 +1,7 @@
-import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Clase } from "./clase.entity";
-import { Repository } from "typeorm";
+import { QueryFailedError, Repository } from "typeorm";
 import { CrearClaseDto } from "./dto/crear-clase.dto";
 import { RespuestaClaseDto } from "./dto/respuesta-clase.dto";
 import { CategoriesService } from "src/categorias/categories.service";
@@ -30,20 +30,21 @@ export class ClasesService{
 
     // POSTt
     async crear(crearClaseDto: CrearClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
+        try{
         console.log('Datos del DTO recibidos:', crearClaseDto);
     
-        if (!crearClaseDto.perfilProfesorId) {
-            throw new BadRequestException('El perfilProfesorId es obligatorio.');
-        }
+        const normalizedName = crearClaseDto.nombre.trim().toLowerCase();
 
-
-        // Validar si ya existe una clase con el mismo nombre
-        const claseExistente = await this.clasesRepository.findOne({
-            where: { nombre: crearClaseDto.nombre },
-        });
+        const claseExistente = await this.clasesRepository
+            .createQueryBuilder('clase')
+            .where('LOWER(clase.nombre) = :nombre', { nombre: normalizedName })
+            .getOne();
 
         if (claseExistente) {
-            throw new ConflictException(`La clase con el nombre '${crearClaseDto.nombre}' ya existe.`);
+            throw new HttpException(
+                `La clase con el nombre "${crearClaseDto.nombre}" ya existe.`,
+                HttpStatus.BAD_REQUEST,
+            );
         }
 
         const categoria = await this.categoriesService.findOne(crearClaseDto.categoriaId);
@@ -62,9 +63,6 @@ export class ClasesService{
             throw new NotFoundException(`Perfil del profesor con ID ${crearClaseDto.perfilProfesorId} no encontrado`);
         }
         
-        // if (!crearClaseDto.perfilProfesorId) {
-        //     throw new Error('El perfilProfesorId es requerido y no puede ser nulo.');
-        // }
 
         console.log('Perfil del profesor encontrado:', perfilProfesor);
     
@@ -80,7 +78,6 @@ export class ClasesService{
         }
     }
 
-    
 
     const nuevaClase = await this.clasesRepository.save({
         ...restoDatos,
@@ -105,10 +102,20 @@ export class ClasesService{
         throw new NotFoundException('No se pudo cargar la clase con sus relaciones.');
     }
 
-
-    return claseConRelaciones;
     
+    return claseConRelaciones;
+    } catch (error) {
+        if (error instanceof QueryFailedError && error.driverError?.code === '23505') {
+            // Error de unicidad detectado (código específico de PostgreSQL)
+            throw new HttpException(
+                'Ya existe una clase con ese nombre.',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+        // Si el error no es de unicidad, lánzalo tal como está
+        throw error;
     }
+}
 
 
      // GET
@@ -147,6 +154,27 @@ export class ClasesService{
 
         if (!clase) {
             throw new NotFoundException(`Clase con ID ${id} no encontrada`);
+        }
+
+        // Verificar si el nombre ya existe en otra clase
+    if (modificarClaseDto.nombre && modificarClaseDto.nombre.trim()) {
+        const normalizedName = modificarClaseDto.nombre.trim().toLowerCase();
+
+        const claseExistente = await this.clasesRepository
+            .createQueryBuilder('clase')
+            .where('LOWER(clase.nombre) = :nombre', { nombre: normalizedName })
+            .getOne();
+
+        if (claseExistente) {
+            throw new HttpException(
+                `Ya existe una clase con el nombre "${modificarClaseDto.nombre}".`,
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+    }
+    // Normalización del nombre antes de guardar
+        if (modificarClaseDto.nombre) {
+            clase.nombre = modificarClaseDto.nombre.trim().toLowerCase();
         }
         
         // Eliminar la imagen anterior si se proporciona un archivo nuevo
@@ -195,8 +223,6 @@ export class ClasesService{
             }
             clase.categoria = categoria;
         }
-
-        Object.assign(clase, modificarClaseDto);
         
         try{
             // Guardar la clase con las actualizaciones realizadas
@@ -210,10 +236,16 @@ export class ClasesService{
 
         return new RespuestaClaseDto(modificarclase,);
         }catch (error){
-            console.error('Error al actualizar la clase:', error);
-            throw new InternalServerErrorException('Error al actualizar la clase');
+            if (error instanceof QueryFailedError && error.driverError?.code === '23505') {
+                throw new HttpException(
+                    'Ya existe una clase con ese nombre.',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+            throw error;
         }
     }
+
 
         async remove(id: string): Promise<string> {
         const result = await this.clasesRepository.delete(id);

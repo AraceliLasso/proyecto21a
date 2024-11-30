@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, InternalServerErrorException, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Put, Query, Req, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
+import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { IsUUID } from "class-validator";
 import { UsuariosService } from "./usuario.service";
 import { CrearUsuarioDto } from "./dtos/crear-usuario.dto";
@@ -8,12 +8,14 @@ import { MailService } from "src/notificaciones/mail.service";
 import { LoginUsuarioDto } from "./dtos/login-usuario.dto";
 import { UsuarioAdminDto } from "./dtos/admin-usuario.dto";
 import UsuarioRespuestaDto from "./dtos/respuesta-usuario.dto";
-import { Usuario } from "./usuario.entity";
+import { rolEnum, Usuario } from "./usuario.entity";
 import { Roles } from "src/decorators/roles.decorators";
 import { AuthGuard } from "src/guard/auth.guard";
 import { RolesGuard } from "src/guard/roles.guard";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { FileUploadService } from "src/file-upload/file-upload.service";
+import { ModificarEstadoDto } from "./dtos/modificar-estadoUsuario.dto";
+import { ModificarRolDto } from "./dtos/modificar-rolUsuario.dto";
 
 
 
@@ -81,7 +83,7 @@ export class UsuariosController{
     @ApiResponse({ status: 200, description: 'Usuarios obtenidos', type: [UsuarioAdminDto] })
     @HttpCode(HttpStatus.OK)
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles('admin', 'profesor')
+    @Roles('admin')
     @ApiSecurity('bearer')
     @ApiQuery({ name: 'page', required: false, description: 'Número de página', example: 1 })
     @ApiQuery({ name: 'limit', required: false, description: 'Cantidad de resultados por página', example: 5 })
@@ -165,6 +167,38 @@ export class UsuariosController{
         throw new InternalServerErrorException('Error inesperado al actualizar el usuario');
     }
     }
+
+    @Put(":id/rol")
+    @UseGuards(RolesGuard)
+    @Roles(rolEnum.ADMIN) // Solo el administrador puede cambiar roles
+    @ApiOperation({ summary: "Modificar el rol de un usuario" })
+    @ApiParam({ name: "id", description: "ID del usuario a modificar" })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin')
+    @ApiSecurity('bearer')
+    async modificarRol(@Param("id") id: string, @Body() modificarRolDto: ModificarRolDto): Promise<Usuario> {
+        return await this.usuariosService.modificarRol(id, modificarRolDto);
+    }
+
+
+    //Para habilitar o deshabilitar un usuario
+    @Patch(':id')
+    @ApiOperation({ summary: 'Modificar el estado de un usuario' })
+    @ApiResponse({ status: 201, description: 'Estado del usuario modificado exitosamente', type: [Usuario] })
+    @ApiResponse({ status: 400, description: 'Datos inválidos' })
+    @ApiResponse({ status: 500, description: 'Error inesperado al modificar el estado del usuario' })
+    @ApiBody({ description: 'Cuerpo para modificar el estado de una clase', type: ModificarEstadoDto })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin')
+    @ApiSecurity('bearer')
+    async modificarEstadoUsuario(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() modificarEstadoDto: ModificarEstadoDto
+    ): Promise<Usuario> {
+    return this.usuariosService.modificarEstadoUsuario(id, modificarEstadoDto.estado);
+    }
+
+
 
 
     @Delete(':id')
