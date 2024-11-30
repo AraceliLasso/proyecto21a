@@ -5,6 +5,7 @@ import { Categoria } from "./categories.entity";
 import { CrearCategoriaDto } from "./dto/crear-categoria.dto";
 import { Clase } from "src/clases/clase.entity";
 import { ModificarCategoriaDto } from "./dto/modificar-categoria.dto";
+import { SearchDto } from "src/clases/dto/search-logica.dto";
 
 
 @Injectable()
@@ -168,6 +169,23 @@ export class CategoriesService {
         await this.categoryRepository.remove(categoria);
         return `Categoría "${nombreCategoria}" eliminada exitosamente`;
     }
-
+    async searchCategorias(searchDto: SearchDto): Promise<Categoria[]> {
+        const { categoriaNombre, descripcion } = searchDto;
+    
+        const query = this.categoryRepository.createQueryBuilder('categoria')
+            .leftJoinAndSelect('categoria.clases', 'clase') // Relación con clases
+            .leftJoinAndSelect('categoria.perfilProfesor', 'perfilProfesor'); // Relación opcional
+    
+        if (categoriaNombre) {
+            query.andWhere('categoria.nombre ILIKE :categoriaNombre', { categoriaNombre: `%${categoriaNombre}%` });
+        }
+    
+        if (descripcion) {
+            query.andWhere('categoria.descripcion ILIKE :descripcion', { descripcion: `%${descripcion}%` });
+        }
+    
+        const categorias = await query.getMany();
+        return categorias;
+    }
 
     }       
