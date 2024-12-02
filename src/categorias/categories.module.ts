@@ -10,7 +10,7 @@ import { CategoriesController } from "./categories.controller";
 
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Categoria, Clase])],
+    imports: [TypeOrmModule.forFeature([Categoria])],
     providers: [CategoriesService],
     controllers: [CategoriesController],
     exports: [CategoriesService, TypeOrmModule]

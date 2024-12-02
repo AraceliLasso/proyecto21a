@@ -13,7 +13,8 @@ import { PerfilesProfesoresService } from 'src/perfilesProfesores/perfilProfesor
 
 @Injectable()
 export class FileUploadService {
-    constructor(private readonly cloudinaryService: CloudinaryService,
+    constructor(
+        private readonly cloudinaryService: CloudinaryService,
         private readonly clasesService: ClasesService,
         private readonly usuariosService: UsuariosService,
         private readonly perfilesProfesoresService: PerfilesProfesoresService

@@ -20,10 +20,6 @@ export class InscripcionesService {
         private readonly usuariosRepository: Repository<Usuario>,
         @InjectRepository(Clase)
         private readonly clasesRepository: Repository<Clase>,
-        @InjectRepository(Membresia)
-        private readonly membresiaRepository: Repository<Membresia>,
-        @InjectRepository(Categoria)
-        private readonly categoriaRepository: Repository<Categoria>,
         private readonly membresiaService: MembresiaService,
 
     ) { }

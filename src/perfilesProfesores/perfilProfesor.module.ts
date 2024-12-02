@@ -12,16 +12,17 @@ import { CloudinaryService } from "src/file-upload/cloudinary.service";
 import { ClasesService } from "src/clases/clase.service";
 import { CategoriesService } from "src/categorias/categories.service";
 import { Categoria } from "src/categorias/categories.entity";
+import { Inscripcion } from "src/inscripciones/inscripcion.entity";
 
 
 
 
 
 @Module({
-    imports: [TypeOrmModule.forFeature([PerfilProfesor, Clase, Usuario, Categoria]),
+    imports: [TypeOrmModule.forFeature([PerfilProfesor, Clase, Usuario, Inscripcion, Categoria]),
     UsuarioModule
     ],
-    providers: [PerfilesProfesoresService, UsuariosService, FileUploadService, CloudinaryService, ClasesService, CategoriesService],
+    providers: [PerfilesProfesoresService, FileUploadService, CloudinaryService, ClasesService, CategoriesService],
     controllers: [PerfilesProfesoresController],
     exports: [PerfilesProfesoresService, TypeOrmModule]
 })

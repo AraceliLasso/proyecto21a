@@ -11,11 +11,10 @@ import { CloudinaryService } from "src/file-upload/cloudinary.service";
 
 @Module({
     imports: [
-      TypeOrmModule.forFeature([Membresia, Usuario]),  // Asegúrate de que la entidad Membresia esté incluida
-      UsuarioModule,  // Importa UsuarioModule para tener acceso a UsuariosService
+      TypeOrmModule.forFeature([Membresia, Usuario]), 
     ],
     controllers: [MembresiaController],
-    providers: [MembresiaService, UsuariosService, StripeService, CloudinaryService],
+    providers: [MembresiaService, StripeService, UsuariosService, CloudinaryService],
     exports: [MembresiaService],
   })
   export class MembresiaModule {}

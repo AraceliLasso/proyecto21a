@@ -13,7 +13,6 @@ import { InscripcionConClaseDto } from "./dtos/conClase-inscripcion.dto";
 export class InscripcionController {
     constructor(
         private readonly inscripcionesService: InscripcionesService,
-        private readonly usuariosService: UsuariosService,
     ) { }
 
     //*crear la Inscripcion
@@ -71,15 +70,19 @@ export class InscripcionController {
     
 
 
-    //get de inscripciones de una clase específica
-    @Get()
-    async inscripcionDeClasePorId() {
+    //*se va a hacer en el modulo de Clases, en consideracion del origen de los datos
+    //get de TODAS las inscripciones de una clase específica por ID
+    // @Get()
+    // async inscripcionDeClasePorId() {
 
-    }
-    //get de inscripciones de clases según profesor
-    @Get()
-    async inscripcionesDeClasesPorProfesor() {
+    // }
 
-    }
+    //*se va a hacer en el modulo de Clases, en consideracion del origen de los datos
+    //get de TODAS las inscripciones de TODAS las clases de un ID profesor 
+    // @Get()
+    // async inscripcionesDeClasesPorProfesor() {
+
+    // }
+
 
 }

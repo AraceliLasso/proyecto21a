@@ -20,8 +20,8 @@ export class PerfilProfesor {
     @Column({ nullable: false })
     certificacion: string;
 
-    @Column({ nullable: false })
-    imagen: string;
+    @Column({ nullable: true })
+    imagen?: string;
 
     @OneToMany(() => Clase, (clases) => clases.perfilProfesor)
     clases: Clase[]
@@ -29,5 +29,8 @@ export class PerfilProfesor {
     @OneToOne(()=>Usuario, (usuario)=> usuario.perfilProfesor)
     @JoinColumn()
     usuario:Usuario
+
+    @Column({ default: true }) // Por defecto, el perfil estará activo
+    estado: boolean
 
 }
