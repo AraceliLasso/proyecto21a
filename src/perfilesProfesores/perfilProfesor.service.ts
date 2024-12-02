@@ -8,6 +8,7 @@ import { ClasesService } from "src/clases/clase.service";
 import { Clase } from "src/clases/clase.entity";
 import { rolEnum, Usuario } from "src/usuarios/usuario.entity";
 import { CloudinaryService } from "src/file-upload/cloudinary.service";
+import { SearchDto } from "src/clases/dto/search-logica.dto";
 
 @Injectable()
 export class PerfilesProfesoresService{
@@ -217,6 +218,25 @@ export class PerfilesProfesoresService{
         const nombrePerfil = perfilProfesor.nombre;
         await this.perfilesProfesoresRepository.remove(perfilProfesor);
         return `Perfil del profesor "${nombrePerfil}" eliminado exitosamente`;
+    }
+
+    async searchPerfilesProfesores(searchDto: SearchDto): Promise<PerfilProfesor[]> {
+        const { perfilProfesorNombre, descripcion } = searchDto;
+    
+        const query = this.perfilesProfesoresRepository.createQueryBuilder('perfilProfesor')
+            .leftJoinAndSelect('perfilProfesor.clases', 'clase') // Relación con clases
+            .leftJoinAndSelect('perfilProfesor.categorias', 'categoria'); // Relación con categorías
+    
+        if (perfilProfesorNombre) {
+            query.andWhere('perfilProfesor.nombre ILIKE :perfilProfesorNombre', { perfilProfesorNombre: `%${perfilProfesorNombre}%` });
+        }
+    
+        if (descripcion) {
+            query.andWhere('perfilProfesor.descripcion ILIKE :descripcion', { descripcion: `%${descripcion}%` });
+        }
+    
+        const perfilesProfesores = await query.getMany();
+        return perfilesProfesores;
     }
     
 }

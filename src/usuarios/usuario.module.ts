@@ -12,13 +12,14 @@ import { PerfilesProfesoresService } from "src/perfilesProfesores/perfilProfesor
 import { Clase } from "src/clases/clase.entity";
 import { CategoriesService } from "src/categorias/categories.service";
 import { Categoria } from "src/categorias/categories.entity";
+import { InscripcionModule } from "src/inscripciones/inscripcion.module";
 
 
 
 
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Usuario, Clase, PerfilProfesor, Categoria])],
+    imports: [TypeOrmModule.forFeature([Usuario, Clase, PerfilProfesor, Categoria]), InscripcionModule],
     providers: [ UsuariosService, MailService, CloudinaryService, FileUploadService, ClasesService, PerfilesProfesoresService, CategoriesService],
     controllers: [UsuariosController],
     exports: [UsuariosService]

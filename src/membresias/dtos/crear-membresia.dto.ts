@@ -1,5 +1,5 @@
 // dto/create-membresia.dto.ts
-import { IsString, IsInt, Min, IsPositive } from 'class-validator';
+import { IsString, IsInt, Min, IsPositive, IsOptional, IsArray } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CrearMembresiaDto {
@@ -16,4 +16,19 @@ export class CrearMembresiaDto {
   @IsInt()
   @Min(1)
   duracionEnMeses: number;
+
+  @ApiProperty({ description: 'Descripción detallada de la membresía', required: false })
+  @IsString()
+  @IsOptional()
+  descripcion?: string;
+
+  @ApiProperty({
+    description: 'Características del plan de la membresía',
+    type: [String],
+    required: false,
+  })
+  @IsArray()
+  @IsOptional()
+  @IsString({ each: true })
+  features?: string[];
 }
