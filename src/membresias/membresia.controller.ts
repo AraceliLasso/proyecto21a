@@ -259,7 +259,7 @@ export class MembresiaController {
     ) {
       try {
         const session = await this.stripeService.crearSesionDePago(membresiaId, precio, email);
-        return { url: session.url }; // Devolvemos la URL para redirigir al frontend
+        return {sessionId: session.id, url: session.url }; // Devolvemos la URL para redirigir al frontend
       } catch (error) {
         console.error('Error creating checkout session:', error);
         throw new Error('Failed to create checkout session');
