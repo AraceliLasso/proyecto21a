@@ -238,18 +238,37 @@ export class UsuariosService {
         // Subir la imagen a Cloudinary si se proporciona
         if (imagen) {
             try {
-                const imageUrl = await this.cloudinaryService.uploadFile(imagen.buffer, imagen.originalname);
+                const imageUrl = await this.cloudinaryService.uploadFile(imagen.buffer, 'usuario', imagen.originalname);
                 actualizarUsuarioDto.imagen = imageUrl; // Asignar la URL al DTO
             } catch (error) {
                 console.error('Error al subir la imagen a Cloudinary:', error);
                 throw new InternalServerErrorException('Error al subir la imagen');
             }
-        }
+         } //else {
+           // Mantener la URL de la imagen actual si no se proporciona una nueva
+        //     actualizarUsuarioDto.imagen = usuario.imagen;
+        // }
+        
+         // Filtrar propiedades del DTO que no sean `undefined`
+        //const datosActualizados = { ...usuario, ...actualizarUsuarioDto };
+
+            // Filtrar solo los campos definidos en `actualizarUsuarioDto`
+            const datosActualizados = Object.entries(actualizarUsuarioDto).reduce((acc, [key, value]) => {
+                if (value !== undefined) {
+                    acc[key] = value;
+                }
+                return acc;
+            }, { ...usuario }); // Mantén los valores existentes del usuario
+
+            // Guardar los cambios en la base de datos
+            await this.usuariosRepository.save(datosActualizados);
+
+            return datosActualizados;
 
         // Actualizar las propiedades del usuario con los datos proporcionados
-        Object.assign(usuario, actualizarUsuarioDto);
-        await this.usuariosRepository.save(usuario)
-        return usuario;
+        // Object.assign(usuario, actualizarUsuarioDto);
+        // await this.usuariosRepository.save(usuario)
+        // return usuario;
     }
 
     async modificarRol(id: string, modificarRolDto: ModificarRolDto): Promise<Usuario>{

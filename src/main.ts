@@ -15,6 +15,8 @@ async function bootstrap() {
       transform: true,
       whitelist: true,
       forbidNonWhitelisted: true,
+      skipMissingProperties: true, // Evita validar propiedades no enviadas
+      skipUndefinedProperties: true, // Ignora campos que no están definidos
     }),
   );
   // Configura CORS

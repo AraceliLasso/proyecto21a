@@ -1,14 +1,15 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsBoolean, IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
+
+import { IsBoolean, ValidateIf,IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
 
 export class ActualizarUsuarioDto {
     @ApiProperty({
         type: String,
         description: "El nombre del usuario",
-        required: true,
+        required: false,
     })
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     @MaxLength(80)
     @MinLength(3)
@@ -17,34 +18,39 @@ export class ActualizarUsuarioDto {
     @ApiProperty({
         type: Number,
         description: "La edad del usuario",
-        required: true,
+        required: false,
     })
     @IsNumber()
     @Type(() => Number)
+    @IsOptional()
     edad?: number;
 
     @ApiProperty({
         type: Number,
         description: "El número de teléfono del usuario",
-        required: true,
+        required: false,
     })
     @IsNumber()
     @Type(() => Number)
+    @IsOptional()
     telefono?: number;
 
-    @ApiProperty({
+    @ApiPropertyOptional({
         type: String,
         description: "El correo electrónico del usuario",
-        required: true,
+        required: false,
     })
-    @IsEmail()
+    
+    @ValidateIf((obj) => obj.email !== undefined) // Solo valida si email está presente
+    @IsEmail({}, { message: "El correo electrónico no tiene un formato válido" })
     email?: string;
 
-    @ApiProperty({
+    @ApiPropertyOptional({
         type: String,
         description: "La contraseña debe contener al menos una letra minúscula, una letra mayúscula, un número y un carácter especial (!@#$%^&*)",
-        required: true,
+        required: false,
     })
+    @ValidateIf((obj) => obj.contrasena !== undefined) // Solo valida si contrasena está presente
     @Matches(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[=!@#$%^&*])[A-Za-z\d=!@#$%^&*]{8,15}$/,
         {
@@ -55,11 +61,13 @@ export class ActualizarUsuarioDto {
     contrasena?: string;
 
 
-    @ApiProperty({
+    @ApiPropertyOptional({
         type: 'string',
         format: 'binary', 
         description: 'Imagen del usuario',
+        required: false,
     })
+    @IsOptional()
     imagen?: any;
 
 }
