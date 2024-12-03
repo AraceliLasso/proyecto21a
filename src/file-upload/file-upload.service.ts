@@ -17,12 +17,13 @@ export class FileUploadService {
         private readonly cloudinaryService: CloudinaryService,
         private readonly clasesService: ClasesService,
         private readonly usuariosService: UsuariosService,
-        private readonly perfilesProfesoresService: PerfilesProfesoresService
+        private readonly perfilesProfesoresService: PerfilesProfesoresService, 
+        private readonly categoriesService: CategoriesService
     ){}
 
     async uploadFile(
         file: Express.Multer.File, 
-        entityType: 'clase' |  'usuario' | 'perfilProfesor',
+        entityType: 'clase' |  'usuario' | 'perfilProfesor' | 'categoria',
         entityId?: string
     ): Promise<{ imgUrl: string }>{
     
@@ -30,7 +31,7 @@ export class FileUploadService {
             throw new Error('El archivo proporcionado no es válido');
         }
 
-        if (!['clase', 'usuario', 'perfilProfesor'].includes(entityType)) {
+        if (!['clase', 'usuario', 'perfilProfesor', 'categoria'].includes(entityType)) {
             throw new Error('El tipo de entidad proporcionado no es válido');
         }
 
@@ -105,6 +106,16 @@ export class FileUploadService {
         });
 
         break;
+
+        case 'categoria':
+            // Valida si `entityId` está presente
+                if (!entityId) {
+                    throw new Error('No se proporcionó un ID de categoria para actualizar.');
+                }
+
+            // Llamar a `actualizarUsuarios` pasando la URL en el DTO
+            await this.categoriesService.update(entityId, { imagen: url });
+            break;
 
         default:
             throw new Error('Tipo de entidad no compatible');

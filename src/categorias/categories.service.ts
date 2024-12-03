@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { QueryFailedError, Repository } from "typeorm";
 import { Categoria } from "./categories.entity";
@@ -6,6 +6,7 @@ import { CrearCategoriaDto } from "./dto/crear-categoria.dto";
 import { Clase } from "src/clases/clase.entity";
 import { ModificarCategoriaDto } from "./dto/modificar-categoria.dto";
 import { SearchDto } from "src/clases/dto/search-logica.dto";
+import { CloudinaryService } from "src/file-upload/cloudinary.service";
 
 
 @Injectable()
@@ -13,9 +14,10 @@ export class CategoriesService {
     constructor(
         @InjectRepository(Categoria)
         private readonly categoryRepository: Repository<Categoria>,
+        private readonly cloudinaryService: CloudinaryService,
     ) {}
 
-    async create(crearCategoriaDto: CrearCategoriaDto): Promise<Categoria> {
+    async create(crearCategoriaDto: CrearCategoriaDto, file?: Express.Multer.File): Promise<Categoria> {
         try{
         // Normalizar el nombre a minúsculas
     const normalizedName = crearCategoriaDto.nombre.trim().toLowerCase();
@@ -31,10 +33,24 @@ export class CategoriesService {
         throw new HttpException(`La categoría "${crearCategoriaDto.nombre}" ya existe.`, HttpStatus.BAD_REQUEST);
     }
 
+    let imageUrl: string | undefined;
+        if(file){
+        try {
+            // Subir la imagen a Cloudinary y obtener la URL
+            imageUrl = await this.cloudinaryService.uploadFile(file.buffer, 'categoria', file.originalname);
+            console.log('Archivo subido a URL:', imageUrl);
+        } catch (error) {
+            console.error('Error al subir la imagen a Cloudinary:', error);
+            throw new InternalServerErrorException('Error al subir la imagen');
+        }
+    }
+
+    
     // Si no existe, crea y guarda la nueva categoría
     const categoria = this.categoryRepository.create({
-        ...crearCategoriaDto,
+        //...crearCategoriaDto,
         nombre: crearCategoriaDto.nombre.trim(), // Asegúrate de guardar el nombre normalizado
+        imagen: imageUrl
     });
 
     return await this.categoryRepository.save(categoria);
@@ -94,11 +110,17 @@ export class CategoriesService {
 
     }
 
-    async update(id: string, modificarCategoriaDto: ModificarCategoriaDto): Promise<Categoria> {
+    async update(id: string, modificarCategoriaDto: ModificarCategoriaDto, file?: Express.Multer.File): Promise<Categoria> {
+        
         const category = await this.categoryRepository.findOne({ where: { id } });
         if (!category) {
         throw new NotFoundException(`Categoría con ID ${id} no encontrada`);
         } 
+
+        // Si no se proporciona ningún dato válido, lanzar un error
+        if (!modificarCategoriaDto.nombre && !file) {
+            throw new BadRequestException('No se proporcionaron datos para actualizar la categoría.');
+        }
         
         // Verificar si el nombre ya existe en otra categoría
         if (modificarCategoriaDto.nombre) {
@@ -119,8 +141,42 @@ export class CategoriesService {
             // Asignar el nombre normalizado
             category.nombre = modificarCategoriaDto.nombre.trim();
         }
+        
 
-        Object.assign(category, modificarCategoriaDto);
+            if (file) {
+                    // Eliminar la imagen anterior si existe
+                    console.log('Archivo recibido en el servicio:', file);
+                    if (category.imagen) {
+                        try {
+                        await this.cloudinaryService.deleteFile(category.imagen);
+                    } catch (error) {
+                    console.error('Error al manejar la imagen:', error);
+                    throw new InternalServerErrorException('Error al manejar la imagen');
+                }
+            }
+
+                try{
+                    // Subir la nueva imagen
+                    const nuevaImagenUrl = await this.cloudinaryService.uploadFile(
+                        file.buffer,
+                        'categoria',
+                        file.originalname,
+                    );
+                    category.imagen = nuevaImagenUrl; // Asignar la nueva URL de la imagen
+                } catch (error) {
+                    console.error('Error al subir la nueva imagen:', error);
+                    throw new InternalServerErrorException('Error al subir la nueva imagen');
+                }
+            }
+        
+
+        // Actualizar los demás campos proporcionados
+        // Object.keys(modificarCategoriaDto).forEach((key) => {
+        //     if (modificarCategoriaDto[key] !== undefined && key !== 'nombre') {
+        //         (category as any)[key] = modificarCategoriaDto[key];
+        //     }
+        // });
+            //Object.assign(category, modificarCategoriaDto);
 
         try {
             return await this.categoryRepository.save(category);
@@ -133,7 +189,7 @@ export class CategoriesService {
             }
             throw error;
     }
-    }
+}
 
 
     async cambiarEstadoCategoria(id: string, estado: boolean): Promise<Categoria> {

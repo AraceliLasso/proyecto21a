@@ -65,8 +65,16 @@ export class CloudinaryService {
         })
     }
 
+
+    private extractPublicId(imageUrl: string): string {
+        const parts = imageUrl.split('/');
+        const fileName = parts[parts.length - 1]; // Última parte de la URL
+        const publicId = fileName.split('.')[0]; // Remover extensión
+        return `categoria/${publicId}`; // Añadir el prefijo de la carpeta si aplica
+    }
     // Método para eliminar un archivo de Cloudinary
-    async deleteFile(publicId: string): Promise<void> {
+    async deleteFile(imageUrl: string): Promise<void> {
+        const publicId = this.extractPublicId(imageUrl);
         try {
             const result = await cloudinary.uploader.destroy(publicId);
             if (result.result === 'ok') {

@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Patch, HttpException, HttpStatus, Put, BadRequestException, Delete } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiSecurity, ApiBody } from "@nestjs/swagger";
+import { Controller, Get, Post, Body, Param, UseGuards, Patch, HttpException, HttpStatus, Put, BadRequestException, Delete, UploadedFile, UseInterceptors } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiResponse, ApiSecurity, ApiBody, ApiConsumes } from "@nestjs/swagger";
 import { AuthGuard } from "src/guard/auth.guard";
 import { RolesGuard } from "src/guard/roles.guard";
 import { Roles } from "src/decorators/roles.decorators";
@@ -10,13 +10,18 @@ import { ModificarCategoriaDto } from "./dto/modificar-categoria.dto";
 import { Categoria } from "./categories.entity";
 import { Clase } from "src/clases/clase.entity";
 import { ModificarEstadoDto } from "./dto/modificar-estadoCategoria.dto";
+import { FileUploadService } from "src/file-upload/file-upload.service";
+import { FileInterceptor } from "@nestjs/platform-express";
 
 @ApiTags('Categorias')
 @Controller('categorias')
 
 
 export class CategoriesController {
-    constructor(private readonly categoriesService: CategoriesService) { }
+    constructor(private readonly categoriesService: CategoriesService,
+        private readonly fileUploadService: FileUploadService,
+        
+    ) { }
 
 
     @Get()
@@ -71,9 +76,21 @@ export class CategoriesController {
     @UseGuards(AuthGuard, RolesGuard)
     @Roles('admin')
     @ApiSecurity('bearer')
-    async create(@Body() crearCategoriaDto: CrearCategoriaDto): Promise<RespuestaCategoriaDto> {
-        const newCategory = await this.categoriesService.create(crearCategoriaDto);
-        return new RespuestaCategoriaDto(newCategory.id, newCategory.nombre);
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        description: 'Datos para crear la categoria, incluyendo la opción de subir una imagen',
+        schema: {
+            type: 'object',
+            properties: {
+                imagen: { type: 'string', format: 'binary'},
+                nombre: { type: 'string' },
+            }
+        }
+    })
+    @UseInterceptors(FileInterceptor('imagen'))
+    async create(@Body() crearCategoriaDto: CrearCategoriaDto, @UploadedFile() file?: Express.Multer.File): Promise<RespuestaCategoriaDto> {
+        const newCategory = await this.categoriesService.create(crearCategoriaDto, file);
+        return newCategory;
     }
 
     @Put(':id')
@@ -83,15 +100,25 @@ export class CategoriesController {
     @UseGuards(AuthGuard, RolesGuard)
     @Roles('admin')
     @ApiSecurity('bearer')
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        description: 'Datos para actualizar la categoria, incluyendo la opción de subir una imagen',
+        schema: {
+            type: 'object',
+            properties: {
+                imagen: { type: 'string', format: 'binary'},
+                nombre: { type: 'string' },
+            }
+        }
+    })
+    @UseInterceptors(FileInterceptor('imagen'))
     async update(
         @Param('id') id: string, 
-        @Body() modificarCategoriaDto: ModificarCategoriaDto
+        @Body() modificarCategoriaDto: ModificarCategoriaDto,
+        @UploadedFile() file?: Express.Multer.File
     ): Promise<Categoria> {
-        try {
-        return await this.categoriesService.update(id, modificarCategoriaDto);
-        } catch (error) {
-        throw new BadRequestException('Error al actualizar la categoría: ' + error.message);
-        }
+        
+        return this.categoriesService.update(id, modificarCategoriaDto, file);
     }
 
     @Patch(':id/estado')

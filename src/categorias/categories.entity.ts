@@ -25,6 +25,11 @@ export class Categoria {
     @OneToMany(() => Clase, (clases) => clases.categoria)
     clases: Clase[]
 
+    @Column({ nullable: true })
+    imagen?: string;
+
     @Column({ default: true }) // Por defecto, la categoria estará activa
     estado: boolean
+
+
 }
