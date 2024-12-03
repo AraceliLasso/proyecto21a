@@ -41,7 +41,7 @@ export class ClasesController {
                 imagen: { type: 'string', format: 'binary' },
                 nombre: { type: 'string' },
                 descripcion: { type: 'string' },
-                fecha: { type: 'date' },
+                fecha: { type: 'string' },
                 disponibilidad: { type: 'number' },
                 categoriaId: { type: 'string' },
                 perfilProfesorId: { type: 'string' }

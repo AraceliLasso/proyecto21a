@@ -31,16 +31,16 @@ export class Clase {
         description: "Descripcion de la clase",
         required: true,
     })
-    @Column({ length: 100,  unique: true })
+    @Column({ length: 100, unique: true })
     descripcion: string;
 
     @ApiProperty({
-        type: Date,
-        description:'Fecha y hora de la cita en formato ISO', example: '2024-10-10T14:00:00Z', 
-        required: true,
+        type: "text",
+        description: 'Fecha y hora de la clase en string',
+        nullable: true
     })
-    @Column({ nullable: false })
-    fecha: Date
+    @Column({ type: 'text', nullable: true })
+    fecha: string;
 
 
     @ApiProperty({
@@ -52,10 +52,11 @@ export class Clase {
     disponibilidad: number;
 
 
-    @ApiProperty({ 
+    @ApiProperty({
         type: String,
-        description: "URL de la imagen de la clase", 
-        required: true })
+        description: "URL de la imagen de la clase",
+        required: true
+    })
     @Column({ nullable: true })
     imagen: string;
 
@@ -67,20 +68,20 @@ export class Clase {
     @Column({ type: 'uuid', name: "categoriaId", nullable: false })
     categoriaId: string;
 
-    
-    @ManyToOne(() => Categoria, (categoria) => categoria.clases, )
+
+    @ManyToOne(() => Categoria, (categoria) => categoria.clases,)
     @JoinColumn({ name: "categoriaId" })
     categoria: Categoria;
 
     @ManyToOne(() => PerfilProfesor, (perfilProfesor) => perfilProfesor.clases)
     @JoinColumn({ name: 'perfilProfesorId' })
     perfilProfesor: PerfilProfesor;
-    
-    
+
+
     // @Column({ type: 'uuid', name: 'perfilProfesorId', nullable: false })
     // perfilProfesorId: string;
 
-    @OneToMany(() => Inscripcion, (inscripciones) => inscripciones.clase, )
+    @OneToMany(() => Inscripcion, (inscripciones) => inscripciones.clase,)
     inscripciones: Inscripcion[];
 
     @Column({ default: true }) // Por defecto, la clase estará activa
