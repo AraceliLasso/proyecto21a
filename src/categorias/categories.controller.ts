@@ -117,7 +117,7 @@ export class CategoriesController {
         @Body() modificarCategoriaDto: ModificarCategoriaDto,
         @UploadedFile() file?: Express.Multer.File
     ): Promise<Categoria> {
-        console.log('Archivo recibido en el controlador:', file);
+        
         return this.categoriesService.update(id, modificarCategoriaDto, file);
     }
 

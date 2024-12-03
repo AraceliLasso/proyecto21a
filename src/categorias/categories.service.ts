@@ -111,8 +111,7 @@ export class CategoriesService {
     }
 
     async update(id: string, modificarCategoriaDto: ModificarCategoriaDto, file?: Express.Multer.File): Promise<Categoria> {
-        console.log('Archivo recibido en el servicio (entrada):', file); // Agrega este log
-
+        
         const category = await this.categoryRepository.findOne({ where: { id } });
         if (!category) {
         throw new NotFoundException(`Categoría con ID ${id} no encontrada`);
