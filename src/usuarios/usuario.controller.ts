@@ -155,13 +155,9 @@ export class UsuariosController {
             },
         },
     })
-    async actualizarUsuarios(@Param('id') id: string, @Body() actualizarUsuarios: ActualizarUsuarioDto, @UploadedFile() imagen: Express.Multer.File): Promise<Usuario> {
-        try {
-            if (imagen) {
-                const uploadResult = await this.fileUploadService.uploadFile(imagen, 'usuario', id);
-                actualizarUsuarios.imagen = uploadResult.imgUrl; // Asigna la URL de la imagen al DTO
-            }
-            const usuario = await this.usuariosService.actualizarUsuarios(id, actualizarUsuarios)
+    async actualizarUsuarios(@Param('id') id: string, @Body() actualizarUsuarios: ActualizarUsuarioDto, @UploadedFile() imagen?: Express.Multer.File): Promise<Usuario> {
+            try{
+        const usuario = await this.usuariosService.actualizarUsuarios(id, actualizarUsuarios, imagen)
             if (!usuario) {
                 throw new NotFoundException('Usuario no encontrado');
             }

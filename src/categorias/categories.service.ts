@@ -53,6 +53,8 @@ export class CategoriesService {
         imagen: imageUrl
     });
 
+    console.log("Categoria antes de ser guardada", categoria)
+
     return await this.categoryRepository.save(categoria);
 } catch (error) {
     if (error instanceof QueryFailedError && error.driverError?.code === '23505') {
@@ -168,15 +170,6 @@ export class CategoriesService {
                     throw new InternalServerErrorException('Error al subir la nueva imagen');
                 }
             }
-        
-
-        // Actualizar los demás campos proporcionados
-        // Object.keys(modificarCategoriaDto).forEach((key) => {
-        //     if (modificarCategoriaDto[key] !== undefined && key !== 'nombre') {
-        //         (category as any)[key] = modificarCategoriaDto[key];
-        //     }
-        // });
-            //Object.assign(category, modificarCategoriaDto);
 
         try {
             return await this.categoryRepository.save(category);
@@ -203,6 +196,7 @@ export class CategoriesService {
     
         // Cambiar el estado lógico
         categoria.estado = estado;
+
         await this.categoryRepository.save(categoria);
     
         return categoria;
@@ -212,7 +206,7 @@ export class CategoriesService {
     async obtenerCategoriasActivas(): Promise <Categoria[]>{
         
         return await this.categoryRepository.find({
-            where: { clases: { estado: true } },
+            where:   { estado: true },
     })
     }
 

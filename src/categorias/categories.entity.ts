@@ -25,6 +25,10 @@ export class Categoria {
     @OneToMany(() => Clase, (clases) => clases.categoria)
     clases: Clase[]
 
+    @ApiProperty({ 
+        type: String,
+        description: "URL de la imagen de la categoría", 
+        })
     @Column({ nullable: true })
     imagen?: string;
 
