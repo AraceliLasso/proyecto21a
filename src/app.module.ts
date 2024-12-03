@@ -16,6 +16,8 @@ import { SeedModule } from './seeds/seeds-module';
 import { InscripcionModule } from './inscripciones/inscripcion.module';
 import { StripeModule } from './stripe/stripe.module';
 import { CloudinaryService } from './file-upload/cloudinary.service';
+import { ProfesoresModule } from './profesores/profesor.module';
+import { FileUploadModule } from './file-upload/file-upload.module';
 
 
 @Module({
@@ -39,7 +41,9 @@ import { CloudinaryService } from './file-upload/cloudinary.service';
     MembresiaModule,
     SeedModule,
     InscripcionModule,
-    StripeModule
+    StripeModule,
+    ProfesoresModule,
+    FileUploadModule
   ],
 controllers: [AppController],
 providers: [AppService, CloudinaryService],

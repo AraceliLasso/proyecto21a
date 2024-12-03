@@ -16,6 +16,7 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { FileUploadService } from "src/file-upload/file-upload.service";
 import { ModificarEstadoDto } from "./dtos/modificar-estadoUsuario.dto";
 import { ModificarRolDto } from "./dtos/modificar-rolUsuario.dto";
+import { ClasesService } from "src/clases/clase.service";
 
 
 
@@ -23,18 +24,19 @@ import { ModificarRolDto } from "./dtos/modificar-rolUsuario.dto";
 
 @ApiTags("Usuarios")
 @Controller("usuarios")
-export class UsuariosController{
+export class UsuariosController {
     constructor(
         private readonly usuariosService: UsuariosService,
-        private readonly mailService: MailService,
-        private readonly fileUploadService: FileUploadService
-    ) {}
+        // private readonly mailService: MailService,
+        private readonly fileUploadService: FileUploadService,
+        private readonly clasesService: ClasesService,
+    ) { }
 
     @Post('login')
     @ApiOperation({ summary: 'Loguear un usuario' })
     @ApiResponse({ status: 201, description: 'Usuario logueado exitosamente', type: LoginUsuarioDto })
     @ApiResponse({ status: 500, description: 'Error inesperado al loguear el usuario' })
-    async signIn(@Body() credentials: LoginUsuarioDto){
+    async signIn(@Body() credentials: LoginUsuarioDto) {
         return this.usuariosService.login(credentials)
     }
 
@@ -42,30 +44,30 @@ export class UsuariosController{
     @ApiOperation({ summary: 'Crear un nuevo usuario' })
     @ApiResponse({ status: 201, description: 'Usuario creado exitosamente', type: CrearUsuarioDto })
     @ApiResponse({ status: 500, description: 'Error inesperado al crear el usuario' })
-    @UseInterceptors(FileInterceptor('imagen')) 
+    @UseInterceptors(FileInterceptor('imagen'))
     @ApiConsumes('multipart/form-data')
     @ApiBody({
         description: 'Datos para registrar el usuario, incluyendo la opción de subir una imagen',
         schema: {
-        type: 'object',
-        properties: {
-        nombre: { type: 'string' },
-        email: { type: 'string' },
-        contrasena: { type: 'string' },
-        confirmarContrasena: { type: 'string' },
-        edad: { type: 'number' },
-        telefono: {type: 'number'}, 
-        imagen: {
-            type: 'string',
-            format: 'binary',
-        },
-        },
+            type: 'object',
+            properties: {
+                nombre: { type: 'string' },
+                email: { type: 'string' },
+                contrasena: { type: 'string' },
+                confirmarContrasena: { type: 'string' },
+                edad: { type: 'number' },
+                telefono: { type: 'number' },
+                imagen: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
         },
     })
-    async crearUsuario(@Body() crearUsuario: CrearUsuarioDto, @UploadedFile() imagen: Express.Multer.File, @Req() request){
-        const usuario = await this.usuariosService.crearUsuario(crearUsuario,imagen)
+    async crearUsuario(@Body() crearUsuario: CrearUsuarioDto, @UploadedFile() imagen: Express.Multer.File, @Req() request) {
+        const usuario = await this.usuariosService.crearUsuario(crearUsuario, imagen)
 
-         //Enviar correo de confirmación
+        //Enviar correo de confirmación
         // await this.mailService.sendMail(
         // crearUsuario.email,
         // 'Bienvenido a ForgeFit',
@@ -75,10 +77,10 @@ export class UsuariosController{
         return {
             message: `Usuario creado exitosamente`,
             usuario
-        };                                                                                                          
+        };
     }
 
-    @Get()  
+    @Get()
     @ApiOperation({ summary: 'Obtener todos los usuarios' })
     @ApiResponse({ status: 200, description: 'Usuarios obtenidos', type: [UsuarioAdminDto] })
     @HttpCode(HttpStatus.OK)
@@ -90,37 +92,46 @@ export class UsuariosController{
     async obtenerUsuariosPag(
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 5
-    ): Promise<UsuarioAdminDto[]> { 
+    ): Promise<UsuarioAdminDto[]> {
         console.log('llamar obtenerUsuariosPag');
         return this.usuariosService.obtenerUsuariosPag(page, limit);
-    
+
     }
 
 
-    
+
 
 
     @Get(':id')
     @ApiOperation({ summary: 'Obtener usuario por ID' })
-    @ApiResponse({ status: 200, description: 'Usuario obtenido', type: UsuarioRespuestaDto})
+    @ApiResponse({ status: 200, description: 'Usuario obtenido', type: UsuarioRespuestaDto })
     @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
     // @UseGuards(AuthGuard, RolesGuard)
     // @Roles('admin')
     // @ApiSecurity('bearer')
     @HttpCode(HttpStatus.OK)
-    async obtenerUsuario(@Param('id', new ParseUUIDPipe()) id: string): Promise<UsuarioRespuestaDto>{
+    async obtenerUsuario(@Param('id', new ParseUUIDPipe()) id: string): Promise<UsuarioRespuestaDto> {
         const usuario = await this.usuariosService.obtenerUsuarioPorId(id)
-        if(!IsUUID(4, { each: true})){
+        if (!IsUUID(4, { each: true })) {
             throw new HttpException('Invalid UUID', HttpStatus.BAD_REQUEST)
         }
-        if(!usuario){
+        if (!usuario) {
             throw new HttpException('Usuario no encontrado', HttpStatus.NOT_FOUND)
         }
         return new UsuarioRespuestaDto(usuario)
     }
 
+    //get de TODAS las inscripciones de TODAS las clases de un ID profesor 
+    @Get('profesor/:id/inscripciones')
+    async obtenerInscripcionesPorProfesor(
+        @Param('id', ParseUUIDPipe) id: string,
+    ) {
+        return this.clasesService.obtenerInscripcionesPorProfesor(id);
+    }
+
+
     @Put(':id')
-    @UseInterceptors(FileInterceptor('imagen')) 
+    @UseInterceptors(FileInterceptor('imagen'))
     @ApiOperation({ summary: 'Actualizar un usuario por ID' })
     @ApiResponse({ status: 200, description: 'Usuario actualizado', type: ActualizarUsuarioDto })
     @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
@@ -133,9 +144,9 @@ export class UsuariosController{
             properties: {
                 nombre: { type: 'string' },
                 edad: { type: 'number' },
-                telefono: {type: 'number'},
-                email: {type: 'string'},
-                contrasena: {type: 'string'},
+                telefono: { type: 'number' },
+                email: { type: 'string' },
+                contrasena: { type: 'string' },
                 imagen: {
                     type: 'string',
                     format: 'binary'
@@ -144,21 +155,21 @@ export class UsuariosController{
             },
         },
     })
-    async actualizarUsuarios(@Param('id') id: string, @Body() actualizarUsuarios: ActualizarUsuarioDto, @UploadedFile() imagen: Express.Multer.File): Promise<Usuario>{
-        try{
-        if (imagen) {
-            const uploadResult = await this.fileUploadService.uploadFile(imagen, 'usuario', id);
-            actualizarUsuarios.imagen = uploadResult.imgUrl; // Asigna la URL de la imagen al DTO
+    async actualizarUsuarios(@Param('id') id: string, @Body() actualizarUsuarios: ActualizarUsuarioDto, @UploadedFile() imagen: Express.Multer.File): Promise<Usuario> {
+        try {
+            if (imagen) {
+                const uploadResult = await this.fileUploadService.uploadFile(imagen, 'usuario', id);
+                actualizarUsuarios.imagen = uploadResult.imgUrl; // Asigna la URL de la imagen al DTO
+            }
+            const usuario = await this.usuariosService.actualizarUsuarios(id, actualizarUsuarios)
+            if (!usuario) {
+                throw new NotFoundException('Usuario no encontrado');
+            }
+            return usuario;
+        } catch (error) {
+            console.error('Error al actualizar el usuario:', error);
+            throw new InternalServerErrorException('Error inesperado al actualizar el usuario');
         }
-        const usuario = await this.usuariosService.actualizarUsuarios(id, actualizarUsuarios) 
-        if (!usuario) {
-            throw new NotFoundException('Usuario no encontrado');
-        }
-        return usuario;
-    } catch (error) {
-        console.error('Error al actualizar el usuario:', error);
-        throw new InternalServerErrorException('Error inesperado al actualizar el usuario');
-    }
     }
 
     @Put(":id/rol")
@@ -202,13 +213,13 @@ export class UsuariosController{
     @Roles('admin')
     @ApiSecurity('bearer')
     @HttpCode(HttpStatus.OK)
-    async eliminarUsuarios(@Param('id') id: string): Promise<{id: string}>{
+    async eliminarUsuarios(@Param('id') id: string): Promise<{ id: string }> {
         const resultado = await this.usuariosService.eliminarUsuarios(id)
-        if(!resultado){
+        if (!resultado) {
             throw new NotFoundException(`Usuario con ${id} no fue encontrado`);
         }
 
-        return {id}
+        return { id }
     }
 
 }

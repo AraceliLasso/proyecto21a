@@ -13,6 +13,14 @@ export class Membresia {
     @Column()
     nombre: string;
 
+    @ApiProperty({ description: 'Descripción detallada de la membresía' })
+    @Column({ type: 'text', nullable: true })
+    descripcion: string;
+
+    @ApiProperty({ description: 'Características del plan de la membresía' })
+    @Column('text', { array: true, nullable: true })
+    features: string[];
+
     @ApiProperty({ description: 'Precio de la membresía' })
     @Column({ type: 'int' })
     precio: number;
@@ -37,6 +45,8 @@ export class Membresia {
         nullable: false
     })
     activa: boolean;
+
+
 
     @OneToOne(() => Usuario, (usuario) => usuario.membresia)
     @JoinColumn()

@@ -16,12 +16,12 @@ export class MembresiaService {
 
     //*Funcion para crear membresia como admin
     async crearMembresiaNueva(crearMembresiaDto: CrearMembresiaDto): Promise<Membresia> {
-        const { nombre, precio, duracionEnMeses } = crearMembresiaDto;
-
+        const { nombre, precio, duracionEnMeses, descripcion, features } = crearMembresiaDto;
+    
         // Se calcula la fecha de expiración de la membresía
         const fechaExpiracion = new Date();
         fechaExpiracion.setMonth(fechaExpiracion.getMonth() + duracionEnMeses);
-
+    
         // Crear la nueva membresía
         const membresiaNueva = this.membresiasRepository.create({
             nombre,
@@ -29,8 +29,10 @@ export class MembresiaService {
             duracionEnMeses,
             fechaExpiracion,
             activa: true,  // La membresía está activa por defecto
+            descripcion,   // Se agrega la descripción
+            features,      // Se agregan las características
         });
-
+    
         // Guardar la membresía en la base de datos
         return await this.membresiasRepository.save(membresiaNueva);
     }
@@ -168,28 +170,7 @@ export class MembresiaService {
             relations: ['usuario'], // Incluir relación con 'usuario' para obtener los datos del usuario
         });
     }
-    // async cancelarMembresia(usuario: Usuario): Promise<Membresia> {
-    //     const membresia = await this.membresiasRepository.findOne({
-    //         where: { usuario, activo: true },
-    //     });
-
-    //     if (!membresia) {
-    //         throw new NotFoundException('No tienes una membresía activa para cancelar.');
-    //     }
-
-    //     membresia.activo = false; // Desactivar la membresía
-    //     return this.membresiasRepository.save(membresia);
-    // }
-    // async cancelarMembresiaAdmin(nombre: string): Promise<Membresia> {
-    //     const membresia = await this.membresiasRepository.findOne({ where: { nombre, activo: true } });
-
-    //     if (!membresia) {
-    //         throw new NotFoundException('Membresía no encontrada o ya está inactiva.');
-    //     }
-
-    //     membresia.activo = false; // Desactivar la membresía
-    //     return this.membresiasRepository.save(membresia);
-    // }
+    
     // Función para que el usuario cancele su propia membresía
     async cancelarMembresia(id: string): Promise<Membresia> {
         const membresia = await this.membresiasRepository.findOne({
