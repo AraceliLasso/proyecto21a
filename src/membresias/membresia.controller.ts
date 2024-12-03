@@ -61,20 +61,26 @@ export class MembresiaController {
       if (!membresia.activa) {
         throw new HttpException('Esta membresía ya no está disponible', HttpStatus.BAD_REQUEST);
       }
-      
-// Crear la sesión de pago con Stripe
-const session = await this.stripeService.crearSesionDePago(
-    membresiaId,
-    membresia.precio,
-    usuario.email,
-  );
     
+      // Crear la sesión de pago con Stripe
+      const session = await this.stripeService.crearSesionDePago(
+        membresiaId,
+        membresia.precio,
+        usuario.email,
+      );
+    
+      // Asignar la membresía al usuario
       usuario.membresia = membresia;
       await this.usuariosService.update(usuario);
     
-      return { message: 'Membresía comprada y asignada con éxito', membresia, usuario };
-    }
-    
+      // Retornar la respuesta con el session.id
+      return { 
+        message: 'Membresía comprada y asignada con éxito', 
+        membresia, 
+        usuario, 
+        sessionId: session.id  // Enviar el session.id al frontend
+      };
+    }    
     @Get()
     @ApiOperation({ summary: 'Obtener todas las membresías' })
     @ApiResponse({ status: 200, description: 'Membresías obtenidas correctamente', type: [Membresia] })
@@ -259,6 +265,9 @@ const session = await this.stripeService.crearSesionDePago(
         throw new Error('Failed to create checkout session');
       }
     }
+    
+
+    
     
 }
 
