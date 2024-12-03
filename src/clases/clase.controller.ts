@@ -48,11 +48,9 @@ export class ClasesController {
             },
         },
     })
-    @UseInterceptors(FileInterceptor('imagen', {
-        limits: { fileSize: 10 * 1024 * 1024} }), TransformInterceptor)
+    @UseInterceptors(FileInterceptor('imagen', { limits: { fileSize: 10 * 1024 * 1024} }), TransformInterceptor)
     async create(@Body() crearClaseDto: CrearClaseDto, @UploadedFile() file?: Express.Multer.File): Promise<RespuestaClaseDto> {
         
-
             // Validación de disponibilidad
             if (typeof crearClaseDto.disponibilidad !== 'number') {
                 throw new BadRequestException('Disponibilidad debe ser un número');
@@ -62,15 +60,6 @@ export class ClasesController {
 
             // Crea la clase en la base de datos sin la imagen
             const nuevaClase = await this.clasesService.crear(crearClaseDto, file);
-            
-            // Verifica si hay un archivo y lo sube a Cloudinary usando el `id` de la clase creada
-            if (file) {
-            const uploadResult = await this.fileUploadService.uploadFile(file, 'clase', nuevaClase.id);
-            const imagenUrl = uploadResult.imgUrl;
-            // Actualiza la clase con la URL de la imagen
-            await this.clasesService.modificarImagenClase(nuevaClase.id, imagenUrl);
-            nuevaClase.imagen = imagenUrl; // Asigna la URL al objeto de la clase
-        }
             return nuevaClase; 
         
     }
