@@ -231,35 +231,35 @@ const session = await this.stripeService.crearSesionDePago(
         return this.membresiaService.cancelarMembresia(userId);
     }
 
-    
-  @Post('checkout')
-  @ApiOperation({ summary: 'Create a Stripe Checkout session' })
-  @ApiResponse({ status: 200, description: 'Checkout session created', schema: { example: { sessionId: 'cs_test_12345' } } })
-  @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  @ApiBody({
-    description: 'Parameters to create a Checkout session',
-    schema: {
-      type: 'object',
-      properties: {
-        membresiaId: { type: 'string', example: 'membresia_123' },
-        precio: { type: 'number', example: 2000 },
-        email: { type: 'string', example: 'user@example.com' },
+    @Post('checkout')
+    @ApiOperation({ summary: 'Create a Stripe Checkout session' })
+    @ApiResponse({ status: 200, description: 'Checkout session created', schema: { example: { url: 'https://checkout.stripe.com/pay/cs_test_12345' } } })
+    @ApiResponse({ status: 500, description: 'Internal Server Error' })
+    @ApiBody({
+      description: 'Parameters to create a Checkout session',
+      schema: {
+        type: 'object',
+        properties: {
+          membresiaId: { type: 'string', example: 'membresia_123' },
+          precio: { type: 'number', example: 2000 },
+          email: { type: 'string', example: 'user@example.com' },
+        },
       },
-    },
-  })
-  async createCheckoutSession(
-    @Body('membresiaId') membresiaId: string,
-    @Body('precio') precio: number,
-    @Body('email') email: string,
-  ) {
-    try {
-      const session = await this.stripeService.crearSesionDePago(membresiaId, precio, email);
-      return { sessionId: session.id };
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      throw new Error('Failed to create checkout session');
+    })
+    async createCheckoutSession(
+      @Body('membresiaId') membresiaId: string,
+      @Body('precio') precio: number,
+      @Body('email') email: string,
+    ) {
+      try {
+        const session = await this.stripeService.crearSesionDePago(membresiaId, precio, email);
+        return { url: session.url }; // Devolvemos la URL para redirigir al frontend
+      } catch (error) {
+        console.error('Error creating checkout session:', error);
+        throw new Error('Failed to create checkout session');
+      }
     }
-  }
+    
 }
 
 

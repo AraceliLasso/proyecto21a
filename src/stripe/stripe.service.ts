@@ -48,7 +48,7 @@ export class StripeService {
           setup_future_usage: 'on_session',
         },
         customer_email: email, // Utiliza el correo del usuario
-        success_url: `https://pf-webgym-nx5u.vercel.app//stripe/pay/success/checkout/session?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `https://pf-webgym-nx5u.vercel.app/stripe/pay/success/checkout/session?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: 'https://pf-webgym-nx5u.vercel.app/pay/failed/checkout/session',
       });
 
