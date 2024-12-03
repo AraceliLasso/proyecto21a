@@ -8,7 +8,7 @@ import { Roles } from 'src/decorators/roles.decorators';
 import { AuthGuard } from 'src/guard/auth.guard';
 import { UsuariosService } from 'src/usuarios/usuario.service';
 import { MembresiaInactivaDto } from './dtos/inactivo-membresia.dto';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ActualizarPrecioMembresiaDto } from './dtos/actualizar-membresia.dto';
 import * as express from 'express';
 import { CrearMembresiaDto } from './dtos/crear-membresia.dto';
@@ -230,6 +230,36 @@ const session = await this.stripeService.crearSesionDePago(
     async cancelarMembresiaPorAdmin(@Param('id') userId: string) {
         return this.membresiaService.cancelarMembresia(userId);
     }
+
+    
+  @Post('checkout')
+  @ApiOperation({ summary: 'Create a Stripe Checkout session' })
+  @ApiResponse({ status: 200, description: 'Checkout session created', schema: { example: { sessionId: 'cs_test_12345' } } })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @ApiBody({
+    description: 'Parameters to create a Checkout session',
+    schema: {
+      type: 'object',
+      properties: {
+        membresiaId: { type: 'string', example: 'membresia_123' },
+        precio: { type: 'number', example: 2000 },
+        email: { type: 'string', example: 'user@example.com' },
+      },
+    },
+  })
+  async createCheckoutSession(
+    @Body('membresiaId') membresiaId: string,
+    @Body('precio') precio: number,
+    @Body('email') email: string,
+  ) {
+    try {
+      const session = await this.stripeService.crearSesionDePago(membresiaId, precio, email);
+      return { sessionId: session.id };
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      throw new Error('Failed to create checkout session');
+    }
+  }
 }
 
 
