@@ -40,8 +40,8 @@ export class ActualizarUsuarioDto {
         description: "El correo electrónico del usuario",
         required: false,
     })
-    
     @ValidateIf((obj) => obj.email !== undefined) // Solo valida si email está presente
+    @IsOptional()
     @IsEmail({}, { message: "El correo electrónico no tiene un formato válido" })
     email?: string;
 
@@ -51,6 +51,7 @@ export class ActualizarUsuarioDto {
         required: false,
     })
     @ValidateIf((obj) => obj.contrasena !== undefined) // Solo valida si contrasena está presente
+    @IsOptional()
     @Matches(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[=!@#$%^&*])[A-Za-z\d=!@#$%^&*]{8,15}$/,
         {

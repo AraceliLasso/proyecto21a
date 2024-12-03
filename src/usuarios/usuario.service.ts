@@ -116,7 +116,9 @@ export class UsuariosService {
 
 
     async obtenerUsuarioPorId(id: string): Promise<Usuario | undefined>{
-        return this.usuariosRepository.findOne({ where: {id}})
+        return this.usuariosRepository.findOne({ where: {id},
+            relations: ['membresia', 'inscripciones']
+        })
     }
 
     async crearUsuario(crearUsuario: CrearUsuarioDto, imagen?: Express.Multer.File): Promise<Usuario>{
@@ -244,31 +246,24 @@ export class UsuariosService {
                 console.error('Error al subir la imagen a Cloudinary:', error);
                 throw new InternalServerErrorException('Error al subir la imagen');
             }
-         } //else {
-           // Mantener la URL de la imagen actual si no se proporciona una nueva
-        //     actualizarUsuarioDto.imagen = usuario.imagen;
-        // }
+        } 
+
+         // Mantener la URL de la imagen actual si no se proporciona una nueva
+            if (!imagen && actualizarUsuarioDto.imagen === undefined) {
+            actualizarUsuarioDto.imagen = usuario.imagen;
+            }
         
          // Filtrar propiedades del DTO que no sean `undefined`
-        //const datosActualizados = { ...usuario, ...actualizarUsuarioDto };
-
-            // Filtrar solo los campos definidos en `actualizarUsuarioDto`
-            const datosActualizados = Object.entries(actualizarUsuarioDto).reduce((acc, [key, value]) => {
-                if (value !== undefined) {
-                    acc[key] = value;
-                }
-                return acc;
-            }, { ...usuario }); // Mantén los valores existentes del usuario
+        const datosActualizados = {
+            ...usuario,
+            ...actualizarUsuarioDto,
+            imagen: actualizarUsuarioDto.imagen || usuario.imagen, // Preservar la imagen si no hay cambios
+        };
 
             // Guardar los cambios en la base de datos
             await this.usuariosRepository.save(datosActualizados);
 
             return datosActualizados;
-
-        // Actualizar las propiedades del usuario con los datos proporcionados
-        // Object.assign(usuario, actualizarUsuarioDto);
-        // await this.usuariosRepository.save(usuario)
-        // return usuario;
     }
 
     async modificarRol(id: string, modificarRolDto: ModificarRolDto): Promise<Usuario>{

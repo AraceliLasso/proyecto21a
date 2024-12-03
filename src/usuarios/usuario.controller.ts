@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, InternalServerErrorException, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Put, Query, Req, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, InternalServerErrorException, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Put, Query, Req, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors, ValidationPipe } from "@nestjs/common";
 import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { IsUUID } from "class-validator";
 import { UsuariosService } from "./usuario.service";
@@ -17,6 +17,7 @@ import { FileUploadService } from "src/file-upload/file-upload.service";
 import { ModificarEstadoDto } from "./dtos/modificar-estadoUsuario.dto";
 import { ModificarRolDto } from "./dtos/modificar-rolUsuario.dto";
 import { ClasesService } from "src/clases/clase.service";
+import { CleanNullInterceptor } from "src/interceptor/clean-null.interceptor";
 
 
 
@@ -131,7 +132,7 @@ export class UsuariosController {
 
 
     @Put(':id')
-    @UseInterceptors(FileInterceptor('imagen'))
+    @UseInterceptors(FileInterceptor('imagen'), CleanNullInterceptor)
     @ApiOperation({ summary: 'Actualizar un usuario por ID' })
     @ApiResponse({ status: 200, description: 'Usuario actualizado', type: ActualizarUsuarioDto })
     @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
@@ -155,17 +156,21 @@ export class UsuariosController {
             },
         },
     })
-    async actualizarUsuarios(@Param('id') id: string, @Body() actualizarUsuarios: ActualizarUsuarioDto, @UploadedFile() imagen?: Express.Multer.File): Promise<Usuario> {
-            try{
-        const usuario = await this.usuariosService.actualizarUsuarios(id, actualizarUsuarios, imagen)
-            if (!usuario) {
-                throw new NotFoundException('Usuario no encontrado');
+    async actualizarUsuarios(
+        @Param('id') id: string, 
+        @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, skipMissingProperties: true,})) actualizarUsuarios: ActualizarUsuarioDto, 
+        @UploadedFile() imagen?: Express.Multer.File): Promise<Usuario> {
+            try {
+                const usuario = await this.usuariosService.actualizarUsuarios(id, actualizarUsuarios, imagen);
+                if (!usuario) {
+                    throw new NotFoundException('Usuario no encontrado');
+                }
+                return usuario;
+            } catch (error) {
+                console.error('Error al actualizar el usuario:', error);
+                throw new InternalServerErrorException('Error inesperado al actualizar el usuario');
             }
-            return usuario;
-        } catch (error) {
-            console.error('Error al actualizar el usuario:', error);
-            throw new InternalServerErrorException('Error inesperado al actualizar el usuario');
-        }
+        
     }
 
     @Put(":id/rol")
