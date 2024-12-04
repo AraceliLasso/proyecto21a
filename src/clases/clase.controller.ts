@@ -41,7 +41,7 @@ export class ClasesController {
                 imagen: { type: 'string', format: 'binary' },
                 nombre: { type: 'string' },
                 descripcion: { type: 'string' },
-                fecha: { type: 'date' },
+                fecha: { type: 'string' },
                 disponibilidad: { type: 'number' },
                 categoriaId: { type: 'string' },
                 perfilProfesorId: { type: 'string' }
@@ -51,18 +51,18 @@ export class ClasesController {
     })
     @UseInterceptors(FileInterceptor('imagen', { limits: { fileSize: 10 * 1024 * 1024} }), TransformInterceptor)
     async create(@Body() crearClaseDto: CrearClaseDto, @UploadedFile() file?: Express.Multer.File): Promise<RespuestaClaseDto> {
-        
-            // Validación de disponibilidad
-            if (typeof crearClaseDto.disponibilidad !== 'number') {
-                throw new BadRequestException('Disponibilidad debe ser un número');
-            }
-            console.log('Tipo:', typeof crearClaseDto.disponibilidad); // Ahora debería ser "number"
-            console.log('Valor:', crearClaseDto.disponibilidad); // Ahora debería ser un número válido
-
-            // Crea la clase en la base de datos sin la imagen
-            const nuevaClase = await this.clasesService.crear(crearClaseDto, file);
-            return nuevaClase; 
-        
+        // Validación de disponibilidad
+        if (typeof crearClaseDto.disponibilidad !== 'number') {
+            throw new BadRequestException('Disponibilidad debe ser un número');
+        }
+    
+        console.log('Tipo:', typeof crearClaseDto.disponibilidad); // "number"
+        console.log('Valor:', crearClaseDto.disponibilidad); // Valor válido
+    
+        // Llamar al servicio para crear la clase
+        const nuevaClase = await this.clasesService.crear(crearClaseDto, file);
+    
+        return nuevaClase;
     }
 
 

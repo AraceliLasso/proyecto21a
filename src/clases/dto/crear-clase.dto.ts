@@ -13,18 +13,18 @@ export class CrearClaseDto {
     @IsNotEmpty()
     descripcion: string;
 
-    @ApiProperty({ description: 'Fecha y hora de la cita en formato ISO', example: '2024-10-10T14:00:00Z', required: true })
-    @IsNotEmpty()
-    fecha: Date;
+    @ApiProperty({ description: 'Fecha y hora de la clase en string', required: false })
+    @IsString()
+    fecha: string;
 
-    @ApiProperty({  type: Number,description: "La disponibilidad de clases", required: true })
+    @ApiProperty({ type: Number, description: "La disponibilidad de clases", required: true })
     @IsNumber()
     @IsNotEmpty()
     disponibilidad: number;
 
     @ApiProperty({
         type: 'string',
-        format: 'binary', 
+        format: 'binary',
         description: 'Imagen de la clase',
     })
     imagen: any;
