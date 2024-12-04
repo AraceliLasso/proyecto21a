@@ -38,6 +38,11 @@ export class InscripcionesService {
             throw new NotFoundException('Clase no encontrada');
         }
 
+        // Verificar si la clase tiene disponibilidad
+        if (clase.disponibilidad <= 0) {
+            throw new BadRequestException('La clase no tiene cupos disponibles');
+        }
+
         // Verificar si el usuario tiene una membresía activa
         const membresiaActiva = await this.membresiaService.obtenerMembresiaActivaPorUsuario(usuarioId);
         if (!membresiaActiva) {
@@ -52,9 +57,15 @@ export class InscripcionesService {
             fechaVencimiento: membresiaActiva.fechaExpiracion, // Asumimos que la membresía tiene una fecha de vencimiento
         });
 
+        // Reducir la disponibilidad de la clase
+        clase.disponibilidad -= 1;
+        await this.clasesRepository.save(clase); // Guardamos la clase con la nueva disponibilidad
+
+        // Guardar la inscripción
         return this.inscripcionesRepository.save(inscripcion);
     }
-    
+
+
     // Actualizar el estado de la inscripción
     async actualizarEstadoInscripcion(usuarioId: string, claseId: string): Promise<string> {
         const inscripcion = await this.inscripcionesRepository.findOne({
@@ -91,27 +102,27 @@ export class InscripcionesService {
     async obtenerInscripcionesConClase(usuarioId: string) {
         // Buscar todas las inscripciones del usuario y cargar las clases asociadas
         const inscripciones = await this.inscripcionesRepository.find({
-          where: { usuario: { id: usuarioId } },
-          relations: ['clase'], // Cargar la relación con la clase
+            where: { usuario: { id: usuarioId } },
+            relations: ['clase'], // Cargar la relación con la clase
         });
-    
+
         // Mapear las inscripciones para devolver tanto la inscripción como la clase
         return inscripciones.map(inscripcion => ({
-          id: inscripcion.id,
-          fechaInscripcion: inscripcion.fechaInscripcion,
-          fechaVencimiento: inscripcion.fechaVencimiento,
-          estado: inscripcion.estado,
-          clase: {
-            id: inscripcion.clase.id,
-            nombre: inscripcion.clase.nombre,
-            descripcion: inscripcion.clase.descripcion,
-            fecha: inscripcion.clase.fecha,
-            disponibilidad: inscripcion.clase.disponibilidad,
-            categoria: inscripcion.clase.categoria, // Asegúrate de tener esta relación cargada si es necesario
-          }
+            id: inscripcion.id,
+            fechaInscripcion: inscripcion.fechaInscripcion,
+            fechaVencimiento: inscripcion.fechaVencimiento,
+            estado: inscripcion.estado,
+            clase: {
+                id: inscripcion.clase.id,
+                nombre: inscripcion.clase.nombre,
+                descripcion: inscripcion.clase.descripcion,
+                fecha: inscripcion.clase.fecha,
+                disponibilidad: inscripcion.clase.disponibilidad,
+                categoria: inscripcion.clase.categoria, // Asegúrate de tener esta relación cargada si es necesario
+            }
         }));
-      }
-  
+    }
+
     // async obtenerInscripcionesPorUsuario(usuarioId: string): Promise<InscripcionConClaseDto[]> {
     //     // Verificar si el usuario existe
     //     const usuario = await this.usuariosRepository.findOne({ where: { id: usuarioId } });
