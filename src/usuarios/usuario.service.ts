@@ -116,9 +116,7 @@ export class UsuariosService {
 
 
     async obtenerUsuarioPorId(id: string): Promise<Usuario | undefined>{
-        return this.usuariosRepository.findOne({ where: {id},
-            relations: ['membresia', 'inscripciones']
-        })
+        return this.usuariosRepository.findOne({ where: {id}})
     }
 
     async crearUsuario(crearUsuario: CrearUsuarioDto, imagen?: Express.Multer.File): Promise<Usuario>{
@@ -240,30 +238,41 @@ export class UsuariosService {
         // Subir la imagen a Cloudinary si se proporciona
         if (imagen) {
             try {
-                const imageUrl = await this.cloudinaryService.uploadFile(imagen.buffer, 'usuario', imagen.originalname);
+                const imageUrl = await this.cloudinaryService.uploadFile(imagen.buffer, imagen.originalname);
                 actualizarUsuarioDto.imagen = imageUrl; // Asignar la URL al DTO
             } catch (error) {
                 console.error('Error al subir la imagen a Cloudinary:', error);
                 throw new InternalServerErrorException('Error al subir la imagen');
             }
-        } 
+        }
 
-         // Mantener la URL de la imagen actual si no se proporciona una nueva
-            if (!imagen && actualizarUsuarioDto.imagen === undefined) {
+        // Mantener la URL de la imagen actual si no se proporciona una nueva
+        if (!imagen && actualizarUsuarioDto.imagen === undefined) {
             actualizarUsuarioDto.imagen = usuario.imagen;
             }
+
+            // Crear un objeto con los campos actuales del usuario, y solo sobrescribir los que se pasen en el DTO
+    const datosActualizados = {
+        nombre: actualizarUsuarioDto.nombre || usuario.nombre,  // Solo actualizar el nombre si se pasa
+        edad: actualizarUsuarioDto.edad || usuario.edad,        // Solo actualizar la edad si se pasa
+        telefono: actualizarUsuarioDto.telefono || usuario.telefono, // Solo actualizar el teléfono si se pasa
+        email: actualizarUsuarioDto.email || usuario.email,      // Solo actualizar el email si se pasa
+        contrasena: actualizarUsuarioDto.contrasena || usuario.contrasena, // Solo actualizar la contraseña si se pasa
+        imagen: actualizarUsuarioDto.imagen || usuario.imagen,   // Solo actualizar la imagen si se pasa
+    };
         
-         // Filtrar propiedades del DTO que no sean `undefined`
-        const datosActualizados = {
-            ...usuario,
-            ...actualizarUsuarioDto,
-            imagen: actualizarUsuarioDto.imagen || usuario.imagen, // Preservar la imagen si no hay cambios
-        };
+         // Filtrar propiedades del DTO que no sean undefined
+        // const datosActualizados = {
+        //     ...usuario,
+        //     ...actualizarUsuarioDto,
+        //     imagen: actualizarUsuarioDto.imagen || usuario.imagen, // Preservar la imagen si no hay cambios
+        // };
 
             // Guardar los cambios en la base de datos
-            await this.usuariosRepository.save(datosActualizados);
+            await this.usuariosRepository.save({ ...usuario, ...datosActualizados });
 
-            return datosActualizados;
+            return { ...usuario, ...datosActualizados };
+
     }
 
     async modificarRol(id: string, modificarRolDto: ModificarRolDto): Promise<Usuario>{

@@ -9,6 +9,7 @@ export class ActualizarUsuarioDto {
         description: "El nombre del usuario",
         required: false,
     })
+    @ValidateIf((obj) => obj.nombre !== undefined && obj.nombre !== null && obj.nombre !== '')
     @IsOptional()
     @IsString()
     @MaxLength(80)
@@ -40,7 +41,7 @@ export class ActualizarUsuarioDto {
         description: "El correo electrónico del usuario",
         required: false,
     })
-    @ValidateIf((obj) => obj.email !== undefined) // Solo valida si email está presente
+    @ValidateIf((obj) => obj.email !== undefined && obj.email !== null && obj.email !== '') // Solo valida si email está presente
     @IsOptional()
     @IsEmail({}, { message: "El correo electrónico no tiene un formato válido" })
     email?: string;
@@ -50,7 +51,7 @@ export class ActualizarUsuarioDto {
         description: "La contraseña debe contener al menos una letra minúscula, una letra mayúscula, un número y un carácter especial (!@#$%^&*)",
         required: false,
     })
-    @ValidateIf((obj) => obj.contrasena !== undefined) // Solo valida si contrasena está presente
+    @ValidateIf((obj) => obj.contrasena !== undefined && obj.contrasena !== null && obj.contrasena !== '') // Solo valida si contrasena está presente
     @IsOptional()
     @Matches(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[=!@#$%^&*])[A-Za-z\d=!@#$%^&*]{8,15}$/,
