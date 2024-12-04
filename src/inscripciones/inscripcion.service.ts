@@ -10,6 +10,7 @@ import { Membresia } from "src/membresias/membresia.entity";
 import { Categoria } from "src/categorias/categories.entity";
 import { InscripcionRespuestaDto } from "./dtos/respuesta-inscripicon.dto";
 import { InscripcionConClaseDto } from "./dtos/conClase-inscripcion.dto";
+import { PerfilProfesor } from "src/perfilesProfesores/perfilProfesor.entity";
 
 @Injectable()
 export class InscripcionesService {
@@ -92,26 +93,20 @@ export class InscripcionesService {
         // Buscar todas las inscripciones del usuario y cargar las clases asociadas
         const inscripciones = await this.inscripcionesRepository.find({
           where: { usuario: { id: usuarioId } },
-          relations: ['clase'], // Cargar la relación con la clase
+          relations: ['clase', 'clase.perfilProfesor'], // Cargar la relación con la clase
         });
     
         // Mapear las inscripciones para devolver tanto la inscripción como la clase
         return inscripciones.map(inscripcion => ({
-          id: inscripcion.id,
-          fechaInscripcion: inscripcion.fechaInscripcion,
-          fechaVencimiento: inscripcion.fechaVencimiento,
-          estado: inscripcion.estado,
-          clase: {
-            id: inscripcion.clase.id,
-            nombre: inscripcion.clase.nombre,
-            descripcion: inscripcion.clase.descripcion,
-            fecha: inscripcion.clase.fecha,
-            disponibilidad: inscripcion.clase.disponibilidad,
-            categoria: inscripcion.clase.categoria, // Asegúrate de tener esta relación cargada si es necesario
-          }
-        }));
-      }
-  
+            id: inscripcion.id,
+            fechaInscripcion: inscripcion.fechaInscripcion,
+            fechaVencimiento: inscripcion.fechaVencimiento,
+            estado: inscripcion.estado,
+            clase: inscripcion.clase,
+
+            }));
+        }
+
     // async obtenerInscripcionesPorUsuario(usuarioId: string): Promise<InscripcionConClaseDto[]> {
     //     // Verificar si el usuario existe
     //     const usuario = await this.usuariosRepository.findOne({ where: { id: usuarioId } });
