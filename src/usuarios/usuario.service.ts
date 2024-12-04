@@ -4,7 +4,7 @@ import { CrearUsuarioDto } from "./dtos/crear-usuario.dto";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from 'bcrypt';
 // import { usuarioWithAdminDto } from "./dto/admin-usuario.dto";
-import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from "@nestjs/common";
 
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -42,6 +42,16 @@ export class UsuariosService {
         console.log('Email recibido en el login:', loginUsuario.email);
         console.log('Usuario encontrado:', usuario);
 
+
+        if (!usuario) {
+            throw new HttpException('Email o contraseña incorrecto', HttpStatus.UNAUTHORIZED);
+        }
+    
+        // Verificar si el usuario está habilitado
+        if (!usuario.estado) {
+            throw new ForbiddenException('Tu cuenta está suspendida. Contacta al administrador.');
+        }
+
         const coincideContrasena = usuario && await bcrypt.compare(loginUsuario.contrasena, usuario.contrasena);
 
         console.log('Contraseña recibida en el login:', loginUsuario.contrasena);
@@ -51,10 +61,6 @@ export class UsuariosService {
             throw new HttpException('Email o contraseña incorrecto', HttpStatus.UNAUTHORIZED);
         }
 
-        // Verifica si el rol es ADMIN antes de crear el token
-        // if (usuario.rol !== rolEnum.ADMIN) {
-        //     throw new HttpException('No tiene permiso para acceder a este recurso', HttpStatus.FORBIDDEN);
-        // }
 
         const token = await this.createToken(usuario);
         
@@ -67,7 +73,6 @@ export class UsuariosService {
             token
         };
     }
-
 
     private async createToken(usuario: Usuario) {
         const payload = {
