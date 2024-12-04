@@ -183,9 +183,23 @@ export class PerfilesProfesoresService{
             await this.usuariosRepository.save(perfilProfesor.usuario); // Guarda los cambios en el usuario
         }
 
+        // Filtrar solo los campos definidos en modificarPerfilProfesorDto
+        const datosActualizados = Object.entries(modificarPerfilProfesor).reduce(
+            (acc, [key, value]) => {
+                if (value !== undefined && value !== null && value !== '') {
+                    acc[key] = value;
+                }
+                return acc;
+            },
+            {} as Partial<PerfilProfesor>,
+        );
 
-        Object.assign(perfilProfesor, modificarPerfilProfesor);
+        // Aplicar los cambios filtrados al perfilProfesor
+        Object.assign(perfilProfesor, datosActualizados);
+
+        // Guardar los cambios en el repositorio
         return this.perfilesProfesoresRepository.save(perfilProfesor);
+
     }
 
     async cambiarEstadoPerfilProfesor(id: string, estado: boolean): Promise<PerfilProfesor> {
