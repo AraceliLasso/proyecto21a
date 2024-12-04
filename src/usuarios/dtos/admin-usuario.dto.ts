@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
+import { Membresia } from "src/membresias/membresia.entity";
 
 export class UsuarioAdminDto {
 
@@ -73,4 +74,23 @@ export class UsuarioAdminDto {
     })
     @IsBoolean()
     estado: boolean;
+
+
+    @ApiProperty({
+        type: () => Membresia, 
+        description: "La membresía asociada al usuario",
+        required: false,
+    })
+    membresia?: {
+        id: string;
+        nombre: string;
+        descripcion: string;
+        features:string [],
+        precio: number;
+        duracionEnMeses: number;
+        fechaCreacion: Date;
+        fechaExpiracion: Date;
+        fechaActualizacion: Date,
+        activa: boolean;
+    } | null; 
 }

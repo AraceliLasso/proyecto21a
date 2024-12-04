@@ -28,7 +28,7 @@ import { CleanNullInterceptor } from "src/interceptor/clean-null.interceptor";
 export class UsuariosController {
     constructor(
         private readonly usuariosService: UsuariosService,
-        // private readonly mailService: MailService,
+        private readonly mailService: MailService,
         private readonly fileUploadService: FileUploadService,
         private readonly clasesService: ClasesService,
     ) { }
@@ -68,13 +68,13 @@ export class UsuariosController {
     async crearUsuario(@Body() crearUsuario: CrearUsuarioDto, @UploadedFile() imagen: Express.Multer.File, @Req() request) {
         const usuario = await this.usuariosService.crearUsuario(crearUsuario, imagen)
 
-        //Enviar correo de confirmación
-        // await this.mailService.sendMail(
-        // crearUsuario.email,
-        // 'Bienvenido a ForgeFit',
-        // 'Gracias por registrarte.',
-        // '<h1>Te damos la bienvenida a ForgeFit!!</h1><p>Gracias por registrarte.</p>',
-        // );
+      // Enviar correo de confirmación
+        await this.mailService.sendMail(
+        crearUsuario.email,
+        'Bienvenido a ForgeFit',
+        'Gracias por registrarte.',
+        '<h1>Te damos la bienvenida a ForgeFit!!</h1><p>Gracias por registrarte.</p>',
+        );
         return {
             message: `Usuario creado exitosamente`,
             usuario

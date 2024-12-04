@@ -90,7 +90,7 @@ export class UsuariosService {
         const usuarios = await this.usuariosRepository.find({
             skip: offset,
             take: limit,
-            relations: ['perfilProfesor']
+            relations: ['perfilProfesor', 'membresia']
         });
 
         return usuarios.map(usuario => {
@@ -113,6 +113,24 @@ export class UsuariosService {
             usuarioDto.rol = 'profesor';
         } else {
             usuarioDto.rol = 'cliente';
+        }
+
+        // Agrega las membresías al DTO
+        if (usuario.membresia) { // Verifica si el usuario tiene una membresía
+            usuarioDto.membresia = {
+                id: usuario.membresia.id,
+                nombre: usuario.membresia.nombre,
+                descripcion: usuario.membresia.descripcion,
+                features: usuario.membresia.features,
+                precio: usuario.membresia.precio,
+                duracionEnMeses: usuario.membresia.duracionEnMeses,
+                fechaCreacion: usuario.membresia.fechaCreacion,
+                fechaExpiracion: usuario.membresia.fechaExpiracion,
+                fechaActualizacion: usuario.membresia.fechaActualizacion,
+                activa: usuario.membresia.activa,
+            };
+        } else {
+            usuarioDto.membresia = null; // O establece un valor por defecto si no tiene membresía
         }
 
             return usuarioDto;
