@@ -15,6 +15,7 @@ import { Inscripcion } from "src/inscripciones/inscripcion.entity";
 import { InscripcionRespuestaDto } from "src/inscripciones/dtos/respuesta-inscripicon.dto";
 import { InscripcionesService } from "src/inscripciones/inscripcion.service";
 import { rolEnum, Usuario } from "src/usuarios/usuario.entity";
+import RespuestaUsuario2Dto from "src/usuarios/dtos/respuestaDos-usuario.dto";
 
 @Injectable()
 export class ClasesService {
@@ -307,7 +308,7 @@ export class ClasesService {
         // Buscar todas las inscripciones con la relación a la clase
         const inscripciones = await this.inscripcionesRepository.find({
             where: { clase: { id: claseId } }, // Asegúrate de que `clase` es el nombre correcto de la relación
-            relations: ['clase'], // Cambia `class` por `clase` si es el nombre real de la relación
+            relations: ['clase', 'usuario'], // Cambia `class` por `clase` si es el nombre real de la relación
             skip,
             take,
         });
@@ -321,7 +322,7 @@ export class ClasesService {
 
         // Mapear las inscripciones al formato de DTO
         return inscripciones.map((inscripcion) => {
-            const { id, fechaInscripcion, fechaVencimiento, estado, clase: entidadClase } = inscripcion;
+            const { id, fechaInscripcion, fechaVencimiento, estado, clase: entidadClase, usuario: respuestaUsuario} = inscripcion;
 
             // Transformar la clase al formato esperado
             const claseDto: RespuestaClaseDto = {
@@ -331,6 +332,13 @@ export class ClasesService {
                 fecha: entidadClase.fecha,
                 disponibilidad: entidadClase.disponibilidad,
             };
+            const usuarioDto: RespuestaUsuario2Dto = {
+                id: respuestaUsuario.id,
+                nombre: respuestaUsuario.nombre,
+                email: respuestaUsuario.email,
+                telefono: respuestaUsuario.telefono,
+                imagen: respuestaUsuario.imagen,
+            };
 
             // Retornar el DTO de la inscripción
             return {
@@ -339,6 +347,7 @@ export class ClasesService {
                 fechaVencimiento,
                 estado,
                 clase: claseDto,
+                usuario: usuarioDto,
             };
         });
 
