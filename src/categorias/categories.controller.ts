@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Patch, HttpException, HttpStatus, Put, BadRequestException, Delete, UploadedFile, UseInterceptors } from "@nestjs/common";
+import { Controller, Get, Post, Body, Param, UseGuards, Patch, HttpException, HttpStatus, Put, BadRequestException, Delete, Query, UploadedFile, UseInterceptors } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiSecurity, ApiBody, ApiConsumes } from "@nestjs/swagger";
 import { AuthGuard } from "src/guard/auth.guard";
 import { RolesGuard } from "src/guard/roles.guard";
@@ -10,6 +10,7 @@ import { ModificarCategoriaDto } from "./dto/modificar-categoria.dto";
 import { Categoria } from "./categories.entity";
 import { Clase } from "src/clases/clase.entity";
 import { ModificarEstadoDto } from "./dto/modificar-estadoCategoria.dto";
+import { SearchDto } from "src/clases/dto/search-logica.dto";
 import { FileUploadService } from "src/file-upload/file-upload.service";
 import { FileInterceptor } from "@nestjs/platform-express";
 
@@ -147,6 +148,16 @@ export class CategoriesController {
         const resultMessage = await this.categoriesService.removeCategory(id);
         return { message: resultMessage };
     }
+
+    @Get('search')
+    @ApiOperation({ summary: 'Buscar categorías por nombre y descripción' })
+    @ApiResponse({ status: 200, description: 'Categorías encontradas', type: [Categoria] })
+    async search(@Query() searchDto: SearchDto): Promise<Categoria[]> {
+    return this.categoriesService.searchCategorias(searchDto);
+}
+
+
+    
 
 
 }

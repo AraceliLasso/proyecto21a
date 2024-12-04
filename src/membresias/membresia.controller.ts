@@ -8,7 +8,7 @@ import { Roles } from 'src/decorators/roles.decorators';
 import { AuthGuard } from 'src/guard/auth.guard';
 import { UsuariosService } from 'src/usuarios/usuario.service';
 import { MembresiaInactivaDto } from './dtos/inactivo-membresia.dto';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ActualizarPrecioMembresiaDto } from './dtos/actualizar-membresia.dto';
 import * as express from 'express';
 import { CrearMembresiaDto } from './dtos/crear-membresia.dto';
@@ -61,20 +61,26 @@ export class MembresiaController {
       if (!membresia.activa) {
         throw new HttpException('Esta membresía ya no está disponible', HttpStatus.BAD_REQUEST);
       }
-      
-// Crear la sesión de pago con Stripe
-const session = await this.stripeService.crearSesionDePago(
-    membresiaId,
-    membresia.precio,
-    usuario.email,
-  );
     
+      // Crear la sesión de pago con Stripe
+      const session = await this.stripeService.crearSesionDePago(
+        membresiaId,
+        membresia.precio,
+        usuario.email,
+      );
+    
+      // Asignar la membresía al usuario
       usuario.membresia = membresia;
       await this.usuariosService.update(usuario);
     
-      return { message: 'Membresía comprada y asignada con éxito', membresia, usuario };
-    }
-    
+      // Retornar la respuesta con el session.id
+      return { 
+        message: 'Membresía comprada y asignada con éxito', 
+        membresia, 
+        usuario, 
+        sessionId: session.id  // Enviar el session.id al frontend
+      };
+    }    
     @Get()
     @ApiOperation({ summary: 'Obtener todas las membresías' })
     @ApiResponse({ status: 200, description: 'Membresías obtenidas correctamente', type: [Membresia] })
@@ -230,6 +236,39 @@ const session = await this.stripeService.crearSesionDePago(
     async cancelarMembresiaPorAdmin(@Param('id') userId: string) {
         return this.membresiaService.cancelarMembresia(userId);
     }
+
+    @Post('checkout')
+    @ApiOperation({ summary: 'Create a Stripe Checkout session' })
+    @ApiResponse({ status: 200, description: 'Checkout session created', schema: { example: { url: 'https://checkout.stripe.com/pay/cs_test_12345' } } })
+    @ApiResponse({ status: 500, description: 'Internal Server Error' })
+    @ApiBody({
+      description: 'Parameters to create a Checkout session',
+      schema: {
+        type: 'object',
+        properties: {
+          membresiaId: { type: 'string', example: 'membresia_123' },
+          precio: { type: 'number', example: 2000 },
+          email: { type: 'string', example: 'user@example.com' },
+        },
+      },
+    })
+    async createCheckoutSession(
+      @Body('membresiaId') membresiaId: string,
+      @Body('precio') precio: number,
+      @Body('email') email: string,
+    ) {
+      try {
+        const session = await this.stripeService.crearSesionDePago(membresiaId, precio, email);
+        return {sessionId: session.id, url: session.url }; // Devolvemos la URL para redirigir al frontend
+      } catch (error) {
+        console.error('Error creating checkout session:', error);
+        throw new Error('Failed to create checkout session');
+      }
+    }
+    
+
+    
+    
 }
 
 

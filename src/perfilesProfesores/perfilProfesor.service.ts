@@ -9,6 +9,7 @@ import { Clase } from "src/clases/clase.entity";
 import { rolEnum, Usuario } from "src/usuarios/usuario.entity";
 import { CloudinaryService } from "src/file-upload/cloudinary.service";
 import { SearchDto } from "src/clases/dto/search-logica.dto";
+import { SearchPerfilProfesorDto } from "./dto/search-perfilProfesor-dto";
 
 @Injectable()
 export class PerfilesProfesoresService{
@@ -252,5 +253,23 @@ export class PerfilesProfesoresService{
         const perfilesProfesores = await query.getMany();
         return perfilesProfesores;
     }
+    async search(searchDto: SearchPerfilProfesorDto): Promise<PerfilProfesor[]> {
+        const { nombre, descripcion, certificacion } = searchDto;
     
+        const query = this.perfilesProfesoresRepository.createQueryBuilder('perfilProfesor');
+    
+        if (nombre) {
+          query.andWhere('perfilProfesor.nombre ILIKE :nombre', { nombre: `%${nombre}%` });
+        }
+    
+        if (descripcion) {
+          query.andWhere('perfilProfesor.descripcion ILIKE :descripcion', { descripcion: `%${descripcion}%` });
+        }
+    
+        if (certificacion) {
+          query.andWhere('perfilProfesor.certificacion ILIKE :certificacion', { certificacion: `%${certificacion}%` });
+        }
+    
+        return await query.getMany();
+      }
 }
