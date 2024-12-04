@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Usuario } from 'src/usuarios/usuario.entity';
 import { UsuariosService } from 'src/usuarios/usuario.service';
@@ -52,6 +52,11 @@ async crearUsuarioGoogle(payload: LoginGoogleDto) {
         esNuevoUsuario = true; // Marca al usuario como nuevo
     }
 
+    // Verificar si el usuario está habilitado
+    if (!usuario.estado) {
+        throw new ForbiddenException('Tu cuenta está suspendida. Contacta al administrador.');
+    }
+
     // Generar el token JWT
     const token = await this.generateJwtToken(usuario);
 
@@ -68,21 +73,6 @@ async crearUsuarioGoogle(payload: LoginGoogleDto) {
     console.error('Error en la autenticación OAuth:', error);
     throw new UnauthorizedException('No se pudo autenticar al usuario');
 }
-    // return{
-    //     usuario: {
-    //         nombre: usuario.nombre,
-    //         email: usuario.email,
-    //         telefono: usuario.telefono ?? null,
-    //         edad: usuario.edad ?? null,
-    //         rol: usuario.rol || "cliente",
-    //         imagen: usuario.imagen ?? null
-    //     },
-    //     esNuevoUsuario, // Devuelve si el usuario es nuevo
-    // }  
-    // } catch (error) {
-    //     console.error('Error en la autenticación OAuth:', error);
-    //     throw new UnauthorizedException('No se pudo autenticar al usuario');
-    // }
 }
 
 async generateJwtToken(usuario: Partial<Usuario>): Promise<string> {
