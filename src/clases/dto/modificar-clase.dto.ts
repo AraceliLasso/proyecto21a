@@ -1,7 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Type } from "class-transformer";
-import { IsNotEmpty, IsNumber, IsString, IsUUID } from "class-validator";
-
+import { Transform, Type } from "class-transformer";
+import { IsNotEmpty, IsNumber, IsString, IsUUID, MaxLength, MinLength } from "class-validator";
 export class ModificarClaseDto {
     @ApiProperty({ description: "El nombre de la clase", required: true })
     @IsString()
@@ -48,4 +47,3 @@ export class ModificarClaseDto {
 function IsOptional(): (target: ModificarClaseDto, propertyKey: "imagen") => void {
     throw new Error("Function not implemented.");
 }
-

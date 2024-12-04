@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, InternalServerErrorException, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, InternalServerErrorException, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors, ValidationPipe } from "@nestjs/common";
 import { ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { ClasesService } from "./clase.service";
 import { RespuestaClaseDto } from "./dto/respuesta-clase.dto";
@@ -15,6 +15,7 @@ import { ImageUploadPipe } from "src/pipes/pipes/image/image-upload.pipe";
 import { TransformInterceptor } from "./interceptor";
 import { ModificarEstadoDto } from "./dto/modificar-estadoClase.dto";
 import { InscripcionRespuestaDto } from "src/inscripciones/dtos/respuesta-inscripicon.dto";
+
 
 @ApiTags("Clases")
 @Controller("clases")
@@ -49,19 +50,19 @@ export class ClasesController {
             },
         },
     })
-    @UseInterceptors(FileInterceptor('imagen', { limits: { fileSize: 10 * 1024 * 1024} }), TransformInterceptor)
+    @UseInterceptors(FileInterceptor('imagen', { limits: { fileSize: 10 * 1024 * 1024 } }), TransformInterceptor)
     async create(@Body() crearClaseDto: CrearClaseDto, @UploadedFile() file?: Express.Multer.File): Promise<RespuestaClaseDto> {
         // Validación de disponibilidad
         if (typeof crearClaseDto.disponibilidad !== 'number') {
             throw new BadRequestException('Disponibilidad debe ser un número');
         }
-    
+
         console.log('Tipo:', typeof crearClaseDto.disponibilidad); // "number"
         console.log('Valor:', crearClaseDto.disponibilidad); // Valor válido
-    
+
         // Llamar al servicio para crear la clase
         const nuevaClase = await this.clasesService.crear(crearClaseDto, file);
-    
+
         return nuevaClase;
     }
 
@@ -102,66 +103,6 @@ export class ClasesController {
         return this.clasesService.modificarEstado(id, modificarEstadoDto.estado);
     }
 
-
-    
-
-    // GET --- Solo el admin puede ver todas las clases, tanto activas como no
-    @Get()
-    @ApiOperation({ summary: 'Obtener todas las clases' })
-    @ApiResponse({ status: 200, description: 'Clases obtenidas', type: [Clase] })
-    @ApiQuery({ name: 'page', required: false, description: 'Número de página', example: 1 })
-    @ApiQuery({ name: 'limit', required: false, description: 'Cantidad de resultados por página', example: 5 })
-    @UseGuards(AuthGuard, RolesGuard)
-    @Roles('admin')
-    @ApiSecurity('bearer')
-    async getClases(
-        @Query('page') page: number = 1,
-        @Query('limit') limit: number = 10,
-    ) {
-        return this.clasesService.get(page, limit);
-    }
-   //Obtenemos solo las clases activas
-   @Get('/activas')
-   @ApiOperation({ summary: 'Obtener todas las clases activas' })
-   @ApiResponse({ status: 201, description: 'Clases activas obtenidas', type: [Clase] })
-   @ApiResponse({ status: 500, description: 'No se encontraron clases activas' })
-   async getClasesActivas(): Promise<Clase[]> {
-       return this.clasesService.filtrarClasesActivas();
-   }
-
-   @Get(':id')
-   @ApiOperation({ summary: 'Obtener clase por ID' })
-   @ApiResponse({ status: 200, description: 'Clase obtenida', type: Clase })
-   @ApiResponse({ status: 404, description: 'Clase no encontrada' })
-   async findOne(@Param('id', new ParseUUIDPipe()) id: string) {
-       const clase = await this.clasesService.findOne(id);
-       if (!clase) {
-           throw new NotFoundException("Clase no encontrada");
-       }
-       return clase;
-   }
-
-    //get de TODAS las inscripciones de una clase específica por ID
-    @Get('clase/:claseId')
-    @ApiOperation({ summary: 'Obtener todas las inscripciones de una clase' })
-    @ApiResponse({ status: 200, description: 'Inscripciones de clase obtenidas', type: [InscripcionRespuestaDto] })
-    @HttpCode(HttpStatus.OK)
-    @UseGuards(AuthGuard, RolesGuard)
-    @Roles('admin')
-    @ApiSecurity('bearer')
-    @ApiQuery({ name: 'page', required: false, description: 'Número de página', example: 1 })
-    @ApiQuery({ name: 'limit', required: false, description: 'Cantidad de resultados por página', example: 5 })
-    async inscripcionDeClasePorId(
-        @Param('claseId') claseId: string,
-        @Query('page') page: number = 1,
-        @Query('limit') limit: number = 10,
-    ): Promise<InscripcionRespuestaDto[]> {
-        console.log('llamar obtenerInscripcionesPorClase');
-        return this.clasesService.obtenerInscripcionesPorClaseId(page, limit, claseId);
-    }
-
-  
-
     // PUT
     @Put(":id")
     @ApiOperation({ summary: 'Actualizar una clase existente' })
@@ -200,7 +141,6 @@ export class ClasesController {
                 const uploadResult = await this.fileUploadService.uploadFile(file, 'clase', id);
                 modificarClaseDto.imagen = uploadResult.imgUrl; // Asigna la URL de la imagen al DTO
             }
-
             const modificarClase = await this.clasesService.update(id, modificarClaseDto);
             if (!modificarClase) {
                 throw new NotFoundException('Clase no encontrada');
@@ -208,6 +148,64 @@ export class ClasesController {
             return modificarClase;
     
     }
+    // GET --- Solo el admin puede ver todas las clases, tanto activas como no
+    @Get()
+    @ApiOperation({ summary: 'Obtener todas las clases' })
+    @ApiResponse({ status: 200, description: 'Clases obtenidas', type: [Clase] })
+    @ApiQuery({ name: 'page', required: false, description: 'Número de página', example: 1 })
+    @ApiQuery({ name: 'limit', required: false, description: 'Cantidad de resultados por página', example: 5 })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin')
+    @ApiSecurity('bearer')
+    async getClases(
+        @Query('page') page: number = 1,
+        @Query('limit') limit: number = 10,
+    ) {
+        return this.clasesService.get(page, limit);
+    }
+    //Obtenemos solo las clases activas
+    @Get('/activas')
+    @ApiOperation({ summary: 'Obtener todas las clases activas' })
+    @ApiResponse({ status: 201, description: 'Clases activas obtenidas', type: [Clase] })
+    @ApiResponse({ status: 500, description: 'No se encontraron clases activas' })
+    async getClasesActivas(): Promise<Clase[]> {
+        return this.clasesService.filtrarClasesActivas();
+    }
+
+    @Get(':id')
+    @ApiOperation({ summary: 'Obtener clase por ID' })
+    @ApiResponse({ status: 200, description: 'Clase obtenida', type: Clase })
+    @ApiResponse({ status: 404, description: 'Clase no encontrada' })
+    async findOne(@Param('id', new ParseUUIDPipe()) id: string) {
+        const clase = await this.clasesService.findOne(id);
+        if (!clase) {
+            throw new NotFoundException("Clase no encontrada");
+        }
+        return clase;
+    }
+
+    //get de TODAS las inscripciones de una clase específica por ID
+    @Get('clase/:claseId')
+    @ApiOperation({ summary: 'Obtener todas las inscripciones de una clase' })
+    @ApiResponse({ status: 200, description: 'Inscripciones de clase obtenidas', type: [InscripcionRespuestaDto] })
+    @HttpCode(HttpStatus.OK)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles('admin')
+    @ApiSecurity('bearer')
+    @ApiQuery({ name: 'page', required: false, description: 'Número de página', example: 1 })
+    @ApiQuery({ name: 'limit', required: false, description: 'Cantidad de resultados por página', example: 5 })
+    async inscripcionDeClasePorId(
+        @Param('claseId') claseId: string,
+        @Query('page') page: number = 1,
+        @Query('limit') limit: number = 10,
+    ): Promise<InscripcionRespuestaDto[]> {
+        console.log('llamar obtenerInscripcionesPorClase');
+        return this.clasesService.obtenerInscripcionesPorClaseId(page, limit, claseId);
+    }
+
+
+
+  
 
     // DELETE
     @Delete(':id')
