@@ -261,13 +261,6 @@ export class UsuariosService {
         imagen: actualizarUsuarioDto.imagen || usuario.imagen,   // Solo actualizar la imagen si se pasa
     };
         
-         // Filtrar propiedades del DTO que no sean undefined
-        // const datosActualizados = {
-        //     ...usuario,
-        //     ...actualizarUsuarioDto,
-        //     imagen: actualizarUsuarioDto.imagen || usuario.imagen, // Preservar la imagen si no hay cambios
-        // };
-
             // Guardar los cambios en la base de datos
             await this.usuariosRepository.save({ ...usuario, ...datosActualizados });
 
