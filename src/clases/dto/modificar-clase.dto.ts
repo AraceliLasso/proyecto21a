@@ -1,48 +1,49 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform, Type } from "class-transformer";
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength, MinLength } from "class-validator";
-
+import { IsNotEmpty, IsNumber, IsString, IsUUID, MaxLength, MinLength } from "class-validator";
 export class ModificarClaseDto {
-    @ApiProperty({ description: "El nombre de la clase", required: false })
-    @IsOptional()
+    @ApiProperty({ description: "El nombre de la clase", required: true })
     @IsString()
-    @MaxLength(80)
-    @MinLength(3)
-    nombre?: string;
+    @IsNotEmpty()
+    nombre: string;
 
-    @ApiProperty({ description: "La descripción de la clase", required: false })
-    @IsOptional()
+    @ApiProperty({ description: "La descripción de la clase", required: true })
     @IsString()
-    descripcion?: string;
+    @IsNotEmpty()
+    descripcion: string;
 
-    @ApiProperty({ description: 'Fecha y hora de la clase en string', required: false })
-    @IsOptional()
+    @ApiProperty({ description: 'Fecha y hora de la clase en string', required: false})
     @IsString()
-    fecha?: string;
+    fecha: string;
 
-
-    @ApiProperty({ type: Number, description: "La disponibilidad de clases", required: false })
-    @IsOptional()
+    @ApiProperty({ description: "La disponibilidad de clases", required: true })
     @IsNumber()
-    @Transform(({ value }) => (value ? Number(value) : value))  // Convierte el valor a número si no es undefined o null
-    disponibilidad?: number;
+    @IsNotEmpty()
+    @Type(() => Number)
+    disponibilidad: number;
 
     @ApiProperty({
         type: 'string',
-        format: 'binary',
+        format: 'binary', 
         description: 'Imagen de la clase',
-        required: false
     })
-    @IsOptional()
-    imagen?: any;
+    imagen: any;
 
     @ApiProperty({ description: "ID de la categoría", required: false })
-    @IsOptional()
     @IsUUID()
+    @IsNotEmpty()
     categoriaId?: string;
 
     @ApiProperty({ description: "ID del profesor", required: false })
-    @IsOptional()
     @IsUUID()
+    @IsNotEmpty()
     perfilProfesorId?: string;
+
+
+    // estado: boolean
+
+}
+
+function IsOptional(): (target: ModificarClaseDto, propertyKey: "imagen") => void {
+    throw new Error("Function not implemented.");
 }

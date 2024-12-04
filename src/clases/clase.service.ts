@@ -130,106 +130,106 @@ export class ClasesService {
         return new RespuestaClaseDto(clase);
     }
 
-    // PUT
-    async update(id: string, modificarClaseDto: ModificarClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
-        const clase = await this.clasesRepository.findOne({
-            where: { id }, // Usar un objeto con la propiedad `where`
-            relations: ['categoria', 'perfilProfesor'], // Cargar la relación de categoría
-        });
+    // // PUT
+    // async update(id: string, modificarClaseDto: ModificarClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
+    //     const clase = await this.clasesRepository.findOne({
+    //         where: { id }, // Usar un objeto con la propiedad `where`
+    //         relations: ['categoria', 'perfilProfesor'], // Cargar la relación de categoría
+    //     });
 
-        if (!clase) {
-            throw new NotFoundException(`Clase con ID ${id} no encontrada`);
-        }
+    //     if (!clase) {
+    //         throw new NotFoundException(`Clase con ID ${id} no encontrada`);
+    //     }
 
-        // Verificar si el nombre ya existe en otra clase
-        if (modificarClaseDto.nombre && modificarClaseDto.nombre.trim()) {
-            const normalizedName = modificarClaseDto.nombre.trim().toLowerCase();
+    //     // Verificar si el nombre ya existe en otra clase
+    //     if (modificarClaseDto.nombre && modificarClaseDto.nombre.trim()) {
+    //         const normalizedName = modificarClaseDto.nombre.trim().toLowerCase();
 
-            const claseExistente = await this.clasesRepository
-                .createQueryBuilder('clase')
-                .where('LOWER(clase.nombre) = :nombre', { nombre: normalizedName })
-                .getOne();
+    //         const claseExistente = await this.clasesRepository
+    //             .createQueryBuilder('clase')
+    //             .where('LOWER(clase.nombre) = :nombre', { nombre: normalizedName })
+    //             .getOne();
 
-            if (claseExistente) {
-                throw new HttpException(
-                    `Ya existe una clase con el nombre "${modificarClaseDto.nombre}".`,
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
-        }
-        // Normalización del nombre antes de guardar
-        if (modificarClaseDto.nombre) {
-            clase.nombre = modificarClaseDto.nombre.trim().toLowerCase();
-        }
+    //         if (claseExistente) {
+    //             throw new HttpException(
+    //                 `Ya existe una clase con el nombre "${modificarClaseDto.nombre}".`,
+    //                 HttpStatus.BAD_REQUEST,
+    //             );
+    //         }
+    //     }
+    //     // Normalización del nombre antes de guardar
+    //     if (modificarClaseDto.nombre) {
+    //         clase.nombre = modificarClaseDto.nombre.trim().toLowerCase();
+    //     }
 
-        // Eliminar la imagen anterior si se proporciona un archivo nuevo
-        if (file && clase.imagen) {
-            try {
-                await this.cloudinaryService.deleteFile(clase.imagen);
-            } catch (error) {
-                console.error('Error al eliminar la imagen anterior:', error);
-                throw new InternalServerErrorException('Error al eliminar la imagen anterior');
-            }
-        }
+    //     // Eliminar la imagen anterior si se proporciona un archivo nuevo
+    //     if (file && clase.imagen) {
+    //         try {
+    //             await this.cloudinaryService.deleteFile(clase.imagen);
+    //         } catch (error) {
+    //             console.error('Error al eliminar la imagen anterior:', error);
+    //             throw new InternalServerErrorException('Error al eliminar la imagen anterior');
+    //         }
+    //     }
 
-        // Subir nueva imagen si se proporciona un archivo
-        if (file) {
-            const nuevaImagenUrl = await this.cloudinaryService.uploadFile(file.buffer, file.originalname);
-            clase.imagen = nuevaImagenUrl; // Reemplazar la URL de la imagen actual
-        }
+    //     // Subir nueva imagen si se proporciona un archivo
+    //     if (file) {
+    //         const nuevaImagenUrl = await this.cloudinaryService.uploadFile(file.buffer, file.originalname);
+    //         clase.imagen = nuevaImagenUrl; // Reemplazar la URL de la imagen actual
+    //     }
 
 
 
-        // Asignar las propiedades de modificarClaseDto a la clase (sin necesidad de comprobar cada campo manualmente)
-        Object.assign(clase, modificarClaseDto);
+    //     // Asignar las propiedades de modificarClaseDto a la clase (sin necesidad de comprobar cada campo manualmente)
+    //     Object.assign(clase, modificarClaseDto);
 
-        // Verifica si se proporcionó el ID del perfil del profesor y asigna la entidad correspondiente, cuando configure Profesor
-        if (modificarClaseDto.perfilProfesorId) {
-            const perfilProfesor = await this.perfilProfesorRepository.findOne({
-                where: { id: modificarClaseDto.perfilProfesorId },
-            });
-            console.log("if (modificarClaseDto.perfilProfesorId)", perfilProfesor)
-            if (!perfilProfesor) {
-                throw new NotFoundException(`Perfil de profesor con ID ${modificarClaseDto.perfilProfesorId} no encontrado`);
-            }
-            clase.perfilProfesor = perfilProfesor;
-            console.log("clase.perfilProfesor", perfilProfesor)
-        } else if (!clase.perfilProfesor) {
-            // Lanza un error solo si no hay perfil asociado en la entidad actual
-            throw new InternalServerErrorException('El perfil del profesor es obligatorio para actualizar la clase.');
-        }
+    //     // Verifica si se proporcionó el ID del perfil del profesor y asigna la entidad correspondiente, cuando configure Profesor
+    //     if (modificarClaseDto.perfilProfesorId) {
+    //         const perfilProfesor = await this.perfilProfesorRepository.findOne({
+    //             where: { id: modificarClaseDto.perfilProfesorId },
+    //         });
+    //         console.log("if (modificarClaseDto.perfilProfesorId)", perfilProfesor)
+    //         if (!perfilProfesor) {
+    //             throw new NotFoundException(`Perfil de profesor con ID ${modificarClaseDto.perfilProfesorId} no encontrado`);
+    //         }
+    //         clase.perfilProfesor = perfilProfesor;
+    //         console.log("clase.perfilProfesor", perfilProfesor)
+    //     } else if (!clase.perfilProfesor) {
+    //         // Lanza un error solo si no hay perfil asociado en la entidad actual
+    //         throw new InternalServerErrorException('El perfil del profesor es obligatorio para actualizar la clase.');
+    //     }
 
-        if (modificarClaseDto.categoriaId) {
-            const categoria = await this.categoriesService.findOne(
-                modificarClaseDto.categoriaId,
-            );
-            if (!categoria) {
-                throw new NotFoundException(`Categoría con ID ${modificarClaseDto.categoriaId} no encontrada`);
-            }
-            clase.categoria = categoria;
-        }
+    //     if (modificarClaseDto.categoriaId) {
+    //         const categoria = await this.categoriesService.findOne(
+    //             modificarClaseDto.categoriaId,
+    //         );
+    //         if (!categoria) {
+    //             throw new NotFoundException(`Categoría con ID ${modificarClaseDto.categoriaId} no encontrada`);
+    //         }
+    //         clase.categoria = categoria;
+    //     }
 
-        try {
-            // Guardar la clase con las actualizaciones realizadas
-            const modificarclase = await this.clasesRepository.save({
-                ...clase, // Todos los datos existentes
-                perfilProfesorId: clase.perfilProfesor.id, // Garantiza que la relación no se pierda
-            });
+    //     try {
+    //         // Guardar la clase con las actualizaciones realizadas
+    //         const modificarclase = await this.clasesRepository.save({
+    //             ...clase, // Todos los datos existentes
+    //             perfilProfesorId: clase.perfilProfesor.id, // Garantiza que la relación no se pierda
+    //         });
 
-            // Crear el DTO de respuesta para la categoría
-            const categoryDto = new RespuestaCategoriaDto(modificarclase.categoria.id, modificarclase.categoria.nombre);
+    //         // Crear el DTO de respuesta para la categoría
+    //         const categoryDto = new RespuestaCategoriaDto(modificarclase.categoria.id, modificarclase.categoria.nombre);
 
-            return new RespuestaClaseDto(modificarclase,);
-        } catch (error) {
-            if (error instanceof QueryFailedError && error.driverError?.code === '23505') {
-                throw new HttpException(
-                    'Ya existe una clase con ese nombre.',
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
-            throw error;
-        }
-    }
+    //         return new RespuestaClaseDto(modificarclase,);
+    //     } catch (error) {
+    //         if (error instanceof QueryFailedError && error.driverError?.code === '23505') {
+    //             throw new HttpException(
+    //                 'Ya existe una clase con ese nombre.',
+    //                 HttpStatus.BAD_REQUEST,
+    //             );
+    //         }
+    //         throw error;
+    //     }
+    // }
 
 
     async remove(id: string): Promise<string> {
@@ -425,5 +425,108 @@ export class ClasesService {
 
      return datosActualizados;
     }
+
+      // PUT
+      async update(id: string, modificarClaseDto: ModificarClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
+        const clase = await this.clasesRepository.findOne({
+            where: { id }, // Usar un objeto con la propiedad `where`
+            relations: ['categoria', 'perfilProfesor'], // Cargar la relación de categoría
+        });
+
+        if (!clase) {
+            throw new NotFoundException(`Clase con ID ${id} no encontrada`);
+        }
+
+        // Verificar si el nombre ya existe en otra clase
+        if (modificarClaseDto.nombre && modificarClaseDto.nombre.trim()) {
+            const normalizedName = modificarClaseDto.nombre.trim().toLowerCase();
+
+            const claseExistente = await this.clasesRepository
+                .createQueryBuilder('clase')
+                .where('LOWER(clase.nombre) = :nombre', { nombre: normalizedName })
+                .getOne();
+
+            if (claseExistente) {
+                throw new HttpException(
+                    `Ya existe una clase con el nombre "${modificarClaseDto.nombre}".`,
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+        }
+        // Normalización del nombre antes de guardar
+        if (modificarClaseDto.nombre) {
+            clase.nombre = modificarClaseDto.nombre.trim().toLowerCase();
+        }
+
+        // Eliminar la imagen anterior si se proporciona un archivo nuevo
+        if (file && clase.imagen) {
+            try {
+                await this.cloudinaryService.deleteFile(clase.imagen);
+            } catch (error) {
+                console.error('Error al eliminar la imagen anterior:', error);
+                throw new InternalServerErrorException('Error al eliminar la imagen anterior');
+            }
+        }
+
+        // Subir nueva imagen si se proporciona un archivo
+        if (file) {
+            const nuevaImagenUrl = await this.cloudinaryService.uploadFile(file.buffer, file.originalname);
+            clase.imagen = nuevaImagenUrl; // Reemplazar la URL de la imagen actual
+        }
+
+
+
+        // Asignar las propiedades de modificarClaseDto a la clase (sin necesidad de comprobar cada campo manualmente)
+        Object.assign(clase, modificarClaseDto);
+
+        // Verifica si se proporcionó el ID del perfil del profesor y asigna la entidad correspondiente, cuando configure Profesor
+        if (modificarClaseDto.perfilProfesorId) {
+            const perfilProfesor = await this.perfilProfesorRepository.findOne({
+                where: { id: modificarClaseDto.perfilProfesorId },
+            });
+            console.log("if (modificarClaseDto.perfilProfesorId)", perfilProfesor)
+            if (!perfilProfesor) {
+                throw new NotFoundException(`Perfil de profesor con ID ${modificarClaseDto.perfilProfesorId} no encontrado`);
+            }
+            clase.perfilProfesor = perfilProfesor;
+            console.log("clase.perfilProfesor", perfilProfesor)
+        } else if (!clase.perfilProfesor) {
+            // Lanza un error solo si no hay perfil asociado en la entidad actual
+            throw new InternalServerErrorException('El perfil del profesor es obligatorio para actualizar la clase.');
+        }
+
+        if (modificarClaseDto.categoriaId) {
+            const categoria = await this.categoriesService.findOne(
+                modificarClaseDto.categoriaId,
+            );
+            if (!categoria) {
+                throw new NotFoundException(`Categoría con ID ${modificarClaseDto.categoriaId} no encontrada`);
+            }
+            clase.categoria = categoria;
+        }
+
+        try {
+            // Guardar la clase con las actualizaciones realizadas
+            const modificarclase = await this.clasesRepository.save({
+                ...clase, // Todos los datos existentes
+                perfilProfesorId: clase.perfilProfesor.id, // Garantiza que la relación no se pierda
+            });
+
+            // Crear el DTO de respuesta para la categoría
+            const categoryDto = new RespuestaCategoriaDto(modificarclase.categoria.id, modificarclase.categoria.nombre);
+
+            return new RespuestaClaseDto(modificarclase,);
+        } catch (error) {
+            if (error instanceof QueryFailedError && error.driverError?.code === '23505') {
+                throw new HttpException(
+                    'Ya existe una clase con ese nombre.',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+            throw error;
+        }
+    }
+
+
     
 }    
