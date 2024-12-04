@@ -10,9 +10,9 @@ export class OAuth2Strategy extends PassportStrategy(Strategy, 'oauth2') {
         tokenURL: 'https://provider.com/oauth2/token',
         clientID: process.env.GOOGLEAUTH_CLIENT_ID,
         clientSecret: process.env.GOOGLEAUTH_CLIENT_SECRET,
-        callbackURL: process.env.NODE_ENV === 'production'
-        ? 'https://pf-webgym.vercel.app/auth/google/callback'
-        : 'http://localhost:3000/auth/google/callback',
+        callbackURL: 
+        'https://pf-webgym.vercel.app/auth/google/callback'
+        ,
         scope: ['profile', 'email'],
         });
     }
