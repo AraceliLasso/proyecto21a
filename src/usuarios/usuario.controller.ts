@@ -148,11 +148,7 @@ export class UsuariosController {
                 telefono: { type: 'number' },
                 email: { type: 'string' },
                 contrasena: { type: 'string' },
-                imagen: {
-                    type: 'string',
-                    format: 'binary'
-                },
-
+                // El campo imagen ya no es necesario aquí, ya que lo manejamos de forma separada con @UploadedFile()
             },
         },
     })
@@ -160,18 +156,20 @@ export class UsuariosController {
         @Param('id') id: string, 
         @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, skipMissingProperties: true,})) actualizarUsuarios: ActualizarUsuarioDto, 
         @UploadedFile() imagen?: Express.Multer.File): Promise<Usuario> {
-            try {
-                const usuario = await this.usuariosService.actualizarUsuarios(id, actualizarUsuarios, imagen);
-                if (!usuario) {
-                    throw new NotFoundException('Usuario no encontrado');
-                }
-                return usuario;
-            } catch (error) {
-                console.error('Error al actualizar el usuario:', error);
-                throw new InternalServerErrorException('Error inesperado al actualizar el usuario');
+    
+        try {
+            // Verifica si la imagen fue cargada y la maneja
+            const usuario = await this.usuariosService.actualizarUsuarios(id, actualizarUsuarios, imagen);
+            if (!usuario) {
+                throw new NotFoundException('Usuario no encontrado');
             }
-        
+            return usuario;
+        } catch (error) {
+            console.error('Error al actualizar el usuario:', error);
+            throw new InternalServerErrorException('Error inesperado al actualizar el usuario');
+        }
     }
+    
 
     @Put(":id/rol")
     @UseGuards(RolesGuard)
