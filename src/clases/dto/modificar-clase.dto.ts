@@ -1,51 +1,48 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Type } from "class-transformer";
-import { IsNotEmpty, IsNumber, IsString, IsUUID } from "class-validator";
+import { Transform, Type } from "class-transformer";
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength, MinLength } from "class-validator";
 
 export class ModificarClaseDto {
-    @ApiProperty({ description: "El nombre de la clase", required: true })
+    @ApiProperty({ description: "El nombre de la clase", required: false })
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    nombre: string;
+    @MaxLength(80)
+    @MinLength(3)
+    nombre?: string;
 
-    @ApiProperty({ description: "La descripción de la clase", required: true })
+    @ApiProperty({ description: "La descripción de la clase", required: false })
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    descripcion: string;
+    descripcion?: string;
 
-    @ApiProperty({ description: 'Fecha y hora de la clase en string', required: false})
+    @ApiProperty({ description: 'Fecha y hora de la clase en string', required: false })
+    @IsOptional()
     @IsString()
-    fecha: string;
+    fecha?: string;
 
-    @ApiProperty({ description: "La disponibilidad de clases", required: true })
+
+    @ApiProperty({ type: Number, description: "La disponibilidad de clases", required: false })
+    @IsOptional()
     @IsNumber()
-    @IsNotEmpty()
-    @Type(() => Number)
-    disponibilidad: number;
+    @Transform(({ value }) => (value ? Number(value) : value))  // Convierte el valor a número si no es undefined o null
+    disponibilidad?: number;
 
     @ApiProperty({
         type: 'string',
-        format: 'binary', 
+        format: 'binary',
         description: 'Imagen de la clase',
+        required: false
     })
-    imagen: any;
+    @IsOptional()
+    imagen?: any;
 
     @ApiProperty({ description: "ID de la categoría", required: false })
+    @IsOptional()
     @IsUUID()
-    @IsNotEmpty()
     categoriaId?: string;
 
     @ApiProperty({ description: "ID del profesor", required: false })
+    @IsOptional()
     @IsUUID()
-    @IsNotEmpty()
     perfilProfesorId?: string;
-
-
-    // estado: boolean
-
 }
-
-function IsOptional(): (target: ModificarClaseDto, propertyKey: "imagen") => void {
-    throw new Error("Function not implemented.");
-}
-

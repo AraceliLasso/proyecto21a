@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, InternalServerErrorException, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, InternalServerErrorException, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors, ValidationPipe } from "@nestjs/common";
 import { ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from "@nestjs/swagger";
 import { ClasesService } from "./clase.service";
 import { RespuestaClaseDto } from "./dto/respuesta-clase.dto";
@@ -15,6 +15,7 @@ import { ImageUploadPipe } from "src/pipes/pipes/image/image-upload.pipe";
 import { TransformInterceptor } from "./interceptor";
 import { ModificarEstadoDto } from "./dto/modificar-estadoClase.dto";
 import { InscripcionRespuestaDto } from "src/inscripciones/dtos/respuesta-inscripicon.dto";
+import { CleanNullInterceptor } from "src/interceptor/clean-null.interceptor";
 
 @ApiTags("Clases")
 @Controller("clases")
@@ -49,19 +50,19 @@ export class ClasesController {
             },
         },
     })
-    @UseInterceptors(FileInterceptor('imagen', { limits: { fileSize: 10 * 1024 * 1024} }), TransformInterceptor)
+    @UseInterceptors(FileInterceptor('imagen', { limits: { fileSize: 10 * 1024 * 1024 } }), TransformInterceptor)
     async create(@Body() crearClaseDto: CrearClaseDto, @UploadedFile() file?: Express.Multer.File): Promise<RespuestaClaseDto> {
         // Validación de disponibilidad
         if (typeof crearClaseDto.disponibilidad !== 'number') {
             throw new BadRequestException('Disponibilidad debe ser un número');
         }
-    
+
         console.log('Tipo:', typeof crearClaseDto.disponibilidad); // "number"
         console.log('Valor:', crearClaseDto.disponibilidad); // Valor válido
-    
+
         // Llamar al servicio para crear la clase
         const nuevaClase = await this.clasesService.crear(crearClaseDto, file);
-    
+
         return nuevaClase;
     }
 
@@ -102,8 +103,52 @@ export class ClasesController {
         return this.clasesService.modificarEstado(id, modificarEstadoDto.estado);
     }
 
+  // PUT
+  @Patch("actualizar/:id")
+  @UseInterceptors(FileInterceptor('imagen'), CleanNullInterceptor)
+  @ApiOperation({ summary: 'Actualizar una clase existente' })
+  @ApiResponse({ status: 200, description: 'Clase actualizada exitosamente', type: Clase })
+  @ApiResponse({ status: 400, description: 'La clase ya existe.' })
+  @HttpCode(HttpStatus.OK)
+  // @UseGuards(AuthGuard, RolesGuard)
+  // @Roles('admin', 'profesor')
+  // @ApiSecurity('bearer')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+      description: 'Datos para actualizar la clase, incluyendo la opción de subir una imagen',
+      schema: {
+          type: 'object',
+          properties: {
+              nombre: { type: 'string' },
+              descripcion: { type: 'string' },
+              fecha: { type: 'string' },
+              disponibilidad: { type: 'number' },
+              categoriaId: { type: 'string', format: 'uuid' },  // Asegúrate de usar 'uuid' aquí
+              perfilProfesorId: { type: 'string', format: 'uuid' },  // Asegúrate de usar 'uuid' aquí
+              imagen: {
+                  type: 'string',
+                  format: 'binary'
+              },
+          },
+      },
+  })
+  
+  async update(
+      @Param('id') id: string,
+      @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, skipMissingProperties: true, })) modificarClaseDto: ModificarClaseDto,
+      @UploadedFile() imagen?: Express.Multer.File): Promise<Clase> {
+      try {
+          const clase = await this.clasesService.actualizarClase(id, modificarClaseDto);
+          if (!clase) {
+              throw new NotFoundException('Clase no encontrada');
+          }
+          return clase;
+      } catch (error) {
+          console.error('Error al actualizar la clase:', error);
+          throw new InternalServerErrorException('Error inesperado al actualizar la clase');
+      }
+  }
 
-    
 
     // GET --- Solo el admin puede ver todas las clases, tanto activas como no
     @Get()
@@ -120,26 +165,26 @@ export class ClasesController {
     ) {
         return this.clasesService.get(page, limit);
     }
-   //Obtenemos solo las clases activas
-   @Get('/activas')
-   @ApiOperation({ summary: 'Obtener todas las clases activas' })
-   @ApiResponse({ status: 201, description: 'Clases activas obtenidas', type: [Clase] })
-   @ApiResponse({ status: 500, description: 'No se encontraron clases activas' })
-   async getClasesActivas(): Promise<Clase[]> {
-       return this.clasesService.filtrarClasesActivas();
-   }
+    //Obtenemos solo las clases activas
+    @Get('/activas')
+    @ApiOperation({ summary: 'Obtener todas las clases activas' })
+    @ApiResponse({ status: 201, description: 'Clases activas obtenidas', type: [Clase] })
+    @ApiResponse({ status: 500, description: 'No se encontraron clases activas' })
+    async getClasesActivas(): Promise<Clase[]> {
+        return this.clasesService.filtrarClasesActivas();
+    }
 
-   @Get(':id')
-   @ApiOperation({ summary: 'Obtener clase por ID' })
-   @ApiResponse({ status: 200, description: 'Clase obtenida', type: Clase })
-   @ApiResponse({ status: 404, description: 'Clase no encontrada' })
-   async findOne(@Param('id', new ParseUUIDPipe()) id: string) {
-       const clase = await this.clasesService.findOne(id);
-       if (!clase) {
-           throw new NotFoundException("Clase no encontrada");
-       }
-       return clase;
-   }
+    @Get(':id')
+    @ApiOperation({ summary: 'Obtener clase por ID' })
+    @ApiResponse({ status: 200, description: 'Clase obtenida', type: Clase })
+    @ApiResponse({ status: 404, description: 'Clase no encontrada' })
+    async findOne(@Param('id', new ParseUUIDPipe()) id: string) {
+        const clase = await this.clasesService.findOne(id);
+        if (!clase) {
+            throw new NotFoundException("Clase no encontrada");
+        }
+        return clase;
+    }
 
     //get de TODAS las inscripciones de una clase específica por ID
     @Get('clase/:claseId')
@@ -160,54 +205,9 @@ export class ClasesController {
         return this.clasesService.obtenerInscripcionesPorClaseId(page, limit, claseId);
     }
 
+
+
   
-
-    // PUT
-    @Put(":id")
-    @ApiOperation({ summary: 'Actualizar una clase existente' })
-    @ApiResponse({ status: 200, description: 'Clase actualizada exitosamente', type: RespuestaClaseDto })
-    @ApiResponse({ status: 400, description: 'La clase ya existe.' })
-    @UseGuards(AuthGuard, RolesGuard)
-    @Roles('admin', 'profesor')
-    @ApiSecurity('bearer')
-    @ApiConsumes('multipart/form-data')
-    @ApiBody({
-        description: 'Datos para actualizar la clase, incluyendo la opción de subir una imagen',
-        schema: {
-            type: 'object',
-            properties: {
-                imagen: {
-                    type: 'string',
-                    format: 'binary'
-                },
-                nombre: { type: 'string' },
-                descripcion: { type: 'string' },
-                fecha: { type: 'date' },
-                disponibilidad: { type: 'number' },
-                categoriaId: { type: 'string' },
-                perfilProfesorId: { type: 'string' }
-
-            },
-        },
-    })
-    @UseInterceptors(FileInterceptor('imagen'))
-    async update(
-        @Param("id") id: string,
-        @Body() modificarClaseDto: ModificarClaseDto, @UploadedFile(new ImageUploadPipe()) file?: Express.Multer.File): Promise<RespuestaClaseDto> {
-        
-            // Si hay un archivo, súbelo a Cloudinary
-            if (file) {
-                const uploadResult = await this.fileUploadService.uploadFile(file, 'clase', id);
-                modificarClaseDto.imagen = uploadResult.imgUrl; // Asigna la URL de la imagen al DTO
-            }
-
-            const modificarClase = await this.clasesService.update(id, modificarClaseDto);
-            if (!modificarClase) {
-                throw new NotFoundException('Clase no encontrada');
-            }
-            return modificarClase;
-    
-    }
 
     // DELETE
     @Delete(':id')

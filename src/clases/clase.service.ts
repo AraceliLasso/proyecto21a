@@ -388,4 +388,42 @@ export class ClasesService {
             })),
         };
     }
-}
+
+    async actualizarClase(id: string, modificarClaseDto: ModificarClaseDto, imagen?: Express.Multer.File): Promise<Clase> {
+        const clase = await this.clasesRepository.findOne({
+            where: { id },
+            relations: ['perfilProfesor', 'categoria'], // Asegúrate de incluir las relaciones necesarias
+        });
+    
+        if (!clase) {
+            throw new NotFoundException(`Clase con id: ${id} no encontrada`);
+        }
+        if (imagen) {
+            try {
+                const imageUrl = await this.cloudinaryService.uploadFile(imagen.buffer, 'clase', imagen.originalname);
+                modificarClaseDto.imagen = imageUrl; // Asignar la URL al DTO
+            } catch (error) {
+                console.error('Error al subir la imagen a Cloudinary:', error);
+                throw new InternalServerErrorException('Error al subir la imagen');
+            }
+        } 
+
+         // Mantener la URL de la imagen actual si no se proporciona una nueva
+         if (!imagen && modificarClaseDto.imagen === undefined) {
+            modificarClaseDto.imagen = clase.imagen;
+            }
+        
+         // Filtrar propiedades del DTO que no sean `undefined`
+        const datosActualizados = {
+            ...clase,
+            ...modificarClaseDto,
+            imagen: modificarClaseDto.imagen || clase.imagen, // Preservar la imagen si no hay cambios
+        };
+    
+     // Guardar los cambios en la base de datos
+     await this.clasesRepository.save(datosActualizados);
+
+     return datosActualizados;
+    }
+    
+}    
