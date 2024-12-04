@@ -17,8 +17,8 @@ import { InscripcionesService } from "src/inscripciones/inscripcion.service";
 import { rolEnum, Usuario } from "src/usuarios/usuario.entity";
 
 @Injectable()
-export class ClasesService{
-    constructor (
+export class ClasesService {
+    constructor(
         @InjectRepository(Clase)
         private readonly clasesRepository: Repository<Clase>,
         @InjectRepository(Inscripcion)
@@ -29,107 +29,82 @@ export class ClasesService{
         private readonly perfilProfesorRepository: Repository<PerfilProfesor>,
         @InjectRepository(Usuario)
         private readonly usuariosRepository: Repository<Usuario>,
-    ){}
+    ) { }
 
     // POSTt
     async crear(crearClaseDto: CrearClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
-        try{
-        console.log('Datos del DTO recibidos:', crearClaseDto);
-    
-        const normalizedName = crearClaseDto.nombre.trim().toLowerCase();
-
-        const claseExistente = await this.clasesRepository
-            .createQueryBuilder('clase')
-            .where('LOWER(clase.nombre) = :nombre', { nombre: normalizedName })
-            .getOne();
-
-
-            // Validar si ya existe una clase con el nombre
-        // const claseExistente = await this.clasesRepository.findOne({
-        //     where: { nombre: normalizedName },
-        // });
-
-        if (claseExistente) {
-            throw new HttpException(
-                `La clase con el nombre "${crearClaseDto.nombre}" ya existe.`,
-                HttpStatus.BAD_REQUEST,
-            );
-        }
-
-        const categoria = await this.categoriesService.findOne(crearClaseDto.categoriaId);
-        if (!categoria) {
-            throw new NotFoundException(`Categoría con ID ${crearClaseDto.categoriaId} no encontrada`);
-        }
-        console.log('Categoría encontrada:', categoria);
-
-
-        // Desestructurar el DTO
-        //const { perfilProfesorId, categoriaId, ...restoDatos } = crearClaseDto;
-
-        // Validar el perfil del profesor
-        const perfilProfesor = await this.perfilProfesorRepository.findOne({ where: { id: crearClaseDto.perfilProfesorId } });
-        if (!perfilProfesor) {
-            throw new NotFoundException(`Perfil del profesor con ID ${crearClaseDto.perfilProfesorId} no encontrado`);
-        }
-        
-
-        console.log('Perfil del profesor encontrado:', perfilProfesor);
-    
-        let imageUrl: string | undefined;
-        if(file){
         try {
-            // Subir la imagen a Cloudinary y obtener la URL
-            imageUrl = await this.cloudinaryService.uploadFile(file.buffer, 'clase', file.originalname);
-            console.log('Archivo subido a URL:', imageUrl);
+            console.log('Datos del DTO recibidos:', crearClaseDto);
+            
+            const normalizedName = crearClaseDto.nombre.trim().toLowerCase();
+    
+            const claseExistente = await this.clasesRepository
+                .createQueryBuilder('clase')
+                .where('LOWER(clase.nombre) = :nombre', { nombre: normalizedName })
+                .getOne();
+    
+            if (claseExistente) {
+                throw new HttpException(
+                    `La clase con el nombre "${crearClaseDto.nombre}" ya existe.`,
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+    
+            const categoria = await this.categoriesService.findOne(crearClaseDto.categoriaId);
+            if (!categoria) {
+                throw new NotFoundException(`Categoría con ID ${crearClaseDto.categoriaId} no encontrada`);
+            }
+            console.log('Categoría encontrada:', categoria);
+    
+            const perfilProfesor = await this.perfilProfesorRepository.findOne({ where: { id: crearClaseDto.perfilProfesorId } });
+            if (!perfilProfesor) {
+                throw new NotFoundException(`Perfil del profesor con ID ${crearClaseDto.perfilProfesorId} no encontrado`);
+            }
+    
+            console.log('Perfil del profesor encontrado:', perfilProfesor);
+    
+            // Subir la imagen si existe un archivo
+            let imageUrl: string | undefined;
+            if (file) {
+                try {
+                    // Espera la carga de la imagen
+                    imageUrl = await this.cloudinaryService.uploadFile(file.buffer, 'clase', file.originalname);
+                    console.log('Archivo subido a Cloudinary:', imageUrl);
+                } catch (error) {
+                    console.error('Error al subir la imagen a Cloudinary:', error);
+                    throw new InternalServerErrorException('Error al subir la imagen');
+                }
+            }
+    
+            // Crear la clase directamente con la URL de la imagen si existe
+            const nuevaClase = this.clasesRepository.create({
+                ...crearClaseDto,
+                perfilProfesor,
+                categoria,
+                imagen: imageUrl,
+            });
+    
+            // Guardar la clase y esperar su confirmación
+            const claseGuardada = await this.clasesRepository.save(nuevaClase);
+    
+            return claseGuardada;
         } catch (error) {
-            console.error('Error al subir la imagen a Cloudinary:', error);
-            throw new InternalServerErrorException('Error al subir la imagen');
+            if (error instanceof QueryFailedError && error.driverError?.code === '23505') {
+                throw new HttpException(
+                    'Ya existe una clase con ese nombre.',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+            throw error;
         }
     }
-
-
-    const nuevaClase = await this.clasesRepository.create({
-        ...crearClaseDto,
-        perfilProfesor,
-        nombre: crearClaseDto.nombre.trim(),
-        //perfilProfesorId: perfilProfesor.id,
-        categoria,
-        //categoriaId,
-        imagen: imageUrl,
-    });
     
-    console.log("Nueva clase en service", nuevaClase)
     
-    // Cargar las relaciones explícitamente
-    // const claseConRelaciones = await this.clasesRepository.findOne({
-    //     where: { id: nuevaClase.id },
-    //     relations: ['perfilProfesor', 'categoria'],
-    // });
-
-    // console.log("ClaseConRelaciones", claseConRelaciones)
-
-    // if (!claseConRelaciones) {
-    //     throw new NotFoundException('No se pudo cargar la clase con sus relaciones.');
-    // }
-
     
-    return await this.clasesRepository.save(nuevaClase);
-    } catch (error) {
-        if (error instanceof QueryFailedError && error.driverError?.code === '23505') {
-            // Error de unicidad detectado (código específico de PostgreSQL)
-            throw new HttpException(
-                'Ya existe una clase con ese nombre.',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
-        // Si el error no es de unicidad, lánzalo tal como está
-        throw error;
-    }
-}
 
 
-     // GET
-        async get(page: number, limit: number) {
+    // GET
+    async get(page: number, limit: number) {
         return await this.clasesRepository.find({
             take: limit,
             skip: (page - 1) * limit,
@@ -139,7 +114,7 @@ export class ClasesService{
     async findOne(claseId: string): Promise<RespuestaClaseDto> {
         const clase = await this.clasesRepository.findOne({
             where: { id: claseId },
-            relations: ['categoria', 'perfilProfesor'], 
+            relations: ['categoria', 'perfilProfesor'],
         });
 
         console.log('Resultado de la consulta:', clase);
@@ -167,35 +142,35 @@ export class ClasesService{
         }
 
         // Verificar si el nombre ya existe en otra clase
-    if (modificarClaseDto.nombre && modificarClaseDto.nombre.trim()) {
-        const normalizedName = modificarClaseDto.nombre.trim().toLowerCase();
+        if (modificarClaseDto.nombre && modificarClaseDto.nombre.trim()) {
+            const normalizedName = modificarClaseDto.nombre.trim().toLowerCase();
 
-        const claseExistente = await this.clasesRepository
-            .createQueryBuilder('clase')
-            .where('LOWER(clase.nombre) = :nombre', { nombre: normalizedName })
-            .getOne();
+            const claseExistente = await this.clasesRepository
+                .createQueryBuilder('clase')
+                .where('LOWER(clase.nombre) = :nombre', { nombre: normalizedName })
+                .getOne();
 
-        if (claseExistente) {
-            throw new HttpException(
-                `Ya existe una clase con el nombre "${modificarClaseDto.nombre}".`,
-                HttpStatus.BAD_REQUEST,
-            );
+            if (claseExistente) {
+                throw new HttpException(
+                    `Ya existe una clase con el nombre "${modificarClaseDto.nombre}".`,
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
         }
-    }
-    // Normalización del nombre antes de guardar
+        // Normalización del nombre antes de guardar
         if (modificarClaseDto.nombre) {
             clase.nombre = modificarClaseDto.nombre.trim().toLowerCase();
         }
-        
+
         // Eliminar la imagen anterior si se proporciona un archivo nuevo
         if (file && clase.imagen) {
-        try {
-            await this.cloudinaryService.deleteFile(clase.imagen);
-        } catch (error) {
-            console.error('Error al eliminar la imagen anterior:', error);
-            throw new InternalServerErrorException('Error al eliminar la imagen anterior');
+            try {
+                await this.cloudinaryService.deleteFile(clase.imagen);
+            } catch (error) {
+                console.error('Error al eliminar la imagen anterior:', error);
+                throw new InternalServerErrorException('Error al eliminar la imagen anterior');
+            }
         }
-    }
 
         // Subir nueva imagen si se proporciona un archivo
         if (file) {
@@ -207,7 +182,7 @@ export class ClasesService{
 
         // Asignar las propiedades de modificarClaseDto a la clase (sin necesidad de comprobar cada campo manualmente)
         Object.assign(clase, modificarClaseDto);
-            
+
         // Verifica si se proporcionó el ID del perfil del profesor y asigna la entidad correspondiente, cuando configure Profesor
         if (modificarClaseDto.perfilProfesorId) {
             const perfilProfesor = await this.perfilProfesorRepository.findOne({
@@ -219,33 +194,33 @@ export class ClasesService{
             }
             clase.perfilProfesor = perfilProfesor;
             console.log("clase.perfilProfesor", perfilProfesor)
-        }else if (!clase.perfilProfesor) {
+        } else if (!clase.perfilProfesor) {
             // Lanza un error solo si no hay perfil asociado en la entidad actual
             throw new InternalServerErrorException('El perfil del profesor es obligatorio para actualizar la clase.');
         }
 
         if (modificarClaseDto.categoriaId) {
             const categoria = await this.categoriesService.findOne(
-                modificarClaseDto.categoriaId ,
+                modificarClaseDto.categoriaId,
             );
             if (!categoria) {
                 throw new NotFoundException(`Categoría con ID ${modificarClaseDto.categoriaId} no encontrada`);
             }
             clase.categoria = categoria;
         }
-        
-        try{
+
+        try {
             // Guardar la clase con las actualizaciones realizadas
-        const modificarclase = await this.clasesRepository.save({
-            ...clase, // Todos los datos existentes
-            perfilProfesorId: clase.perfilProfesor.id, // Garantiza que la relación no se pierda
-        });
+            const modificarclase = await this.clasesRepository.save({
+                ...clase, // Todos los datos existentes
+                perfilProfesorId: clase.perfilProfesor.id, // Garantiza que la relación no se pierda
+            });
 
-        // Crear el DTO de respuesta para la categoría
-        const categoryDto = new RespuestaCategoriaDto(modificarclase.categoria.id, modificarclase.categoria.nombre);
+            // Crear el DTO de respuesta para la categoría
+            const categoryDto = new RespuestaCategoriaDto(modificarclase.categoria.id, modificarclase.categoria.nombre);
 
-        return new RespuestaClaseDto(modificarclase,);
-        }catch (error){
+            return new RespuestaClaseDto(modificarclase,);
+        } catch (error) {
             if (error instanceof QueryFailedError && error.driverError?.code === '23505') {
                 throw new HttpException(
                     'Ya existe una clase con ese nombre.',
@@ -257,7 +232,7 @@ export class ClasesService{
     }
 
 
-        async remove(id: string): Promise<string> {
+    async remove(id: string): Promise<string> {
         const result = await this.clasesRepository.delete(id);
         if (result.affected === 0) {
             throw new NotFoundException(`Clase con ID ${id} no encontrada`);
@@ -265,31 +240,31 @@ export class ClasesService{
         return `Clase con ID ${id} eliminada exitosamente`;
     }
 
- 
+
 
     async searchClases(searchDto: SearchDto): Promise<Clase[]> {
         const { claseNombre, categoriaNombre, perfilProfesorNombre, descripcion } = searchDto;
-    
+
         const query = this.clasesRepository.createQueryBuilder('clase')
             .leftJoinAndSelect('clase.categoria', 'categoria')
             .leftJoinAndSelect('clase.perfilProfesor', 'perfilProfesor');
-    
+
         if (claseNombre) {
             query.andWhere('clase.nombre ILIKE :nombre', { nombre: `%${claseNombre}%` });
         }
-    
+
         if (categoriaNombre) {
             query.andWhere('categoria.nombre ILIKE :categoriaNombre', { categoriaNombre: `%${categoriaNombre}%` });
         }
-    
+
         if (perfilProfesorNombre) {
             query.andWhere('perfilProfesor.nombre ILIKE :perfilProfesorNombre', { perfilProfesorNombre: `%${perfilProfesorNombre}%` });
         }
-    
+
         if (descripcion) {
             query.andWhere('clase.descripcion ILIKE :descripcion', { descripcion: `%${descripcion}%` });
         }
-    
+
         const clases = await query.getMany();
         return clases;
     }
@@ -304,11 +279,11 @@ export class ClasesService{
     //Funcion para cambiar de estado activo o no una clase
     async modificarEstado(id: string, estado: boolean): Promise<Clase> {
         const clase = await this.clasesRepository.findOne({ where: { id } });
-    
+
         if (!clase) {
             throw new NotFoundException('Clase no encontrada');
         }
-    
+
         clase.estado = estado;
         await this.clasesRepository.save(clase);
 
@@ -371,46 +346,46 @@ export class ClasesService{
     async obtenerInscripcionesPorProfesor(usuarioId: string) {
         // Verificar si el usuario es un profesor
         const usuario = await this.usuariosRepository.findOne({
-          where: { id: usuarioId, rol: rolEnum.PROFESOR },
-          relations: ['perfilProfesor'],
+            where: { id: usuarioId, rol: rolEnum.PROFESOR },
+            relations: ['perfilProfesor'],
         });
-    
+
         if (!usuario) {
-          throw new NotFoundException('El usuario no es un profesor o no existe.');
+            throw new NotFoundException('El usuario no es un profesor o no existe.');
         }
-    
+
         // Buscar clases asociadas al perfil del profesor
         const clases = await this.clasesRepository.find({
-          where: { perfilProfesor: usuario.perfilProfesor },
-          relations: ['inscripciones', 'inscripciones.usuario'],
+            where: { perfilProfesor: usuario.perfilProfesor },
+            relations: ['inscripciones', 'inscripciones.usuario'],
         });
-    
+
         if (clases.length === 0) {
-          throw new NotFoundException('El profesor no tiene clases asociadas.');
+            throw new NotFoundException('El profesor no tiene clases asociadas.');
         }
-    
+
         // Extraer las inscripciones de todas las clases
         const inscripciones = clases.flatMap((clase) =>
-          clase.inscripciones.map((inscripcion) => ({
-            id: inscripcion.id,
-            fechaInscripcion: inscripcion.fechaInscripcion,
-            fechaVencimiento: inscripcion.fechaVencimiento,
-            estado: inscripcion.estado,
-            claseId: clase.id,
-            claseNombre: clase.nombre,
-            estudianteId: inscripcion.usuario.id,
-            estudianteNombre: inscripcion.usuario.nombre,
-          })),
+            clase.inscripciones.map((inscripcion) => ({
+                id: inscripcion.id,
+                fechaInscripcion: inscripcion.fechaInscripcion,
+                fechaVencimiento: inscripcion.fechaVencimiento,
+                estado: inscripcion.estado,
+                claseId: clase.id,
+                claseNombre: clase.nombre,
+                estudianteId: inscripcion.usuario.id,
+                estudianteNombre: inscripcion.usuario.nombre,
+            })),
         );
-    
+
         return {
-          profesorId: usuario.id,
-          nombreProfesor: usuario.nombre,
-          clases: clases.map((clase) => ({
-            id: clase.id,
-            nombre: clase.nombre,
-            inscripciones: inscripciones.filter((i) => i.claseId === clase.id),
-          })),
+            profesorId: usuario.id,
+            nombreProfesor: usuario.nombre,
+            clases: clases.map((clase) => ({
+                id: clase.id,
+                nombre: clase.nombre,
+                inscripciones: inscripciones.filter((i) => i.claseId === clase.id),
+            })),
         };
-      }
+    }
 }
