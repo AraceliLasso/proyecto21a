@@ -65,7 +65,7 @@ export class UsuariosController {
             },
         },
     })
-    async crearUsuario(@Body() crearUsuario: CrearUsuarioDto, @UploadedFile() imagen: Express.Multer.File, @Req() request) {
+    async crearUsuario(@Body() crearUsuario: CrearUsuarioDto, @UploadedFile() imagen?: Express.Multer.File) {
         const usuario = await this.usuariosService.crearUsuario(crearUsuario, imagen)
 
       // Enviar correo de confirmación
