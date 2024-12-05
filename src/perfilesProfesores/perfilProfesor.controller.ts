@@ -56,6 +56,14 @@ export class PerfilesProfesoresController{
         return this.perfilesProfesoresService.obtenerPerfilProfesorClase();
     }
 
+    @Get('perfilProfesorActivos/clase')
+    @ApiOperation({ summary: 'Listar todos los perfiles de profesores activos por clases asignadas' })
+    @ApiResponse({ status: 200, description: 'Lista de perfiles de profesores activos con sus clases asignadas', type: [PerfilProfesor] })
+    async encontrarTodosActivosPorClase(): Promise<PerfilProfesor[]> {
+        return this.perfilesProfesoresService.obtenerPerfilProfesorActivoClase();
+    }
+
+
     @Get(':usuarioId')
     @ApiOperation({ summary: 'Obtener un perfil por UsuarioID' })
     @ApiResponse({ status: 200, description: 'Perfil de profesor encontrado', type: PerfilProfesor })

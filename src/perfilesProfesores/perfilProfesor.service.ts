@@ -93,7 +93,7 @@ export class PerfilesProfesoresService{
                 },
                 
             },
-            where: { clases: { estado: true } },
+            //where: { clases: { estado: true } },
     })
     }
 
@@ -101,6 +101,19 @@ export class PerfilesProfesoresService{
     async obtenerPerfilProfesorClase(): Promise <PerfilProfesor[]>{
         return await this.perfilesProfesoresRepository.find({ relations: ['clases'] })
     }
+
+    async obtenerPerfilProfesorActivoClase(): Promise <PerfilProfesor[]>{
+        return await this.perfilesProfesoresRepository.find({
+            where: {estado: true},
+            relations: ['clases', 'usuario'] ,
+            select: {
+                usuario: {
+                    id: true, // Solo incluye el ID del usuario relacionado
+                },
+            },
+
+    })
+}
 
     async obtenerPerfilProfesorPorId(id: string) : Promise<PerfilProfesor>{
         const perfilProfesor = await this.perfilesProfesoresRepository.findOne(
