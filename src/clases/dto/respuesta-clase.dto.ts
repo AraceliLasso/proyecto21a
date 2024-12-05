@@ -14,13 +14,9 @@ export class RespuestaClaseDto {
     id: string;
 
     @ApiProperty({ description: "El nombre de la clase", required: true })
-    @IsString()
-    @IsNotEmpty()
     nombre: string;
 
     @ApiProperty({ description: "La descripción de la clase", required: true })
-    @IsString()
-    @IsNotEmpty()
     descripcion: string;
 
     @ApiProperty({ description: 'Fecha y hora de la clase en string', required: false })
@@ -28,8 +24,6 @@ export class RespuestaClaseDto {
     fecha: string;
 
     @ApiProperty({ description: "La disponibilidad de clases", required: true })
-    @IsNumber()
-    @IsNotEmpty()
     disponibilidad: number;
 
     @ApiProperty({
@@ -48,15 +42,14 @@ export class RespuestaClaseDto {
     estado?: boolean;
 
     @ApiProperty({
-        type: () => RespuestaPerfilProfesorDto, // Se indica que la categoría es un DTO
+        type: () => RespuestaPerfilProfesorDto,
         description: "El perfil del profesor de la clase",
         required: false,
     })
-    @Type(() => RespuestaPerfilProfesorDto) // Decorador para la transformación del perfilProfesor
     perfilProfesor?: RespuestaPerfilProfesorDto;
 
     @ApiProperty({
-        type: () => RespuestaCategoriaDto, // Se indica que la categoría es un DTO
+        type: () => RespuestaCategoriaDto,
         description: "La categoría del producto",
         required: false,
     })

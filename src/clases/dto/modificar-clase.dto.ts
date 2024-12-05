@@ -1,49 +1,48 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength, MinLength } from "class-validator";
 import { Transform, Type } from "class-transformer";
-import { IsNotEmpty, IsNumber, IsString, IsUUID, MaxLength, MinLength } from "class-validator";
+
 export class ModificarClaseDto {
-    @ApiProperty({ description: "El nombre de la clase", required: true })
+    @ApiProperty({ description: "El nombre de la clase", required: false })
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    nombre: string;
+    nombre?: string;
 
-    @ApiProperty({ description: "La descripción de la clase", required: true })
+    @ApiProperty({ description: "La descripción de la clase", required: false })
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    descripcion: string;
+    descripcion?: string;
 
-    @ApiProperty({ description: 'Fecha y hora de la clase en string', required: false})
+    @ApiProperty({ description: 'Fecha y hora de la clase en string', required: false })
+    @IsOptional()
     @IsString()
-    fecha: string;
+    fecha?: string;
 
-    @ApiProperty({ description: "La disponibilidad de clases", required: true })
+
+    @ApiProperty({ type: Number, description: "La disponibilidad de clases", required: false })
+    @IsOptional()
     @IsNumber()
-    @IsNotEmpty()
-    @Type(() => Number)
-    disponibilidad: number;
+    @Transform(({ value }) => (value !== null && value !== undefined ? Number(value) : value))
+    disponibilidad?: number;
 
     @ApiProperty({
         type: 'string',
-        format: 'binary', 
+        format: 'binary',
         description: 'Imagen de la clase',
+        required: false
     })
-    imagen: any;
+    @IsOptional()
+    imagen?: any;
 
     @ApiProperty({ description: "ID de la categoría", required: false })
+    @IsOptional()
     @IsUUID()
-    @IsNotEmpty()
+    @Transform(({ value }) => value ? value : null) // Transformación para validar o asignar null
     categoriaId?: string;
 
     @ApiProperty({ description: "ID del profesor", required: false })
+    @IsOptional()
     @IsUUID()
-    @IsNotEmpty()
+    @Transform(({ value }) => value ? value : null) // Transformación para validar o asignar null
     perfilProfesorId?: string;
-
-
-    // estado: boolean
-
-}
-
-function IsOptional(): (target: ModificarClaseDto, propertyKey: "imagen") => void {
-    throw new Error("Function not implemented.");
 }

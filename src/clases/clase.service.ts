@@ -16,6 +16,7 @@ import { InscripcionRespuestaDto } from "src/inscripciones/dtos/respuesta-inscri
 import { InscripcionesService } from "src/inscripciones/inscripcion.service";
 import { rolEnum, Usuario } from "src/usuarios/usuario.entity";
 import RespuestaUsuario2Dto from "src/usuarios/dtos/respuestaDos-usuario.dto";
+import { plainToClass } from "class-transformer";
 
 @Injectable()
 export class ClasesService {
@@ -398,45 +399,11 @@ export class ClasesService {
         };
     }
 
-    async actualizarClase(id: string, modificarClaseDto: ModificarClaseDto, imagen?: Express.Multer.File): Promise<Clase> {
-        const clase = await this.clasesRepository.findOne({
-            where: { id },
-            relations: ['perfilProfesor', 'categoria'], // Asegúrate de incluir las relaciones necesarias
-        });
+  
+   
     
-        if (!clase) {
-            throw new NotFoundException(`Clase con id: ${id} no encontrada`);
-        }
-        if (imagen) {
-            try {
-                const imageUrl = await this.cloudinaryService.uploadFile(imagen.buffer, 'clase', imagen.originalname);
-                modificarClaseDto.imagen = imageUrl; // Asignar la URL al DTO
-            } catch (error) {
-                console.error('Error al subir la imagen a Cloudinary:', error);
-                throw new InternalServerErrorException('Error al subir la imagen');
-            }
-        } 
-
-         // Mantener la URL de la imagen actual si no se proporciona una nueva
-         if (!imagen && modificarClaseDto.imagen === undefined) {
-            modificarClaseDto.imagen = clase.imagen;
-            }
-        
-         // Filtrar propiedades del DTO que no sean `undefined`
-        const datosActualizados = {
-            ...clase,
-            ...modificarClaseDto,
-            imagen: modificarClaseDto.imagen || clase.imagen, // Preservar la imagen si no hay cambios
-        };
-    
-     // Guardar los cambios en la base de datos
-     await this.clasesRepository.save(datosActualizados);
-
-     return datosActualizados;
-    }
-
-      // PUT
-      async update(id: string, modificarClaseDto: ModificarClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
+       // PUT
+    async update(id: string, modificarClaseDto: ModificarClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
         const clase = await this.clasesRepository.findOne({
             where: { id }, // Usar un objeto con la propiedad `where`
             relations: ['categoria', 'perfilProfesor'], // Cargar la relación de categoría
@@ -537,5 +504,88 @@ export class ClasesService {
     }
 
 
+      async obtenerClasePorId(id: string): Promise<RespuestaClaseDto> {
+        // Asegúrate de que las relaciones estén cargadas en la consulta
+        const clase = await this.clasesRepository.findOne({
+            where: { id },
+            relations: ['perfilProfesor', 'categoria'], // Carga las relaciones 'perfilProfesor' y 'categoria'
+        });
+
+        // Verifica que la clase haya sido encontrada
+        if (!clase) {
+            throw new NotFoundException(`Clase con ID ${id} no encontrada`);
+        }
+
+        // Devuelve la respuesta transformada usando el DTO
+        return new RespuestaClaseDto(clase);
+    }
+
+    async actualizar(id: string, actualizarClaseDto: ModificarClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
+        // Buscar la clase por el ID
+        const claseExistente = await this.clasesRepository.findOne({ where: { id }, relations: ['perfilProfesor', 'categoria'] });
+        if (!claseExistente) {
+            throw new NotFoundException('Clase no encontrada');
+        }
+    
+        // Actualizar los campos de la clase con los nuevos datos
+        if (actualizarClaseDto.nombre) claseExistente.nombre = actualizarClaseDto.nombre;
+        if (actualizarClaseDto.descripcion) claseExistente.descripcion = actualizarClaseDto.descripcion;
+        if (actualizarClaseDto.fecha) claseExistente.fecha = actualizarClaseDto.fecha;
+        if (typeof actualizarClaseDto.disponibilidad === 'number') claseExistente.disponibilidad = actualizarClaseDto.disponibilidad;
+        if (actualizarClaseDto.categoriaId) claseExistente.categoriaId = actualizarClaseDto.categoriaId;
+    
+        // Buscar el perfil del profesor a partir del ID
+        if (actualizarClaseDto.perfilProfesorId) {
+            const perfilProfesor = await this.perfilProfesorRepository.findOne({ where: { id: actualizarClaseDto.perfilProfesorId } });
+            if (!perfilProfesor) {
+                throw new NotFoundException('Perfil de profesor no encontrado');
+            }
+            claseExistente.perfilProfesor = perfilProfesor; // Asignamos la instancia del profesor a la clase
+        }
+    
+        // Si se sube una nueva imagen, actualizarla
+        if (file) {
+            claseExistente.imagen = file.filename; // O el nombre de archivo o la URL de la imagen
+        }
+    
+        // Guardar los cambios en la base de datos
+        await this.clasesRepository.save(claseExistente);
+    
+        // Devolver el DTO con la clase actualizada
+        return new RespuestaClaseDto(claseExistente); // Se asegura que se devuelve un DTO
+    }
+    
+    
+    // async actualizarClase(
+    //     id: string,
+    //     modificarClaseDto: ModificarClaseDto,
+    //     imagen?: Express.Multer.File, // Parámetro opcional para la imagen
+    // ): Promise<RespuestaClaseDto> {
+    //     // Buscar la clase por ID
+    //     const clase = await this.clasesRepository.findOne({
+    //         where: { id },
+    //         relations: ['perfilProfesor', 'categoria'], // Asegúrate de cargar las relaciones
+    //     });
+
+    //     if (!clase) {
+    //         // Si no se encuentra la clase, lanzamos una excepción
+    //         throw new NotFoundException(`Clase con ID ${id} no encontrada`);
+    //     }
+
+    //     // Actualizar los datos de la clase con los valores del DTO
+    //     Object.assign(clase, modificarClaseDto);
+
+    //     // Si se proporcionó una nueva imagen, actualizamos la propiedad 'imagen'
+    //     if (imagen) {
+    //         // Asegúrate de que el archivo sea procesado correctamente
+    //         clase.imagen = imagen.path; // O el nombre del archivo según tu lógica
+    //     }
+
+    //     // Guardar la clase actualizada en la base de datos
+    //     await this.clasesRepository.save(clase);
+
+    //     // Convertir la clase a un DTO de respuesta y devolverla
+    //     return new RespuestaClaseDto(clase);
+    // }
     
 }    
