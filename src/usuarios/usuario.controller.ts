@@ -69,12 +69,17 @@ export class UsuariosController {
         const usuario = await this.usuariosService.crearUsuario(crearUsuario, imagen)
 
       // Enviar correo de confirmación
+        try{
         await this.mailService.sendMail(
         crearUsuario.email,
         'Bienvenido a ForgeFit',
         'Gracias por registrarte.',
         '<h1>Te damos la bienvenida a ForgeFit!!</h1><p>Gracias por registrarte.</p>',
         );
+    } catch (mailError) {
+        console.error('Error al enviar el correo:', mailError);
+        throw new HttpException('Usuario creado, pero falló el envío del correo', 500);
+    }
         return {
             message: `Usuario creado exitosamente`,
             usuario
