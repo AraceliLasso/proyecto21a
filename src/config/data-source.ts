@@ -20,10 +20,10 @@ const PostgresDataSource = {
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
     //url: process.env.DB_URL,
-    //ssl: false,
-    ssl: {
-        rejectUnauthorized: false, 
-    },
+    ssl: false,
+    // ssl: {
+    //     rejectUnauthorized: false, 
+    // },
     synchronize: true,
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     migrations:['./dist/migration/*{.ts,.js}'],

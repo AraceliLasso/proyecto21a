@@ -7,7 +7,7 @@ export class MailService {
     private oauth2Client = new google.auth.OAuth2(
         process.env.GOOGLEAUTH_CLIENT_ID,     // Client ID de Google
         process.env.GOOGLEAUTH_CLIENT_SECRET, // Client Secret de Google
-        'https://developers.google.com/oauthplayground'
+        'https://pf-webgym-qv6r.vercel.app/api/auth/callback/google'
     );
 
     private transporter;
