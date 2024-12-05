@@ -1,9 +1,14 @@
 import { Module } from '@nestjs/common';
-import { StripeController } from './stripe.controller'; // Asegúrate de que el path sea correcto
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { StripeController } from './stripe.controller';
 import { StripeService } from './stripe.service';
+import { Payment } from './payment.entity'; // Importa la entidad Payment
 import Stripe from 'stripe';
 
 @Module({
+  imports: [
+    TypeOrmModule.forFeature([Payment]), // Registra la entidad Payment
+  ],
   controllers: [StripeController], // Agrega el controlador aquí
   providers: [
     StripeService, // Agrega el servicio aquí
@@ -16,6 +21,9 @@ import Stripe from 'stripe';
       },
     },
   ],
-  exports: ['STRIPE_CLIENT'],
+  exports: [
+    StripeService, // Exporta el servicio si lo necesitas en otros módulos
+    'STRIPE_CLIENT',
+  ],
 })
 export class StripeModule {}
