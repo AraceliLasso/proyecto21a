@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Clase } from 'src/clases/clase.entity';
+import { PerfilProfesor } from 'src/perfilesProfesores/perfilProfesor.entity';
 
 export class InscripcionConClaseDto {
     @ApiProperty()
@@ -16,4 +17,5 @@ export class InscripcionConClaseDto {
 
     @ApiProperty()
     clase: Clase;
+
 }
