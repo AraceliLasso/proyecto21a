@@ -119,7 +119,7 @@ private async processSuccessfulPayment(session: Stripe.Checkout.Session) {
   ) {
     try {
       const { membresiaId, precio, email } = createSessionDto; // Desestructuramos los datos
-      const session = await this.stripeService.createCheckoutSession(
+      const session = await this.stripeService.crearSesionDePago(
         membresiaId,
         precio,
         email,

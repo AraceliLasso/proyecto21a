@@ -34,7 +34,7 @@ export class StripeService {
   /**
    * Crea una nueva sesión de pago en Stripe.
    */
-  async createCheckoutSession(membresiaId: string, precio: number, email: string) {
+  async crearSesionDePago(membresiaId: string, precio: number, email: string) {
     try {
       const session = await this.stripe.checkout.sessions.create({
         line_items: [
