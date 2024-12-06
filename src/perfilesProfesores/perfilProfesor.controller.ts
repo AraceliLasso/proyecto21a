@@ -12,6 +12,7 @@ import { ModificarPerfilProfesorDto } from "./dto/modificar-perfilProfesor.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { FileUploadService } from "src/file-upload/file-upload.service";
 import { ModificarEstadoDto } from "./dto/modificar-estadoPerfilProfesor.dto";
+import { SearchPerfilProfesorDto } from "./dto/search-perfilProfesor-dto";
 
 
 @ApiTags("PerfilProfesor")
@@ -37,6 +38,13 @@ export class PerfilesProfesoresController{
         const perfil = await this.perfilesProfesoresService.crearPerfilProfesor(usuarioId, crearPerfilProfesorDto, imagen);
         return perfil;
     }
+    @Post('search')
+    @ApiOperation({ summary: 'Buscar perfiles de profesores por palabras clave' })
+    @ApiResponse({ status: 200, description: 'Perfiles encontrados', type: [PerfilProfesor] })
+    async search(@Body() searchDto: SearchPerfilProfesorDto): Promise<PerfilProfesor[]> {
+        return this.perfilesProfesoresService.search(searchDto);
+    }
+
 
 
     @Get()

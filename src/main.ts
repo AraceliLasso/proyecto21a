@@ -20,7 +20,7 @@ async function bootstrap() {
     }),
   );
   // Configura CORS
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'; // Definir la URL de frontend
+  const frontendUrl = process.env.FRONTEND_URL || 'https://pf-webgym-nx5u-fgpkm5030-matias-projects-446819e4.vercel.app/'; // Definir la URL de frontend
   console.log({ frontendUrl });
 
   app.enableCors({
