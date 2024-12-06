@@ -233,4 +233,17 @@ export class MembresiaService {
         return this.membresiasRepository.count(); // Devuelve el total de membresías en la base de datos
     }
 
+    async modificarEstadoId(id: string, activa: boolean): Promise<Membresia>{
+        const membresia = await this.membresiasRepository.findOne({ where: { id } });
+
+        if (!membresia) {
+            throw new NotFoundException('Membresia no encontrada');
+        }
+
+        membresia.activa = activa;
+        await this.membresiasRepository.save(membresia);
+
+        return this.membresiasRepository.findOne({ where: { id } });
+    }
+
 }
