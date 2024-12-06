@@ -528,5 +528,111 @@ export class ClasesService {
     }
 
 
+      async obtenerClasePorId(id: string): Promise<RespuestaClaseDto> {
+        // Asegúrate de que las relaciones estén cargadas en la consulta
+        const clase = await this.clasesRepository.findOne({
+            where: { id },
+            relations: ['perfilProfesor', 'categoria'], // Carga las relaciones 'perfilProfesor' y 'categoria'
+        });
+
+        // Verifica que la clase haya sido encontrada
+        if (!clase) {
+            throw new NotFoundException(`Clase con ID ${id} no encontrada`);
+        }
+
+        // Devuelve la respuesta transformada usando el DTO
+        return new RespuestaClaseDto(clase);
+    }
+
+    async actualizar(id: string, actualizarClaseDto: ModificarClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
+        // Buscar la clase por el ID
+        const claseExistente = await this.clasesRepository.findOne({ where: { id }, relations: ['perfilProfesor', 'categoria'] });
+        if (!claseExistente) {
+            throw new NotFoundException('Clase no encontrada');
+        }
+    
+        // Actualizar los campos de la clase con los nuevos datos
+        if (actualizarClaseDto.nombre) claseExistente.nombre = actualizarClaseDto.nombre;
+        if (actualizarClaseDto.descripcion) claseExistente.descripcion = actualizarClaseDto.descripcion;
+        if (actualizarClaseDto.fecha) claseExistente.fecha = actualizarClaseDto.fecha;
+        if (typeof actualizarClaseDto.disponibilidad === 'number') claseExistente.disponibilidad = actualizarClaseDto.disponibilidad;
+        if (actualizarClaseDto.categoriaId) claseExistente.categoriaId = actualizarClaseDto.categoriaId;
+
+    
+        // Buscar el perfil del profesor a partir del ID
+        if (actualizarClaseDto.perfilProfesorId) {
+            const perfilProfesor = await this.perfilProfesorRepository.findOne({ where: { id: actualizarClaseDto.perfilProfesorId } });
+            if (!perfilProfesor) {
+                throw new NotFoundException('Perfil de profesor no encontrado');
+            }
+            claseExistente.perfilProfesor = perfilProfesor; // Asignamos la instancia del profesor a la clase
+        }
+    
+        // Si se sube una nueva imagen, actualizarla
+        if (file) {
+                    // Eliminar la imagen anterior si existe
+                    console.log('Archivo recibido en el servicio:', file);
+                    if (claseExistente.imagen) {
+                        try {
+                        await this.cloudinaryService.deleteFile(claseExistente.imagen);
+                    } catch (error) {
+                    console.error('Error al manejar la imagen:', error);
+                    throw new InternalServerErrorException('Error al manejar la imagen');
+                }
+            }
+
+                try{
+                    // Subir la nueva imagen
+                    const nuevaImagenUrl = await this.cloudinaryService.uploadFile(
+                        file.buffer,
+                        'clase',
+                        file.originalname,
+                    );
+                    claseExistente.imagen = nuevaImagenUrl; // Asignar la nueva URL de la imagen
+                } catch (error) {
+                    console.error('Error al subir la nueva imagen:', error);
+                    throw new InternalServerErrorException('Error al subir la nueva imagen');
+                }
+            }
+    
+        // Guardar los cambios en la base de datos
+        await this.clasesRepository.save(claseExistente);
+    
+        // Devolver el DTO con la clase actualizada
+        return new RespuestaClaseDto(claseExistente); // Se asegura que se devuelve un DTO
+    }
+    
+    
+    // async actualizarClase(
+    //     id: string,
+    //     modificarClaseDto: ModificarClaseDto,
+    //     imagen?: Express.Multer.File, // Parámetro opcional para la imagen
+    // ): Promise<RespuestaClaseDto> {
+    //     // Buscar la clase por ID
+    //     const clase = await this.clasesRepository.findOne({
+    //         where: { id },
+    //         relations: ['perfilProfesor', 'categoria'], // Asegúrate de cargar las relaciones
+    //     });
+
+    //     if (!clase) {
+    //         // Si no se encuentra la clase, lanzamos una excepción
+    //         throw new NotFoundException(`Clase con ID ${id} no encontrada`);
+    //     }
+
+    //     // Actualizar los datos de la clase con los valores del DTO
+    //     Object.assign(clase, modificarClaseDto);
+
+    //     // Si se proporcionó una nueva imagen, actualizamos la propiedad 'imagen'
+    //     if (imagen) {
+    //         // Asegúrate de que el archivo sea procesado correctamente
+    //         clase.imagen = imagen.path; // O el nombre del archivo según tu lógica
+    //     }
+
+    //     // Guardar la clase actualizada en la base de datos
+    //     await this.clasesRepository.save(clase);
+
+    //     // Convertir la clase a un DTO de respuesta y devolverla
+    //     return new RespuestaClaseDto(clase);
+    // }
     
 }    

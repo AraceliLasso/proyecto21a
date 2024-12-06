@@ -125,28 +125,26 @@ export class ClasesController {
                 descripcion: { type: 'string' },
                 fecha: { type: 'date' },
                 disponibilidad: { type: 'number' },
-                categoriaId: { type: 'string' },
-                perfilProfesorId: { type: 'string' }
-
+                categoriaId: { type: 'string', format: 'uuid' },  // Cambia a 'uuid'
+                perfilProfesorId: { type: 'string', format: 'uuid' }, 
             },
         },
     })
     @UseInterceptors(FileInterceptor('imagen'))
     async update(
         @Param("id") id: string,
-        @Body() modificarClaseDto: ModificarClaseDto, @UploadedFile(new ImageUploadPipe()) file?: Express.Multer.File): Promise<RespuestaClaseDto> {
-        
-            // Si hay un archivo, súbelo a Cloudinary
-            if (file) {
-                const uploadResult = await this.fileUploadService.uploadFile(file, 'clase', id);
-                modificarClaseDto.imagen = uploadResult.imgUrl; // Asigna la URL de la imagen al DTO
+        @Body() modificarClaseDto: ModificarClaseDto, @UploadedFile(new ImageUploadPipe()) imagen?: Express.Multer.File): Promise<RespuestaClaseDto> {
+            try {
+                const claseActualizada = await this.clasesService.actualizar(id, modificarClaseDto, imagen);
+                if (!claseActualizada) {
+                    throw new NotFoundException('Clase no encontrada');
+                }
+                return claseActualizada;  // Ya está devolviendo RespuestaClaseDto
+            } catch (error) {
+                console.error('Error al actualizar la clase:', error);
+                throw new InternalServerErrorException('Error inesperado al actualizar la clase');
             }
-            const modificarClase = await this.clasesService.update(id, modificarClaseDto);
-            if (!modificarClase) {
-                throw new NotFoundException('Clase no encontrada');
-            }
-            return modificarClase;
-    
+
     }
     // GET --- Solo el admin puede ver todas las clases, tanto activas como no
     @Get()
