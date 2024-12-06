@@ -198,26 +198,35 @@ export class MembresiaService {
         membresia.activa = false;
         return this.membresiasRepository.save(membresia);
     }
-    async actualizarPrecioMembresia(nombre: string, actualizarPrecioDto: ActualizarPrecioMembresiaDto): Promise<Membresia> {
-        //* desestructuración de objetos para extraer la propiedad precio de actualizarPrecioDto
-        //*y asignarla a una nueva variable llamada nuevoPrecio.
+    async actualizarPrecioMembresia(
+        membresiaId: string,
+        actualizarPrecioDto: ActualizarPrecioMembresiaDto
+      ): Promise<Membresia> {
+        // Desestructuración del DTO para obtener el nuevo precio
         const { precio: nuevoPrecio } = actualizarPrecioDto;
-        // Buscar la membresía activa por nombre
-        const membresia = await this.membresiasRepository.findOne({ where: { nombre, activa: true } });
-
+    
+        // Buscar la membresía por su ID y verificar si está activa
+        const membresia = await this.membresiasRepository.findOne({
+          where: { id: membresiaId, activa: true },
+        });
+    
         if (!membresia) {
-            throw new NotFoundException('Membresía no encontrada o ya no está activa.');
+          // Si no encontramos la membresía o no está activa
+          throw new NotFoundException('Membresía no encontrada o ya no está activa.');
         }
+    
+        // Verificación de la fecha de expiración
+        console.log('Fecha de expiración:', membresia.fechaExpiracion);
+        console.log('Fecha actual:', new Date());
+    
 
-        // Si la membresía está activa y no ha expirado, no actualizamos el precio
-        if (membresia.fechaExpiracion > new Date()) {
-            throw new BadRequestException('El precio de la membresía no se puede cambiar mientras esté activa y sin expirar.');
-        }
-
-        // Si la membresía ha expirado o está inactiva, actualizamos el precio
+    
+        // Si la membresía ya expiró o está inactiva, permitimos actualizar el precio
         membresia.precio = nuevoPrecio;
+    
+        // Guardamos la membresía actualizada en la base de datos
         return this.membresiasRepository.save(membresia);
-    }
+      }
     async obtenerMembresiaPorId(id: string): Promise<Membresia | undefined> {
         return this.membresiasRepository.findOne({ where: { id } });
     }

@@ -15,6 +15,7 @@ import { ImageUploadPipe } from "src/pipes/pipes/image/image-upload.pipe";
 import { TransformInterceptor } from "./interceptor";
 import { ModificarEstadoDto } from "./dto/modificar-estadoClase.dto";
 import { InscripcionRespuestaDto } from "src/inscripciones/dtos/respuesta-inscripicon.dto";
+import { CleanNullInterceptor } from "src/interceptor/clean-null.interceptor";
 
 
 @ApiTags("Clases")
@@ -103,11 +104,13 @@ export class ClasesController {
         return this.clasesService.modificarEstado(id, modificarEstadoDto.estado);
     }
 
-    // PUT
-    @Put(":id")
-    @ApiOperation({ summary: 'Actualizar una clase existente' })
-    @ApiResponse({ status: 200, description: 'Clase actualizada exitosamente', type: RespuestaClaseDto })
-    @ApiResponse({ status: 400, description: 'La clase ya existe.' })
+
+    @Put(':id')
+    @UseInterceptors(FileInterceptor('imagen'), CleanNullInterceptor) // FileInterceptor maneja la subida del archivo
+    @ApiOperation({ summary: 'Actualizar una clase por ID' })
+    @ApiResponse({ status: 200, description: 'Clase actualizada', type: ModificarClaseDto })
+    @ApiResponse({ status: 404, description: 'Clase no encontrada' }) 
+    @HttpCode(HttpStatus.OK)
     @UseGuards(AuthGuard, RolesGuard)
     @Roles('admin', 'profesor')
     @ApiSecurity('bearer')
@@ -117,35 +120,34 @@ export class ClasesController {
         schema: {
             type: 'object',
             properties: {
-                imagen: {
-                    type: 'string',
-                    format: 'binary'
-                },
                 nombre: { type: 'string' },
                 descripcion: { type: 'string' },
-                fecha: { type: 'date' },
+                fecha: { type: 'string' },
                 disponibilidad: { type: 'number' },
                 categoriaId: { type: 'string', format: 'uuid' },  // Cambia a 'uuid'
                 perfilProfesorId: { type: 'string', format: 'uuid' }, 
             },
         },
     })
-    @UseInterceptors(FileInterceptor('imagen'))
-    async update(
-        @Param("id") id: string,
-        @Body() modificarClaseDto: ModificarClaseDto, @UploadedFile(new ImageUploadPipe()) imagen?: Express.Multer.File): Promise<RespuestaClaseDto> {
-            try {
-                const claseActualizada = await this.clasesService.actualizar(id, modificarClaseDto, imagen);
-                if (!claseActualizada) {
-                    throw new NotFoundException('Clase no encontrada');
-                }
-                return claseActualizada;  // Ya está devolviendo RespuestaClaseDto
-            } catch (error) {
-                console.error('Error al actualizar la clase:', error);
-                throw new InternalServerErrorException('Error inesperado al actualizar la clase');
+    async actualizarClase(
+        @Param('id') id: string,
+        @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, skipMissingProperties: true })) modificarClaseDto: ModificarClaseDto, 
+        @UploadedFile() imagen?: Express.Multer.File
+    ): Promise<RespuestaClaseDto> {
+        try {
+            const claseActualizada = await this.clasesService.actualizar(id, modificarClaseDto, imagen);
+            if (!claseActualizada) {
+                throw new NotFoundException('Clase no encontrada');
             }
-
+            return claseActualizada;  // Ya está devolviendo RespuestaClaseDto
+        } catch (error) {
+            console.error('Error al actualizar la clase:', error);
+            throw new InternalServerErrorException('Error inesperado al actualizar la clase');
+        }
     }
+    
+
+
     // GET --- Solo el admin puede ver todas las clases, tanto activas como no
     @Get()
     @ApiOperation({ summary: 'Obtener todas las clases' })
@@ -203,7 +205,7 @@ export class ClasesController {
 
 
 
-  
+
 
     // DELETE
     @Delete(':id')

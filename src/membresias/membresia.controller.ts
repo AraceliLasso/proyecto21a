@@ -20,7 +20,7 @@ export class MembresiaController {
         private readonly membresiaService: MembresiaService,
         private readonly usuariosService: UsuariosService,
         private readonly stripeService: StripeService,
-        
+
     ) { }
     //*endpoint para crear membresias como admin
     @Post()
@@ -45,36 +45,36 @@ export class MembresiaController {
     @ApiBearerAuth() // Indica en Swagger que este endpoint requiere autenticación
     @UseGuards(AuthGuard) // Protege el endpoint
     async comprarMembresia(
-      @Param('membresiaId') membresiaId: string,
-      @Request() req: any, // Extrae al usuario autenticado
+        @Param('membresiaId') membresiaId: string,
+        @Request() req: any, // Extrae al usuario autenticado
     ) {
-      const usuario = await this.usuariosService.obtenerUsuarioPorId(req.user.id);
-      if (!usuario) {
-        throw new HttpException('Usuario no encontrado', HttpStatus.NOT_FOUND);
-      }
-    
-      const membresia = await this.membresiaService.obtenerMembresiaPorId(membresiaId);
-      if (!membresia) {
-        throw new HttpException('Membresía no encontrada', HttpStatus.NOT_FOUND);
-      }
-    
-      if (!membresia.activa) {
-        throw new HttpException('Esta membresía ya no está disponible', HttpStatus.BAD_REQUEST);
-      }
-      
-// Crear la sesión de pago con Stripe
-const session = await this.stripeService.crearSesionDePago(
-    membresiaId,
-    membresia.precio,
-    usuario.email,
-  );
-    
-      usuario.membresia = membresia;
-      await this.usuariosService.update(usuario);
-    
-      return { message: 'Membresía comprada y asignada con éxito', membresia, usuario };
+        const usuario = await this.usuariosService.obtenerUsuarioPorId(req.user.id);
+        if (!usuario) {
+            throw new HttpException('Usuario no encontrado', HttpStatus.NOT_FOUND);
+        }
+
+        const membresia = await this.membresiaService.obtenerMembresiaPorId(membresiaId);
+        if (!membresia) {
+            throw new HttpException('Membresía no encontrada', HttpStatus.NOT_FOUND);
+        }
+
+        if (!membresia.activa) {
+            throw new HttpException('Esta membresía ya no está disponible', HttpStatus.BAD_REQUEST);
+        }
+
+        // Crear la sesión de pago con Stripe
+        const session = await this.stripeService.crearSesionDePago(
+            membresiaId,
+            membresia.precio,
+            usuario.email,
+        );
+
+        usuario.membresia = membresia;
+        await this.usuariosService.update(usuario);
+
+        return { message: 'Membresía comprada y asignada con éxito', membresia, usuario };
     }
-    
+
     @Get()
     @ApiOperation({ summary: 'Obtener todas las membresías' })
     @ApiResponse({ status: 200, description: 'Membresías obtenidas correctamente', type: [Membresia] })
@@ -82,18 +82,19 @@ const session = await this.stripeService.crearSesionDePago(
     @ApiQuery({ name: 'page', required: false, description: 'Número de página', example: 1 })
     @ApiQuery({ name: 'limit', required: false, description: 'Cantidad de resultados por página', example: 5 })
     async obtenerMembresiasPag(
-      @Query('page') page: number = 1,
-      @Query('limit') limit: number = 5
+        @Query('page') page: number = 1,
+        @Query('limit') limit: number = 5
     ): Promise<{ data: Membresia[]; total: number; pages: number }> {
-      const membresias = await this.membresiaService.obtenerMembresiasPag(page, limit);
-      const total = await this.membresiaService.count();  // Contamos el total de membresías
-      const pages = Math.ceil(total / limit);  // Calculamos el número total de páginas
-    
-      return {
-        data: membresias,
-        total,
-        pages,
-      };}
+        const membresias = await this.membresiaService.obtenerMembresiasPag(page, limit);
+        const total = await this.membresiaService.count();  // Contamos el total de membresías
+        const pages = Math.ceil(total / limit);  // Calculamos el número total de páginas
+
+        return {
+            data: membresias,
+            total,
+            pages,
+        };
+    }
     // Obtener historial de membresías: GET /membresias/historial
     //*para que el usuario vea sus propias membresias
     @Get(':usuarioId/historial')
@@ -166,17 +167,21 @@ const session = await this.stripeService.crearSesionDePago(
         return this.membresiaService.desactivarMembresia(nombre);
     }
     // Actualizar precio de membresía: PUT/membresias/precio
-    @Put(":membresiaId/precio")
-    @ApiOperation({ summary: 'Actualizar una membresia por ID' })
-    @ApiResponse({ status: 200, description: 'Membresia actualizada', type: ActualizarPrecioMembresiaDto })
-    @ApiResponse({ status: 404, description: 'Membresia no encontrada' })
+
+    @Put(':membresiaId/precio')
+    @ApiOperation({ summary: 'Actualizar el precio de una membresía por ID' })
+    @ApiResponse({ status: 200, description: 'Membresía actualizada', type: Membresia })
+    @ApiResponse({ status: 404, description: 'Membresía no encontrada' })
     @UseGuards(AuthGuard, RolesGuard)
     @Roles('admin')
     @ApiSecurity('bearer')
     @HttpCode(HttpStatus.OK)
-    async actualizarPrecioMembresia(@Param("membresiaId") membresiaId: string, @Body() actualizarPrecio: ActualizarPrecioMembresiaDto): Promise<Membresia> {
-        const membresia = await this.membresiaService.actualizarPrecioMembresia(membresiaId, actualizarPrecio)
-        return membresia;
+    async actualizarPrecioMembresia(
+        @Param('membresiaId') membresiaId: string,
+        @Body() actualizarPrecio: ActualizarPrecioMembresiaDto
+    ): Promise<Membresia> {
+        // Llamamos al servicio para actualizar el precio
+        return this.membresiaService.actualizarPrecioMembresia(membresiaId, actualizarPrecio);
     }
     // renovarMembresia: Método: PATCH /membresias/renovar
     @Patch('renovar/:userId')

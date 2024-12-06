@@ -15,6 +15,8 @@ import { Inscripcion } from "src/inscripciones/inscripcion.entity";
 import { InscripcionRespuestaDto } from "src/inscripciones/dtos/respuesta-inscripicon.dto";
 import { InscripcionesService } from "src/inscripciones/inscripcion.service";
 import { rolEnum, Usuario } from "src/usuarios/usuario.entity";
+import RespuestaUsuario2Dto from "src/usuarios/dtos/respuestaDos-usuario.dto";
+import { plainToClass } from "class-transformer";
 
 @Injectable()
 export class ClasesService {
@@ -307,7 +309,7 @@ export class ClasesService {
         // Buscar todas las inscripciones con la relación a la clase
         const inscripciones = await this.inscripcionesRepository.find({
             where: { clase: { id: claseId } }, // Asegúrate de que `clase` es el nombre correcto de la relación
-            relations: ['clase'], // Cambia `class` por `clase` si es el nombre real de la relación
+            relations: ['clase', 'usuario'], // Cambia `class` por `clase` si es el nombre real de la relación
             skip,
             take,
         });
@@ -321,7 +323,7 @@ export class ClasesService {
 
         // Mapear las inscripciones al formato de DTO
         return inscripciones.map((inscripcion) => {
-            const { id, fechaInscripcion, fechaVencimiento, estado, clase: entidadClase } = inscripcion;
+            const { id, fechaInscripcion, fechaVencimiento, estado, clase: entidadClase, usuario: respuestaUsuario} = inscripcion;
 
             // Transformar la clase al formato esperado
             const claseDto: RespuestaClaseDto = {
@@ -331,6 +333,13 @@ export class ClasesService {
                 fecha: entidadClase.fecha,
                 disponibilidad: entidadClase.disponibilidad,
             };
+            const usuarioDto: RespuestaUsuario2Dto = {
+                id: respuestaUsuario.id,
+                nombre: respuestaUsuario.nombre,
+                email: respuestaUsuario.email,
+                telefono: respuestaUsuario.telefono,
+                imagen: respuestaUsuario.imagen,
+            };
 
             // Retornar el DTO de la inscripción
             return {
@@ -339,6 +348,7 @@ export class ClasesService {
                 fechaVencimiento,
                 estado,
                 clase: claseDto,
+                usuario: usuarioDto,
             };
         });
 
@@ -389,45 +399,11 @@ export class ClasesService {
         };
     }
 
-    async actualizarClase(id: string, modificarClaseDto: ModificarClaseDto, imagen?: Express.Multer.File): Promise<Clase> {
-        const clase = await this.clasesRepository.findOne({
-            where: { id },
-            relations: ['perfilProfesor', 'categoria'], // Asegúrate de incluir las relaciones necesarias
-        });
+  
+   
     
-        if (!clase) {
-            throw new NotFoundException(`Clase con id: ${id} no encontrada`);
-        }
-        if (imagen) {
-            try {
-                const imageUrl = await this.cloudinaryService.uploadFile(imagen.buffer, 'clase', imagen.originalname);
-                modificarClaseDto.imagen = imageUrl; // Asignar la URL al DTO
-            } catch (error) {
-                console.error('Error al subir la imagen a Cloudinary:', error);
-                throw new InternalServerErrorException('Error al subir la imagen');
-            }
-        } 
-
-         // Mantener la URL de la imagen actual si no se proporciona una nueva
-         if (!imagen && modificarClaseDto.imagen === undefined) {
-            modificarClaseDto.imagen = clase.imagen;
-            }
-        
-         // Filtrar propiedades del DTO que no sean `undefined`
-        const datosActualizados = {
-            ...clase,
-            ...modificarClaseDto,
-            imagen: modificarClaseDto.imagen || clase.imagen, // Preservar la imagen si no hay cambios
-        };
-    
-     // Guardar los cambios en la base de datos
-     await this.clasesRepository.save(datosActualizados);
-
-     return datosActualizados;
-    }
-
-      // PUT
-      async update(id: string, modificarClaseDto: ModificarClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
+       // PUT
+    async update(id: string, modificarClaseDto: ModificarClaseDto, file?: Express.Multer.File): Promise<RespuestaClaseDto> {
         const clase = await this.clasesRepository.findOne({
             where: { id }, // Usar un objeto con la propiedad `where`
             relations: ['categoria', 'perfilProfesor'], // Cargar la relación de categoría

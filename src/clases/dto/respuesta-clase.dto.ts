@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsNumber, IsString, IsUUID } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsNumber, IsString, IsUUID } from "class-validator";
 import { RespuestaCategoriaDto } from "src/categorias/dto/respuesta-categoria.dto";
 import { Clase } from "../clase.entity";
 import { RespuestaPerfilProfesorDto } from "src/perfilesProfesores/dto/respuesta-perfilProfesor.dto";
@@ -10,45 +10,46 @@ export class RespuestaClaseDto {
         type: String,
         description: "El identificador único de la clase, asignado por la base de datos",
         required: true,
-        })
-        id: string;
+    })
+    id: string;
 
     @ApiProperty({ description: "El nombre de la clase", required: true })
-    @IsString()
-    @IsNotEmpty()
     nombre: string;
 
     @ApiProperty({ description: "La descripción de la clase", required: true })
-    @IsString()
-    @IsNotEmpty()
     descripcion: string;
 
-    @ApiProperty({ description: 'Fecha y hora de la clase en string', required: false})
+    @ApiProperty({ description: 'Fecha y hora de la clase en string', required: false })
     @IsString()
     fecha: string;
 
     @ApiProperty({ description: "La disponibilidad de clases", required: true })
-    @IsNumber()
-    @IsNotEmpty()
     disponibilidad: number;
 
     @ApiProperty({
         type: 'string',
-        format: 'binary', 
+        format: 'binary',
         description: 'Imagen de la clase',
     })
     imagen?: string;
 
+
     @ApiProperty({
-        type: () => RespuestaPerfilProfesorDto, // Se indica que la categoría es un DTO
+        type: 'boolean',
+        description: 'Estado de la clase',
+    })
+    @IsBoolean()
+    estado?: boolean;
+
+    @ApiProperty({
+        type: () => RespuestaPerfilProfesorDto,
         description: "El perfil del profesor de la clase",
         required: false,
     })
-    @Type(() => RespuestaPerfilProfesorDto) // Decorador para la transformación del perfilProfesor
     perfilProfesor?: RespuestaPerfilProfesorDto;
 
     @ApiProperty({
-        type: () => RespuestaCategoriaDto, // Se indica que la categoría es un DTO
+        type: () => RespuestaCategoriaDto,
         description: "La categoría del producto",
         required: false,
     })
@@ -61,11 +62,12 @@ export class RespuestaClaseDto {
         this.fecha = clase.fecha;
         this.disponibilidad = clase.disponibilidad;
         this.imagen = clase.imagen || null;
+        this.estado = clase.estado;
         console.log('Perfil Profesor antes de asignar:', clase.perfilProfesor);
-        this.perfilProfesor = clase.perfilProfesor ? plainToClass(RespuestaPerfilProfesorDto, clase.perfilProfesor): null;
+        this.perfilProfesor = clase.perfilProfesor ? plainToClass(RespuestaPerfilProfesorDto, clase.perfilProfesor) : null;
         this.categoria = clase.categoria ? plainToClass(RespuestaCategoriaDto, clase.categoria) : null;
     }
 
-    
+
 
 }
