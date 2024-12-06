@@ -67,10 +67,15 @@ export class CloudinaryService {
 
 
     private extractPublicId(imageUrl: string): string {
-        const parts = imageUrl.split('/');
-        const fileName = parts[parts.length - 1]; // Última parte de la URL
-        const publicId = fileName.split('.')[0]; // Remover extensión
-        return `categoria/${publicId}`; // Añadir el prefijo de la carpeta si aplica
+        // const parts = imageUrl.split('/');
+        // const fileName = parts[parts.length - 1]; // Última parte de la URL
+        // const publicId = fileName.split('.')[0]; // Remover extensión
+        // return publicId; 
+        const urlWithoutQuery = imageUrl.split('?')[0]; // Remover parámetros de consulta si existen
+        const pathSegments = urlWithoutQuery.split('/'); 
+        const folderAndFile = pathSegments.slice(-2); // Extraer los últimos dos segmentos (carpeta y archivo)
+        const publicId = folderAndFile.join('/').split('.')[0]; // Construir el ID completo sin la extensión
+        return publicId;
     }
     // Método para eliminar un archivo de Cloudinary
     async deleteFile(imageUrl: string): Promise<void> {

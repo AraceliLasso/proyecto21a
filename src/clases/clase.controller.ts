@@ -126,7 +126,6 @@ export class ClasesController {
                 disponibilidad: { type: 'number' },
                 categoriaId: { type: 'string', format: 'uuid' },  // Cambia a 'uuid'
                 perfilProfesorId: { type: 'string', format: 'uuid' }, 
-                // No incluimos `imagen` aquí, ya que la manejamos por separado con `@UploadedFile()`
             },
         },
     })

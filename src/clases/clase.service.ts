@@ -533,6 +533,7 @@ export class ClasesService {
         if (actualizarClaseDto.fecha) claseExistente.fecha = actualizarClaseDto.fecha;
         if (typeof actualizarClaseDto.disponibilidad === 'number') claseExistente.disponibilidad = actualizarClaseDto.disponibilidad;
         if (actualizarClaseDto.categoriaId) claseExistente.categoriaId = actualizarClaseDto.categoriaId;
+
     
         // Buscar el perfil del profesor a partir del ID
         if (actualizarClaseDto.perfilProfesorId) {
@@ -545,8 +546,30 @@ export class ClasesService {
     
         // Si se sube una nueva imagen, actualizarla
         if (file) {
-            claseExistente.imagen = file.filename; // O el nombre de archivo o la URL de la imagen
-        }
+                    // Eliminar la imagen anterior si existe
+                    console.log('Archivo recibido en el servicio:', file);
+                    if (claseExistente.imagen) {
+                        try {
+                        await this.cloudinaryService.deleteFile(claseExistente.imagen);
+                    } catch (error) {
+                    console.error('Error al manejar la imagen:', error);
+                    throw new InternalServerErrorException('Error al manejar la imagen');
+                }
+            }
+
+                try{
+                    // Subir la nueva imagen
+                    const nuevaImagenUrl = await this.cloudinaryService.uploadFile(
+                        file.buffer,
+                        'clase',
+                        file.originalname,
+                    );
+                    claseExistente.imagen = nuevaImagenUrl; // Asignar la nueva URL de la imagen
+                } catch (error) {
+                    console.error('Error al subir la nueva imagen:', error);
+                    throw new InternalServerErrorException('Error al subir la nueva imagen');
+                }
+            }
     
         // Guardar los cambios en la base de datos
         await this.clasesRepository.save(claseExistente);
