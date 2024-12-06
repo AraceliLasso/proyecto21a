@@ -8,7 +8,7 @@ import { Roles } from 'src/decorators/roles.decorators';
 import { AuthGuard } from 'src/guard/auth.guard';
 import { UsuariosService } from 'src/usuarios/usuario.service';
 import { MembresiaInactivaDto } from './dtos/inactivo-membresia.dto';
-import { ApiBearerAuth, ApiBody, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ActualizarPrecioMembresiaDto } from './dtos/actualizar-membresia.dto';
 import * as express from 'express';
 import { CrearMembresiaDto } from './dtos/crear-membresia.dto';
