@@ -1,5 +1,5 @@
 // membresia.controller.ts
-import { Controller, Post, Body, Param, Put, Get, UseGuards, Req, NotFoundException, HttpStatus, HttpCode, Query, Patch, ForbiddenException, Request, Delete, HttpException } from '@nestjs/common';
+import { Controller, Post, Body, Param, Put, Get, UseGuards, Req, NotFoundException, HttpStatus, HttpCode, Query, Patch, ForbiddenException, Request, Delete, HttpException, ParseUUIDPipe } from '@nestjs/common';
 import { MembresiaService } from './membresia.service';
 import { Membresia } from './membresia.entity';
 import { rolEnum, Usuario } from 'src/usuarios/usuario.entity';
@@ -13,6 +13,7 @@ import { ActualizarPrecioMembresiaDto } from './dtos/actualizar-membresia.dto';
 import * as express from 'express';
 import { CrearMembresiaDto } from './dtos/crear-membresia.dto';
 import { StripeService } from 'src/stripe/stripe.service';
+import { ModificarEstadoMembresiaDto } from './dtos/modificar-estadoMembresia.dto';
 @ApiTags("Membresias")
 @Controller('membresias')
 export class MembresiaController {
@@ -268,6 +269,27 @@ export class MembresiaController {
 
     
     
+
+
+     //Para habilitar o deshabilitar una membresia
+        @Patch(':id')
+        @ApiOperation({ summary: 'Modificar el estado de una membresia' })
+        @ApiResponse({ status: 201, description: 'Estado de la membresia modificado exitosamente', type: [Membresia] })
+        @ApiResponse({ status: 400, description: 'Datos inválidos' })
+        @ApiResponse({ status: 500, description: 'Error inesperado al modificar el estado de la membresia' })
+        @ApiBody({ description: 'Cuerpo para modificar el estado de una membresia', type: ModificarEstadoMembresiaDto })
+        @UseGuards(AuthGuard, RolesGuard)
+        @Roles('admin')
+        @ApiSecurity('bearer')
+        async modificarEstadoMembresia(
+            @Param('id', ParseUUIDPipe) id: string,
+            @Body() modificarEstadoDto: ModificarEstadoMembresiaDto
+        ): Promise<Membresia> {
+            return this.membresiaService.modificarEstadoId(id, modificarEstadoDto.activa);
+        }
+
+
+
 }
 
 
