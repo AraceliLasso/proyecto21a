@@ -49,22 +49,22 @@ async loginWithGoogle(@Body() loginGoogleDto: LoginGoogleDto) {
         throw new UnauthorizedException('Credenciales invalidas');
     }
     // Si el usuario es nuevo, envía un correo de bienvenida
-    if (usuario.esNuevoUsuario) {
-        try {
-            await this.mailService.sendMail(
-                usuario.usuario.email,
-                'Bienvenido a ForgeFit',
-                'Gracias por registrarte.',
-                '<h1>Te damos la bienvenida a ForgeFit!!</h1><p>Gracias por registrarte.</p>',
-            );
-        } catch(error) {
-                console.error("Error al enviar correo de bienvenida:", error);
-            }
-        };
+    // if (usuario.esNuevoUsuario) {
+    //     try {
+    //         await this.mailService.sendMail(
+    //             usuario.usuario.email,
+    //             'Bienvenido a ForgeFit',
+    //             'Gracias por registrarte.',
+    //             '<h1>Te damos la bienvenida a ForgeFit!!</h1><p>Gracias por registrarte.</p>',
+    //         );
+    //     } catch(error) {
+    //             console.error("Error al enviar correo de bienvenida:", error);
+    //         }
+    //     };
         return usuario;
-    } catch (error) {
-      throw error; // Propaga el error para que NestJS lo maneje
-    }
+    // } catch (error) {
+    //   throw error; // Propaga el error para que NestJS lo maneje
+    // }
 }
 
     // @Patch('update-profile')
@@ -80,4 +80,4 @@ async loginWithGoogle(@Body() loginGoogleDto: LoginGoogleDto) {
     // return await this.usersService.actualizarPerfil(email, ActualizarPerfilDto);
     // }
 
-//}
+}
